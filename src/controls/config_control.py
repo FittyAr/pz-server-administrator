@@ -49,7 +49,7 @@ class ConfigControl:
         e.page.show_snack_bar(
             ft.SnackBar(
                 content=ft.Text("Configuración guardada exitosamente"),
-                bgcolor=ft.colors.GREEN
+                bgcolor=ft.Colors.GREEN
             )
         )
         
@@ -61,7 +61,7 @@ class ConfigControl:
         e.page.show_snack_bar(
             ft.SnackBar(
                 content=ft.Text("Configuración restaurada"),
-                bgcolor=ft.colors.ORANGE
+                bgcolor=ft.Colors.ORANGE
             )
         )
         e.page.update()
@@ -103,7 +103,7 @@ class ConfigControl:
                 # Editor de configuración
                 ft.Container(
                     content=self.config_content,
-                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border=ft.border.all(1, ft.Colors.OUTLINE),
                     border_radius=8,
                     padding=10,
                     expand=True
@@ -116,21 +116,21 @@ class ConfigControl:
                             "Guardar Cambios",
                             icon=ft.Icons.SAVE,
                             on_click=self._save_config,
-                            bgcolor=ft.colors.BLUE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Restaurar",
                             icon=ft.Icons.RESTORE,
                             on_click=self._reset_config,
-                            bgcolor=ft.colors.ORANGE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.ORANGE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Validar Sintaxis",
                             icon=ft.Icons.CHECK_CIRCLE,
-                            bgcolor=ft.colors.GREEN,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10

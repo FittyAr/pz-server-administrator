@@ -47,7 +47,7 @@ class LogsControl:
         e.page.show_snack_bar(
             ft.SnackBar(
                 content=ft.Text("Logs exportados exitosamente"),
-                bgcolor=ft.colors.GREEN
+                bgcolor=ft.Colors.GREEN
             )
         )
         
@@ -71,11 +71,11 @@ class LogsControl:
         Carga logs de ejemplo del servidor
         """
         sample_logs = [
-            {"time": "2024-01-15 10:30:15", "level": "INFO", "message": "Server started successfully", "color": ft.colors.GREEN},
-            {"time": "2024-01-15 10:30:20", "level": "INFO", "message": "Player 'Player1' connected from 192.168.1.100", "color": ft.colors.BLUE},
-            {"time": "2024-01-15 10:35:42", "level": "INFO", "message": "Player 'Player2' connected from 192.168.1.101", "color": ft.colors.BLUE},
-            {"time": "2024-01-15 10:45:12", "level": "WARN", "message": "High memory usage detected: 85%", "color": ft.colors.ORANGE},
-            {"time": "2024-01-15 11:00:33", "level": "INFO", "message": "Autosave completed", "color": ft.colors.GREEN},
+            {"time": "2024-01-15 10:30:15", "level": "INFO", "message": "Server started successfully", "color": ft.Colors.GREEN},
+            {"time": "2024-01-15 10:30:20", "level": "INFO", "message": "Player 'Player1' connected from 192.168.1.100", "color": ft.Colors.BLUE},
+            {"time": "2024-01-15 10:35:42", "level": "INFO", "message": "Player 'Player2' connected from 192.168.1.101", "color": ft.Colors.BLUE},
+            {"time": "2024-01-15 10:45:12", "level": "WARN", "message": "High memory usage detected: 85%", "color": ft.Colors.ORANGE},
+            {"time": "2024-01-15 11:00:33", "level": "INFO", "message": "Autosave completed", "color": ft.Colors.GREEN},
         ]
         
         for log in sample_logs:
@@ -86,9 +86,9 @@ class LogsControl:
         Carga logs de chat
         """
         chat_logs = [
-            {"time": "2024-01-15 10:32:15", "level": "CHAT", "message": "[Player1]: Hello everyone!", "color": ft.colors.CYAN},
-            {"time": "2024-01-15 10:32:45", "level": "CHAT", "message": "[Player2]: Hi there!", "color": ft.colors.CYAN},
-            {"time": "2024-01-15 10:35:12", "level": "CHAT", "message": "[Player1]: Anyone want to team up?", "color": ft.colors.CYAN},
+            {"time": "2024-01-15 10:32:15", "level": "CHAT", "message": "[Player1]: Hello everyone!", "color": ft.Colors.CYAN},
+            {"time": "2024-01-15 10:32:45", "level": "CHAT", "message": "[Player2]: Hi there!", "color": ft.Colors.CYAN},
+            {"time": "2024-01-15 10:35:12", "level": "CHAT", "message": "[Player1]: Anyone want to team up?", "color": ft.Colors.CYAN},
         ]
         
         for log in chat_logs:
@@ -99,9 +99,9 @@ class LogsControl:
         Carga logs de administración
         """
         admin_logs = [
-            {"time": "2024-01-15 09:15:30", "level": "ADMIN", "message": "Admin 'ServerAdmin' logged in", "color": ft.colors.PURPLE},
-            {"time": "2024-01-15 09:20:15", "level": "ADMIN", "message": "Server configuration updated", "color": ft.colors.PURPLE},
-            {"time": "2024-01-15 10:45:22", "level": "ADMIN", "message": "Player 'BadPlayer' banned by ServerAdmin", "color": ft.colors.RED},
+            {"time": "2024-01-15 09:15:30", "level": "ADMIN", "message": "Admin 'ServerAdmin' logged in", "color": ft.Colors.PURPLE},
+            {"time": "2024-01-15 09:20:15", "level": "ADMIN", "message": "Server configuration updated", "color": ft.Colors.PURPLE},
+            {"time": "2024-01-15 10:45:22", "level": "ADMIN", "message": "Player 'BadPlayer' banned by ServerAdmin", "color": ft.Colors.RED},
         ]
         
         for log in admin_logs:
@@ -112,9 +112,9 @@ class LogsControl:
         Carga logs de errores
         """
         error_logs = [
-            {"time": "2024-01-15 08:45:12", "level": "ERROR", "message": "Failed to load mod: ModName.lua", "color": ft.colors.RED},
-            {"time": "2024-01-15 09:12:33", "level": "ERROR", "message": "Database connection timeout", "color": ft.colors.RED},
-            {"time": "2024-01-15 10:22:45", "level": "WARN", "message": "Deprecated function used in script", "color": ft.colors.ORANGE},
+            {"time": "2024-01-15 08:45:12", "level": "ERROR", "message": "Failed to load mod: ModName.lua", "color": ft.Colors.RED},
+            {"time": "2024-01-15 09:12:33", "level": "ERROR", "message": "Database connection timeout", "color": ft.Colors.RED},
+            {"time": "2024-01-15 10:22:45", "level": "WARN", "message": "Deprecated function used in script", "color": ft.Colors.ORANGE},
         ]
         
         for log in error_logs:
@@ -130,7 +130,7 @@ class LogsControl:
                     ft.Text(
                         log["time"],
                         size=12,
-                        color=ft.colors.GREY_400,
+                        color=ft.Colors.GREY_400,
                         width=150
                     ),
                     ft.Container(
@@ -138,7 +138,7 @@ class LogsControl:
                             log["level"],
                             size=12,
                             weight=ft.FontWeight.BOLD,
-                            color=ft.colors.WHITE
+                            color=ft.Colors.WHITE
                         ),
                         bgcolor=log["color"],
                         padding=ft.padding.symmetric(horizontal=8, vertical=2),
@@ -206,22 +206,22 @@ class LogsControl:
                             "Actualizar",
                             icon=ft.Icons.REFRESH,
                             on_click=lambda e: self._load_logs(),
-                            bgcolor=ft.colors.BLUE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Limpiar",
                             icon=ft.Icons.CLEAR,
                             on_click=self._clear_logs,
-                            bgcolor=ft.colors.ORANGE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.ORANGE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Exportar",
                             icon=ft.Icons.DOWNLOAD,
                             on_click=self._export_logs,
-                            bgcolor=ft.colors.GREEN,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10
@@ -232,10 +232,10 @@ class LogsControl:
                 # Área de logs
                 ft.Container(
                     content=self.log_content,
-                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border=ft.border.all(1, ft.Colors.OUTLINE),
                     border_radius=8,
                     expand=True,
-                    bgcolor=ft.colors.SURFACE_VARIANT
+                    bgcolor=ft.Colors.ON_SURFACE_VARIANT
                 ),
             ],
             spacing=10,

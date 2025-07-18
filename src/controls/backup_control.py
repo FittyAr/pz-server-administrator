@@ -27,7 +27,7 @@ class BackupControl:
         e.page.show_snack_bar(
             ft.SnackBar(
                 content=ft.Text("Creando respaldo..."),
-                bgcolor=ft.colors.BLUE
+                bgcolor=ft.Colors.BLUE
             )
         )
         
@@ -113,8 +113,8 @@ class BackupControl:
         """
         Añade una entrada de respaldo a la lista
         """
-        type_color = ft.colors.BLUE if backup["type"] == "Automático" else ft.colors.GREEN
-        status_color = ft.colors.GREEN if backup["status"] == "Completado" else ft.colors.ORANGE
+        type_color = ft.Colors.BLUE if backup["type"] == "Automático" else ft.Colors.GREEN
+        status_color = ft.Colors.GREEN if backup["status"] == "Completado" else ft.Colors.ORANGE
         
         backup_card = ft.Container(
             content=ft.Column(
@@ -131,7 +131,7 @@ class BackupControl:
                                 content=ft.Text(
                                     backup["type"],
                                     size=12,
-                                    color=ft.colors.WHITE
+                                    color=ft.Colors.WHITE
                                 ),
                                 bgcolor=type_color,
                                 padding=ft.padding.symmetric(horizontal=8, vertical=2),
@@ -141,8 +141,8 @@ class BackupControl:
                     ),
                     ft.Row(
                         [
-                            ft.Text(f"Fecha: {backup['date']}", size=12, color=ft.colors.GREY_400),
-                            ft.Text(f"Tamaño: {backup['size']}", size=12, color=ft.colors.GREY_400),
+                            ft.Text(f"Fecha: {backup['date']}", size=12, color=ft.Colors.GREY_400),
+                            ft.Text(f"Tamaño: {backup['size']}", size=12, color=ft.Colors.GREY_400),
                             ft.Text(
                                 backup["status"],
                                 size=12,
@@ -158,23 +158,23 @@ class BackupControl:
                                 "Restaurar",
                                 icon=ft.Icons.RESTORE,
                                 on_click=lambda e, name=backup["name"]: self._restore_backup(name),
-                                bgcolor=ft.colors.BLUE,
-                                color=ft.colors.WHITE,
+                                bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE,
                                 scale=0.8
                             ),
                             ft.ElevatedButton(
                                 "Descargar",
                                 icon=ft.Icons.DOWNLOAD,
-                                bgcolor=ft.colors.GREEN,
-                                color=ft.colors.WHITE,
+                                bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE,
                                 scale=0.8
                             ),
                             ft.ElevatedButton(
                                 "Eliminar",
                                 icon=ft.Icons.DELETE,
                                 on_click=lambda e, name=backup["name"]: self._delete_backup(name),
-                                bgcolor=ft.colors.RED,
-                                color=ft.colors.WHITE,
+                                bgcolor=ft.Colors.RED,
+                            color=ft.Colors.WHITE,
                                 scale=0.8
                             ),
                         ],
@@ -183,7 +183,7 @@ class BackupControl:
                 ],
                 spacing=5
             ),
-            bgcolor=ft.colors.SURFACE_VARIANT,
+            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
             padding=15,
             border_radius=8,
             margin=ft.margin.only(bottom=5)
@@ -239,7 +239,7 @@ class BackupControl:
                         ],
                         spacing=10
                     ),
-                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                     padding=15,
                     border_radius=8
                 ),
@@ -253,20 +253,20 @@ class BackupControl:
                             "Crear Respaldo Manual",
                             icon=ft.Icons.BACKUP,
                             on_click=self._create_backup,
-                            bgcolor=ft.colors.GREEN,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Limpiar Respaldos Antiguos",
                             icon=ft.Icons.CLEANING_SERVICES,
-                            bgcolor=ft.colors.ORANGE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.ORANGE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Configurar Ubicación",
                             icon=ft.Icons.FOLDER,
-                            bgcolor=ft.colors.BLUE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10
@@ -283,7 +283,7 @@ class BackupControl:
                 
                 ft.Container(
                     content=self.backup_list,
-                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border=ft.border.all(1, ft.Colors.OUTLINE),
                     border_radius=8,
                     expand=True
                 ),

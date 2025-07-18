@@ -8,7 +8,7 @@ class ServerControl:
     
     def __init__(self):
         self.server_status = "Detenido"
-        self.status_color = ft.colors.RED
+        self.status_color = ft.Colors.RED
         
     def _start_server(self, e):
         """
@@ -16,7 +16,7 @@ class ServerControl:
         """
         # TODO: Implementar lógica de inicio del servidor
         self.server_status = "Ejecutándose"
-        self.status_color = ft.colors.GREEN
+        self.status_color = ft.Colors.GREEN
         e.page.update()
         
     def _stop_server(self, e):
@@ -25,7 +25,7 @@ class ServerControl:
         """
         # TODO: Implementar lógica de parada del servidor
         self.server_status = "Detenido"
-        self.status_color = ft.colors.RED
+        self.status_color = ft.Colors.RED
         e.page.update()
         
     def _restart_server(self, e):
@@ -34,7 +34,7 @@ class ServerControl:
         """
         # TODO: Implementar lógica de reinicio del servidor
         self.server_status = "Reiniciando..."
-        self.status_color = ft.colors.ORANGE
+        self.status_color = ft.Colors.ORANGE
         e.page.update()
     
     def build(self):
@@ -68,7 +68,7 @@ class ServerControl:
                         alignment=ft.MainAxisAlignment.START
                     ),
                     padding=10,
-                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                     border_radius=8,
                     margin=ft.margin.only(bottom=20)
                 ),
@@ -80,22 +80,22 @@ class ServerControl:
                             "Iniciar Servidor",
                             icon=ft.Icons.PLAY_ARROW,
                             on_click=self._start_server,
-                            bgcolor=ft.colors.GREEN,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Detener Servidor",
                             icon=ft.Icons.STOP,
                             on_click=self._stop_server,
-                            bgcolor=ft.colors.RED,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.RED,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Reiniciar Servidor",
                             icon=ft.Icons.REFRESH,
                             on_click=self._restart_server,
-                            bgcolor=ft.colors.ORANGE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.ORANGE,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10
@@ -121,7 +121,7 @@ class ServerControl:
                         spacing=5
                     ),
                     padding=15,
-                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                     border_radius=8,
                     width=300
                 ),

@@ -30,7 +30,7 @@ class PlayersControl:
             e.page.show_snack_bar(
                 ft.SnackBar(
                     content=ft.Text(f"Jugador {self.selected_player} expulsado"),
-                    bgcolor=ft.colors.ORANGE
+                    bgcolor=ft.Colors.ORANGE
                 )
             )
             
@@ -42,7 +42,7 @@ class PlayersControl:
             e.page.show_snack_bar(
                 ft.SnackBar(
                     content=ft.Text(f"Jugador {self.selected_player} baneado"),
-                    bgcolor=ft.colors.RED
+                    bgcolor=ft.Colors.RED
                 )
             )
             
@@ -54,7 +54,7 @@ class PlayersControl:
             e.page.show_snack_bar(
                 ft.SnackBar(
                     content=ft.Text(f"Jugador {self.selected_player} desbaneado"),
-                    bgcolor=ft.colors.GREEN
+                    bgcolor=ft.Colors.GREEN
                 )
             )
             
@@ -70,10 +70,10 @@ class PlayersControl:
         Crea una fila para mostrar información del jugador
         """
         status_color = {
-            "Online": ft.colors.GREEN,
-            "Offline": ft.colors.GREY,
-            "Banned": ft.colors.RED
-        }.get(player["status"], ft.colors.GREY)
+            "Online": ft.Colors.GREEN,
+            "Offline": ft.Colors.GREY,
+            "Banned": ft.Colors.RED
+        }.get(player["status"], ft.Colors.GREY)
         
         return ft.DataRow(
             cells=[
@@ -109,30 +109,30 @@ class PlayersControl:
                     [
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("2", size=24, weight=ft.FontWeight.BOLD, color=ft.colors.GREEN),
+                                ft.Text("2", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.GREEN),
                                 ft.Text("En línea", size=12)
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=ft.colors.SURFACE_VARIANT,
+                            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                             padding=15,
                             border_radius=8,
                             width=100
                         ),
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("4", size=24, weight=ft.FontWeight.BOLD, color=ft.colors.BLUE),
+                                ft.Text("4", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE),
                                 ft.Text("Total", size=12)
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=ft.colors.SURFACE_VARIANT,
+                            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                             padding=15,
                             border_radius=8,
                             width=100
                         ),
                         ft.Container(
                             content=ft.Column([
-                                ft.Text("1", size=24, weight=ft.FontWeight.BOLD, color=ft.colors.RED),
+                                ft.Text("1", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.RED),
                                 ft.Text("Baneados", size=12)
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                            bgcolor=ft.colors.SURFACE_VARIANT,
+                            bgcolor=ft.Colors.ON_SURFACE_VARIANT,
                             padding=15,
                             border_radius=8,
                             width=100
@@ -155,7 +155,7 @@ class PlayersControl:
                         ],
                         rows=[self._create_player_row(player) for player in self.players_data],
                     ),
-                    border=ft.border.all(1, ft.colors.OUTLINE),
+                    border=ft.border.all(1, ft.Colors.OUTLINE),
                     border_radius=8,
                     padding=10
                 ),
@@ -169,29 +169,29 @@ class PlayersControl:
                             "Expulsar",
                             icon=ft.Icons.LOGOUT,
                             on_click=self._kick_player,
-                            bgcolor=ft.colors.ORANGE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.ORANGE,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Banear",
                             icon=ft.Icons.BLOCK,
                             on_click=self._ban_player,
-                            bgcolor=ft.colors.RED,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.RED,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Desbanear",
                             icon=ft.Icons.CHECK_CIRCLE,
                             on_click=self._unban_player,
-                            bgcolor=ft.colors.GREEN,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.GREEN,
+                            color=ft.Colors.WHITE
                         ),
                         ft.ElevatedButton(
                             "Enviar Mensaje",
                             icon=ft.Icons.MESSAGE,
                             on_click=self._send_message,
-                            bgcolor=ft.colors.BLUE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10
@@ -209,8 +209,8 @@ class PlayersControl:
                         ft.ElevatedButton(
                             "Enviar",
                             icon=ft.Icons.SEND,
-                            bgcolor=ft.colors.BLUE,
-                            color=ft.colors.WHITE
+                            bgcolor=ft.Colors.BLUE,
+                            color=ft.Colors.WHITE
                         ),
                     ],
                     spacing=10
