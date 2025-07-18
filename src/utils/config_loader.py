@@ -453,6 +453,19 @@ class ConfigLoader:
         except Exception as e:
             print(f"Error al actualizar configuración: {e}")
             return False
+    
+    def update_app_config(self, key: str, value: Any) -> bool:
+        """
+        Actualiza un valor de configuración de la aplicación
+        
+        Args:
+            key: Clave a actualizar
+            value: Nuevo valor
+            
+        Returns:
+            True si se actualizó exitosamente
+        """
+        return self.update_config('app_config', key, value)
 
 # Instancia global del cargador de configuración
 config_loader = ConfigLoader()

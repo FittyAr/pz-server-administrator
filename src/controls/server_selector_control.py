@@ -376,7 +376,7 @@ class ServerSelectorControl:
                     )
                 ]),
                 padding=10,
-                bgcolor=ft.Colors.ON_SURFACE_VARIANT,
+                bgcolor=ft.Colors.SURFACE,
                 border_radius=8,
                 margin=ft.margin.only(top=10)
             )
