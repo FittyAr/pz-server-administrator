@@ -58,15 +58,17 @@ class ConfigControl:
         servers = config_loader.get_all_servers()
         server_data = servers.get(self.current_server_id, {})
         server_path = server_data.get('server_path')
+        server_name = server_data.get('name')  # Nombre real del servidor
         
-        if not server_path:
+        if not server_path or not server_name:
             return None
-            
+        
+        # Usar el nombre real del servidor, no el ID normalizado
         file_mappings = {
-            "server_settings": f"{self.current_server_id}.ini",
-            "sandbox_vars": f"{self.current_server_id}_sandbox_vars.lua",
-            "spawn_regions": f"{self.current_server_id}_spawnregions.lua",
-            "server_rules": f"{self.current_server_id}_rules.json"
+            "server_settings": f"{server_name}.ini",
+            "sandbox_vars": f"{server_name}_SandBoxVars.lua",
+            "spawn_regions": f"{server_name}_spawnregions.lua",
+            "server_rules": f"{server_name}_rules.json"
         }
         
         filename = file_mappings.get(config_type)
@@ -88,23 +90,35 @@ class ConfigControl:
         
         if config_file_path and os.path.exists(config_file_path):
             try:
-                with open(config_file_path, 'r', encoding='utf-8') as file:
-                    self.config_content.value = file.read()
+                # Intentar diferentes codificaciones
+                encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+                content = None
+                
+                for encoding in encodings:
+                    try:
+                        with open(config_file_path, 'r', encoding=encoding) as file:
+                            content = file.read()
+                            break
+                    except UnicodeDecodeError:
+                        continue
+                
+                if content is not None:
+                    self.config_content.value = content
+                else:
+                    self.config_content.value = f"# Error: No se pudo decodificar el archivo con ninguna codificación\n# Ruta: {config_file_path}"
+                    
             except Exception as e:
                 self.config_content.value = f"# Error al cargar el archivo: {str(e)}\n# Ruta: {config_file_path}"
         else:
-            # Mostrar plantilla si el archivo no existe
+            # Archivo no existe, mostrar plantilla
             config_templates = {
-                "server_settings": f"# Server Settings ({self.current_server_id}.ini)\n# Archivo no encontrado, creando plantilla\nPublicName=My PZ Server\nPublicDescription=A Project Zomboid Server\nMaxPlayers=32\nPVP=true\nPauseEmpty=true\nPingLimit=400\n",
-                "sandbox_vars": f"-- Sandbox Variables ({self.current_server_id}_sandbox_vars.lua)\n-- Archivo no encontrado, creando plantilla\nSandBoxVars = {{\n    Version = 5,\n    Zombies = 4,\n    Distribution = 1,\n    DayLength = 3,\n    StartMonth = 7,\n    StartTime = 2,\n    WaterShut = 6,\n    ElecShut = 6,\n}}",
-                "spawn_regions": f"-- Spawn Regions ({self.current_server_id}_spawnregions.lua)\n-- Archivo no encontrado, creando plantilla\nfunction SpawnRegions()\n    return {{\n        {{ name = \"Muldraugh, KY\", file = \"media/maps/Muldraugh, KY/spawnpoints.lua\" }},\n        {{ name = \"West Point, KY\", file = \"media/maps/West Point, KY/spawnpoints.lua\" }},\n        {{ name = \"Riverside, KY\", file = \"media/maps/Riverside, KY/spawnpoints.lua\" }},\n    }}\nend",
-                "server_rules": f"{{\n  \"_comment\": \"Reglas del servidor {self.current_server_id} - Archivo no encontrado, creando plantilla\",\n  \"rules\": [\n    \"No griefing\",\n    \"No cheating\",\n    \"Respect other players\",\n    \"No offensive language\"\n  ],\n  \"punishments\": {{\n    \"warning\": 1,\n    \"kick\": 2,\n    \"ban\": 3\n  }}\n}}"
+                "server_settings": f"# Archivo no encontrado: {config_file_path}\n# Creando plantilla para {self.current_server_id}\n\nPublicName=My PZ Server\nPublicDescription=A Project Zomboid Server\nMaxPlayers=32\nPVP=true\nPauseEmpty=true\nPingLimit=400\n",
+                "sandbox_vars": f"-- Archivo no encontrado: {config_file_path}\n-- Creando plantilla para {self.current_server_id}\n\nSandBoxVars = {{\n    Version = 5,\n    Zombies = 4,\n    Distribution = 1,\n    DayLength = 3,\n    StartMonth = 7,\n    StartTime = 2,\n    WaterShut = 6,\n    ElecShut = 6,\n}}",
+                "spawn_regions": f"-- Archivo no encontrado: {config_file_path}\n-- Creando plantilla para {self.current_server_id}\n\nfunction SpawnRegions()\n    return {{\n        {{ name = \"Muldraugh, KY\", file = \"media/maps/Muldraugh, KY/spawnpoints.lua\" }},\n        {{ name = \"West Point, KY\", file = \"media/maps/West Point, KY/spawnpoints.lua\" }},\n        {{ name = \"Riverside, KY\", file = \"media/maps/Riverside, KY/spawnpoints.lua\" }},\n    }}\nend",
+                "server_rules": f"{{\n  \"_comment\": \"Archivo no encontrado: {config_file_path} - Creando plantilla para {self.current_server_id}\",\n  \"rules\": [\n    \"No griefing\",\n    \"No cheating\",\n    \"Respect other players\",\n    \"No offensive language\"\n  ],\n  \"punishments\": {{\n    \"warning\": 1,\n    \"kick\": 2,\n    \"ban\": 3\n  }}\n}}"
             }
             
-            self.config_content.value = config_templates.get(
-                self.selected_config_type, 
-                f"# Archivo de configuración no encontrado para {self.current_server_id}"
-            )
+            self.config_content.value = config_templates.get(self.selected_config_type, f"# Archivo de configuración no encontrado: {config_file_path}")
         
     def _save_config(self, e):
         """
