@@ -26,6 +26,7 @@ def main(page: ft.Page):
     
     # Crear y mostrar el layout principal
     main_layout = MainLayout(page)
+    page.main_layout = main_layout  # Agregar referencia para que otros controles puedan acceder
     page.add(main_layout.build())
     
     # TODO: Implementar validaciones de configuración más adelante

@@ -61,17 +61,26 @@ class ServerSelectorControl:
         """
         Construye una tarjeta para mostrar información del servidor
         """
-        is_default = server_id == config_loader.get_default_server_id()
+        is_favorite = server_id == config_loader.get_favorite_server()
+        is_selected = server_id == config_loader.get_selected_server()
         is_auto_detected = server_data.get('auto_detected', False)
         is_valid = server_data.get('valid', True)
         
         # Indicadores visuales
         indicators = []
-        if is_default:
+        if is_favorite:
             indicators.append(
                 ft.Container(
                     content=ft.Icon(ft.Icons.STAR, color=ft.Colors.AMBER, size=16),
                     tooltip="Servidor favorito"
+                )
+            )
+        
+        if is_selected:
+            indicators.append(
+                ft.Container(
+                    content=ft.Icon(ft.Icons.RADIO_BUTTON_CHECKED, color=ft.Colors.GREEN, size=16),
+                    tooltip="Servidor actualmente seleccionado"
                 )
             )
         
@@ -143,14 +152,20 @@ class ServerSelectorControl:
         # Todos los servidores con .ini son válidos y pueden ser seleccionados
         action_buttons.extend([
             ft.IconButton(
-                icon=ft.Icons.STAR if is_default else ft.Icons.STAR_BORDER,
-                tooltip="Marcar como favorito" if not is_default else "Quitar de favoritos",
-                on_click=lambda e, sid=server_id: self._toggle_favorite(e, sid)
+                icon=ft.Icons.STAR if is_favorite else ft.Icons.STAR_BORDER,
+                tooltip="Marcar como favorito" if not is_favorite else "Quitar de favoritos",
+                on_click=lambda e, sid=server_id: self._toggle_favorite(e, sid),
+                style=ft.ButtonStyle(
+                    color=ft.Colors.AMBER if is_favorite else ft.Colors.GREY
+                )
             ),
             ft.IconButton(
-                icon=ft.Icons.PLAY_ARROW,
-                tooltip="Seleccionar servidor",
-                on_click=lambda e, sid=server_id: self._select_server(e, sid)
+                icon=ft.Icons.RADIO_BUTTON_CHECKED if is_selected else ft.Icons.RADIO_BUTTON_UNCHECKED,
+                tooltip="Servidor activo" if is_selected else "Seleccionar como servidor activo",
+                on_click=lambda e, sid=server_id: self._select_server(e, sid),
+                style=ft.ButtonStyle(
+                    color=ft.Colors.GREEN if is_selected else ft.Colors.GREY
+                )
             )
         ])
         
@@ -213,15 +228,15 @@ class ServerSelectorControl:
         """
         Alterna el estado de favorito de un servidor
         """
-        current_default = config_loader.get_default_server_id()
+        current_favorite = config_loader.get_favorite_server()
         
-        if current_default == server_id:
+        if current_favorite == server_id:
             # Quitar de favoritos (establecer como vacío)
-            success = config_loader.set_default_server("")
+            success = config_loader.set_favorite_server("")
             message = "Servidor removido de favoritos"
         else:
             # Establecer como favorito
-            success = config_loader.set_default_server(server_id)
+            success = config_loader.set_favorite_server(server_id)
             message = "Servidor marcado como favorito"
         
         if success:
@@ -235,10 +250,6 @@ class ServerSelectorControl:
             # Actualizar la lista
             self.refresh_servers()
             e.page.update()
-            
-            # Notificar cambio si hay callback
-            if self.on_server_change:
-                self.on_server_change(server_id if current_default != server_id else None)
         else:
             e.page.snack_bar = ft.SnackBar(
                 content=ft.Text("Error al actualizar servidor favorito"),
@@ -289,22 +300,38 @@ class ServerSelectorControl:
     
     def _select_server(self, e, server_id: str):
         """
-        Selecciona un servidor para trabajar con él
+        Selecciona un servidor como activo para trabajar con él
         """
-        self.selected_server_id = server_id
+        # Actualizar servidor seleccionado en la configuración
+        success = config_loader.set_selected_server(server_id)
         
-        # Notificar cambio si hay callback
-        if self.on_server_change:
-            self.on_server_change(server_id)
-        
-        # Mostrar notificación
-        server_name = config_loader.get_all_servers().get(server_id, {}).get('name', server_id)
-        e.page.snack_bar = ft.SnackBar(
-            content=ft.Text(f"Servidor seleccionado: {server_name}"),
-            bgcolor=ft.Colors.BLUE
-        )
-        e.page.snack_bar.open = True
-        e.page.update()
+        if success:
+            self.selected_server_id = server_id
+            
+            # Actualizar la visualización en el layout principal si existe
+            if hasattr(e.page, 'main_layout') and hasattr(e.page.main_layout, 'update_selected_server_display'):
+                e.page.main_layout.selected_server_id = server_id
+                e.page.main_layout.update_selected_server_display()
+            
+            # Notificar cambio si hay callback
+            if self.on_server_change:
+                self.on_server_change(server_id)
+            
+            # Mostrar notificación
+            server_name = config_loader.get_all_servers().get(server_id, {}).get('name', server_id)
+            e.page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"Servidor activo: {server_name}"),
+                bgcolor=ft.Colors.BLUE
+            )
+            e.page.snack_bar.open = True
+            e.page.update()
+        else:
+            e.page.snack_bar = ft.SnackBar(
+                content=ft.Text("Error al seleccionar servidor"),
+                bgcolor=ft.Colors.RED
+            )
+            e.page.snack_bar.open = True
+            e.page.update()
     
     def _scan_servers(self, e):
         """
@@ -326,8 +353,8 @@ class ServerSelectorControl:
         Obtiene la configuración del servidor seleccionado
         """
         if not self.selected_server_id:
-            # Si no hay servidor seleccionado, usar el favorito
-            self.selected_server_id = config_loader.get_default_server_id()
+            # Si no hay servidor seleccionado, usar el que está en la configuración
+            self.selected_server_id = config_loader.get_selected_server()
         
         if self.selected_server_id:
             all_servers = config_loader.get_all_servers()
@@ -367,10 +394,10 @@ class ServerSelectorControl:
                     ft.Icon(ft.Icons.INFO_OUTLINE, size=16, color=ft.Colors.BLUE),
                     ft.Container(
                         content=ft.Text(
-                            "Usa el botón ⭐ para marcar un servidor como favorito. "
-                            "El servidor favorito se usará por defecto en toda la aplicación.",
-                            size=12,
-                            color=ft.Colors.ON_SURFACE_VARIANT
+                             "⭐ Favorito: Se selecciona automáticamente al iniciar la aplicación.\n"
+                             "🔘 Activo: Servidor actualmente en uso en toda la aplicación.",
+                             size=12,
+                             color=ft.Colors.ON_SURFACE_VARIANT
                         ),
                         expand=True
                     )

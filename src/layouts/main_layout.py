@@ -38,6 +38,15 @@ class MainLayout:
         self.app_config_control = AppConfigControl()
         self.path_config_control = PathConfigControl()
         
+        # Inicializar servidor seleccionado
+        self.selected_server_id = config_loader.initialize_selected_server()
+        self.selected_server_text = ft.Text(
+            self._get_server_display_name(),
+            size=14,
+            weight=ft.FontWeight.W_500,
+            color=ft.Colors.ON_SURFACE
+        )
+        
         # Cargar contenido inicial
         self._update_content()
     
@@ -64,9 +73,30 @@ class MainLayout:
         self.page.snack_bar.open = True
         self.page.update()
     
+    def _get_server_display_name(self) -> str:
+        """
+        Obtiene el nombre del servidor seleccionado para mostrar
+        """
+        if not self.selected_server_id:
+            return "Ningún servidor seleccionado"
+        
+        # Obtener información del servidor
+        servers = config_loader.get_server_config('servers') or {}
+        server_info = servers.get(self.selected_server_id, {})
+        server_name = server_info.get('name', self.selected_server_id)
+        
+        return f"Servidor: {server_name}"
+    
+    def update_selected_server_display(self):
+        """
+        Actualiza la visualización del servidor seleccionado
+        """
+        self.selected_server_text.value = self._get_server_display_name()
+        self.page.update()
+    
     def _create_header(self):
         """
-        Crea el header de la aplicación con botón de tema
+        Crea el header de la aplicación con botón de tema y servidor seleccionado
         """
         current_theme = config_loader.get_app_config('theme')
         theme_icon = ft.Icons.LIGHT_MODE if current_theme == 'dark' else ft.Icons.DARK_MODE
@@ -81,6 +111,19 @@ class MainLayout:
                     color=ft.Colors.PRIMARY
                 ),
                 ft.Container(expand=True),
+                ft.Container(
+                    content=ft.Row([
+                        ft.Icon(
+                            ft.Icons.COMPUTER,
+                            size=16,
+                            color=ft.Colors.PRIMARY
+                        ),
+                        self.selected_server_text
+                    ], spacing=8),
+                    padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                    bgcolor=ft.Colors.PRIMARY_CONTAINER,
+                    border_radius=8
+                ),
                 ft.IconButton(
                     icon=theme_icon,
                     tooltip=theme_tooltip,
@@ -92,7 +135,7 @@ class MainLayout:
                         shape=ft.RoundedRectangleBorder(radius=8)
                     )
                 )
-            ]),
+            ], spacing=16),
             padding=ft.padding.symmetric(horizontal=20, vertical=16),
             bgcolor=ft.Colors.SURFACE,
             border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.OUTLINE))

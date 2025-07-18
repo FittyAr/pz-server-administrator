@@ -466,6 +466,75 @@ class ConfigLoader:
             True si se actualizó exitosamente
         """
         return self.update_config('app_config', key, value)
+    
+    def get_selected_server(self) -> Optional[str]:
+        """
+        Obtiene el servidor actualmente seleccionado
+        
+        Returns:
+            ID del servidor seleccionado o None
+        """
+        return self.get_app_config('selected_server')
+    
+    def set_selected_server(self, server_id: str) -> bool:
+        """
+        Establece el servidor actualmente seleccionado
+        
+        Args:
+            server_id: ID del servidor a seleccionar
+            
+        Returns:
+            True si se actualizó exitosamente
+        """
+        return self.update_app_config('selected_server', server_id)
+    
+    def get_favorite_server(self) -> Optional[str]:
+        """
+        Obtiene el servidor marcado como favorito
+        
+        Returns:
+            ID del servidor favorito o None
+        """
+        return self.get_app_config('favorite_server')
+    
+    def set_favorite_server(self, server_id: str) -> bool:
+        """
+        Establece el servidor favorito
+        
+        Args:
+            server_id: ID del servidor a marcar como favorito
+            
+        Returns:
+            True si se actualizó exitosamente
+        """
+        return self.update_app_config('favorite_server', server_id)
+    
+    def initialize_selected_server(self) -> Optional[str]:
+        """
+        Inicializa el servidor seleccionado al arrancar la aplicación.
+        Si hay un favorito, lo selecciona. Si no, selecciona el primero disponible.
+        
+        Returns:
+            ID del servidor seleccionado o None si no hay servidores
+        """
+        # Verificar si ya hay un servidor seleccionado
+        current_selected = self.get_selected_server()
+        if current_selected:
+            return current_selected
+        
+        # Si no hay seleccionado, usar el favorito
+        favorite = self.get_favorite_server()
+        if favorite:
+            self.set_selected_server(favorite)
+            return favorite
+        
+        # Si no hay favorito, usar el servidor por defecto de la configuración
+        default_server = self.get_server_config('default_server')
+        if default_server:
+            self.set_selected_server(default_server)
+            return default_server
+        
+        return None
 
 # Instancia global del cargador de configuración
 config_loader = ConfigLoader()
