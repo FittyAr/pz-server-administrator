@@ -313,6 +313,9 @@ class ServerSelectorControl:
                 e.page.main_layout.selected_server_id = server_id
                 e.page.main_layout.update_selected_server_display()
             
+            # Actualizar toda la lista de servidores para reflejar el cambio
+            self.refresh_servers()
+            
             # Notificar cambio si hay callback
             if self.on_server_change:
                 self.on_server_change(server_id)
