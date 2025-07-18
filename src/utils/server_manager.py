@@ -4,6 +4,7 @@ import time
 import os
 from typing import Optional, Dict, Any
 from datetime import datetime
+from .config_loader import config_loader
 
 
 class ServerManager:
@@ -12,8 +13,23 @@ class ServerManager:
     """
     
     def __init__(self, server_path: str = "", java_path: str = "java"):
-        self.server_path = server_path
-        self.java_path = java_path
+        # Cargar configuración del servidor
+        server_paths = config_loader.get_server_paths()
+        if server_paths:
+            self.server_path = server_paths.get('server_path', server_path)
+            self.java_path = server_paths.get('java_path', java_path)
+            self.config_files = server_paths.get('config_files', {})
+        else:
+            self.server_path = server_path
+            self.java_path = java_path
+            self.config_files = {}
+        
+        # Cargar configuración RCON
+        self.rcon_config = config_loader.get_rcon_config() or {}
+        
+        # Cargar configuración del servidor actual
+        self.current_server_config = config_loader.get_current_server_config() or {}
+        
         self.server_process: Optional[subprocess.Popen] = None
         self.server_pid: Optional[int] = None
         self.start_time: Optional[datetime] = None

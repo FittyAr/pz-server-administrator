@@ -1,16 +1,32 @@
 import json
 import configparser
 import os
+import shutil
+from pathlib import Path
 from typing import Dict, Any, Optional
+from .config_loader import config_loader
 
 
 class ConfigManager:
     """
-    Gestor de archivos de configuración para diferentes formatos
+    Clase para gestionar archivos de configuración del servidor Project Zomboid
     """
     
     def __init__(self, server_path: str = ""):
-        self.server_path = server_path
+        # Cargar configuración del servidor
+        server_paths = config_loader.get_server_paths()
+        if server_paths and not server_path:
+            server_path = server_paths.get('server_path', '')
+            
+        self.server_path = Path(server_path) if server_path else Path.cwd()
+        self.backup_dir = self.server_path / "config_backups"
+        
+        # Cargar archivos de configuración desde JSON
+        current_server = config_loader.get_current_server_config()
+        if current_server:
+            self.config_files = current_server.get('config_files', {})
+        else:
+            self.config_files = {}
         
     def read_ini_file(self, file_path: str) -> Dict[str, Any]:
         """
