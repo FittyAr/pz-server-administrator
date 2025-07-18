@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional
+from .platform_utils import platform_utils
 
 class ConfigLoader:
     """
@@ -243,6 +244,173 @@ class ConfigLoader:
         except Exception as e:
             print(f"Error al guardar la configuración: {e}")
             return False
+    
+    def scan_server_directory(self, base_path: str = None) -> Dict[str, Dict[str, Any]]:
+        """
+        Escanea un directorio en busca de configuraciones de servidores de Project Zomboid
+        
+        Args:
+            base_path: Ruta base donde buscar servidores. Si es None, usa la configuración o ruta por defecto.
+            
+        Returns:
+            Diccionario con los servidores encontrados
+        """
+        if base_path is None:
+            # Intentar obtener la ruta configurada por el usuario
+            server_config = self.get_server_config()
+            if server_config and 'custom_server_path' in server_config:
+                base_path = server_config['custom_server_path']
+            else:
+                # Usar ruta por defecto del sistema
+                default_paths = platform_utils.get_default_zomboid_paths()
+                base_path = default_paths['server_path']
+        
+        # Normalizar la ruta para el sistema actual
+        base_path = platform_utils.normalize_path(base_path)
+        servers_found = {}
+        
+        try:
+            if not os.path.exists(base_path):
+                print(f"Directorio de servidores no encontrado: {base_path}")
+                return servers_found
+            
+            print(f"Escaneando directorio: {base_path}")
+            
+            # Buscar archivos .ini que indican configuraciones de servidor
+            for item in os.listdir(base_path):
+                if item.endswith('.ini'):
+                    server_name = item.replace('.ini', '')
+                    server_id = server_name.lower().replace(' ', '_').replace('-', '_')
+                    
+                    # Verificar que el servidor tenga los 4 archivos obligatorios
+                    if platform_utils.is_valid_server(base_path, server_name):
+                        # Obtener información de validación para mostrar qué archivos existen
+                        validation = platform_utils.validate_server_files(base_path, server_name)
+                        
+                        config_files = {
+                            'server_settings': f"{server_name}.ini",
+                            'sandbox_vars': f"{server_name}_SandBoxVars.lua",
+                            'spawn_regions': f"{server_name}_spawnregions.lua",
+                            'spawn_points': f"{server_name}_spawnpoints.lua"
+                        }
+                        
+                        servers_found[server_id] = {
+                            'name': server_name,
+                            'description': f"Servidor {server_name} detectado automáticamente",
+                            'server_path': base_path,
+                            'executable_path': self._find_pz_executable(),
+                            'config_files': config_files,
+                            'auto_detected': True,
+                            'valid': True,
+                            'validation': validation,
+                            'rcon': {
+                                'enabled': False,
+                                'host': '127.0.0.1',
+                                'port': 27015,
+                                'password': ''
+                            },
+                            'game_server': {
+                                'host': '0.0.0.0',
+                                'port': 16261,
+                                'udp_port': 16262
+                            },
+                            'steam_integration': {
+                                'enabled': False,
+                                'steam_port1': 8766,
+                                'steam_port2': 8767
+                            }
+                        }
+                    else:
+                        # Servidor incompleto - agregar con información de validación
+                        validation = platform_utils.validate_server_files(base_path, server_name)
+                        missing_files = [file_type for file_type, exists in validation.items() if not exists]
+                        
+                        print(f"Servidor incompleto '{server_name}': faltan archivos {missing_files}")
+                        
+                        servers_found[f"{server_id}_incomplete"] = {
+                            'name': f"{server_name} (Incompleto)",
+                            'description': f"Servidor {server_name} - Faltan archivos: {', '.join(missing_files)}",
+                            'server_path': base_path,
+                            'executable_path': self._find_pz_executable(),
+                            'config_files': {},
+                            'auto_detected': True,
+                            'valid': False,
+                            'validation': validation,
+                            'missing_files': missing_files
+                        }
+            
+            valid_servers = [k for k, v in servers_found.items() if v.get('valid', False)]
+            invalid_servers = [k for k, v in servers_found.items() if not v.get('valid', False)]
+            
+            print(f"Servidores válidos detectados: {valid_servers}")
+            if invalid_servers:
+                print(f"Servidores incompletos detectados: {invalid_servers}")
+            
+        except Exception as e:
+            print(f"Error al escanear directorio de servidores: {e}")
+        
+        return servers_found
+    
+    def _find_pz_executable(self) -> str:
+        """
+        Intenta encontrar el ejecutable de Project Zomboid usando las utilidades de plataforma
+        """
+        # Intentar obtener ruta personalizada de la configuración
+        server_config = self.get_server_config()
+        custom_paths = []
+        
+        if server_config and 'custom_game_path' in server_config:
+            custom_paths.append(server_config['custom_game_path'])
+        
+        # Buscar usando las utilidades de plataforma
+        executable_path = platform_utils.find_pz_executable(custom_paths)
+        
+        if executable_path:
+            return executable_path
+        
+        # Fallback con nombre apropiado para el sistema
+        default_paths = platform_utils.get_default_zomboid_paths()
+        return default_paths['executable']
+    
+    def get_all_servers(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Obtiene todos los servidores configurados y detectados
+        """
+        # Servidores configurados manualmente
+        configured_servers = self.get_server_config('servers') or {}
+        
+        # Servidores detectados automáticamente
+        detected_servers = self.scan_server_directory()
+        
+        # Combinar ambos, dando prioridad a los configurados manualmente
+        all_servers = detected_servers.copy()
+        all_servers.update(configured_servers)
+        
+        return all_servers
+    
+    def set_default_server(self, server_id: str) -> bool:
+        """
+        Establece un servidor como predeterminado (favorito)
+        
+        Args:
+            server_id: ID del servidor a establecer como predeterminado
+            
+        Returns:
+            True si se estableció exitosamente
+        """
+        all_servers = self.get_all_servers()
+        
+        if server_id not in all_servers:
+            print(f"Servidor no encontrado: {server_id}")
+            return False
+        
+        return self.update_config('server_config', 'default_server', server_id)
+    
+    def get_default_server_id(self) -> Optional[str]:
+        """
+        Obtiene el ID del servidor predeterminado
+        """
+        return self.get_server_config('default_server')
     
     def update_config(self, section: str, key: str, value: Any) -> bool:
         """

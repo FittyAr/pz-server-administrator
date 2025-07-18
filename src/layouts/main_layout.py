@@ -5,6 +5,7 @@ from controls.players_control import PlayersControl
 from controls.logs_control import LogsControl
 from controls.backup_control import BackupControl
 from controls.app_config_control import AppConfigControl
+from controls.path_config_control import PathConfigControl
 from utils.config_loader import config_loader
 
 
@@ -32,6 +33,7 @@ class MainLayout:
         self.logs_control = LogsControl()
         self.backup_control = BackupControl()
         self.app_config_control = AppConfigControl()
+        self.path_config_control = PathConfigControl()
         
         # Cargar contenido inicial
         self._update_content()
@@ -59,6 +61,8 @@ class MainLayout:
         elif self.selected_index == 4:
             self.content_area.content = self.backup_control.build()
         elif self.selected_index == 5:
+            self.content_area.content = self.path_config_control.build()
+        elif self.selected_index == 6:
             self.content_area.content = self.app_config_control.build()
     
     def build(self):
@@ -99,6 +103,11 @@ class MainLayout:
                     icon=ft.Icons.BACKUP,
                     selected_icon=ft.Icons.BACKUP,
                     label="Respaldos",
+                ),
+                ft.NavigationRailDestination(
+                    icon=ft.Icons.FOLDER_OPEN,
+                    selected_icon=ft.Icons.FOLDER_OPEN,
+                    label="Rutas",
                 ),
                 ft.NavigationRailDestination(
                     icon=ft.Icons.SETTINGS_APPLICATIONS,

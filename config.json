@@ -9,6 +9,8 @@
   },
   "server_config": {
     "default_server": "main_server",
+    "custom_server_path": "",
+    "custom_game_path": "",
     "servers": {
       "main_server": {
         "name": "Servidor Principal",
