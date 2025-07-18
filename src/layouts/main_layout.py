@@ -93,6 +93,21 @@ class MainLayout:
         """
         self.selected_server_text.value = self._get_server_display_name()
         self.page.update()
+        
+        # Notificar a todos los controles que el servidor ha cambiado
+        self._notify_server_change()
+    
+    def _notify_server_change(self):
+        """
+        Notifica a todos los controles que el servidor seleccionado ha cambiado
+        """
+        # Notificar al control de configuración
+        if hasattr(self, 'config_control'):
+            self.config_control.refresh_for_selected_server()
+        
+        # Aquí se pueden agregar más controles en el futuro
+        # if hasattr(self, 'other_control'):
+        #     self.other_control.refresh_for_selected_server()
     
     def _create_header(self):
         """
