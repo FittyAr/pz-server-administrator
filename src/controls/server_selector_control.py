@@ -83,23 +83,46 @@ class ServerSelectorControl:
                 )
             )
         
-        if not is_valid:
+        # Mostrar advertencia solo si faltan archivos .lua (información, no error)
+        if 'missing_lua_files' in server_data and server_data['missing_lua_files']:
             indicators.append(
                 ft.Container(
-                    content=ft.Icon(ft.Icons.WARNING, color=ft.Colors.ORANGE, size=16),
-                    tooltip="Servidor incompleto"
+                    content=ft.Icon(ft.Icons.INFO, color=ft.Colors.ORANGE, size=16),
+                    tooltip="Servidor parcial - faltan algunos archivos .lua"
                 )
             )
         
-        # Información de validación para servidores inválidos
+        # Información de validación y estado del servidor
         validation_info = []
-        if not is_valid and 'missing_files' in server_data:
-            missing_files = server_data['missing_files']
+        
+        # Mostrar estado del servidor
+        if 'server_status' in server_data:
+            status_color = ft.Colors.GREEN if server_data['server_status'] == "Configurado" else ft.Colors.ORANGE
             validation_info.append(
                 ft.Text(
-                    f"Archivos faltantes: {', '.join(missing_files)}",
+                    f"Estado: {server_data['server_status']}",
                     size=10,
-                    color=ft.Colors.ERROR
+                    color=status_color
+                )
+            )
+        
+        # Mostrar archivos .lua faltantes si los hay
+        if 'missing_lua_files' in server_data and server_data['missing_lua_files']:
+            validation_info.append(
+                ft.Text(
+                    f"Archivos .lua faltantes: {', '.join(server_data['missing_lua_files'])}",
+                    size=10,
+                    color=ft.Colors.ORANGE
+                )
+            )
+        
+        # Mostrar archivos .lua existentes
+        if 'existing_lua_files' in server_data and server_data['existing_lua_files']:
+            validation_info.append(
+                ft.Text(
+                    f"Archivos .lua presentes: {', '.join(server_data['existing_lua_files'])}",
+                    size=10,
+                    color=ft.Colors.GREEN
                 )
             )
         
@@ -117,34 +140,28 @@ class ServerSelectorControl:
         # Botones de acción
         action_buttons = []
         
-        if is_valid:  # Solo permitir acciones en servidores válidos
-            action_buttons.extend([
-                ft.IconButton(
-                    icon=ft.Icons.STAR if not is_default else ft.Icons.STAR_BORDER,
-                    tooltip="Marcar como favorito" if not is_default else "Quitar de favoritos",
-                    on_click=lambda e, sid=server_id: self._toggle_favorite(e, sid)
-                ),
-                ft.IconButton(
-                    icon=ft.Icons.PLAY_ARROW,
-                    tooltip="Seleccionar servidor",
-                    on_click=lambda e, sid=server_id: self._select_server(e, sid)
-                )
-            ])
-        else:
-            action_buttons.append(
-                ft.IconButton(
-                    icon=ft.Icons.INFO,
-                    tooltip="Ver detalles del servidor incompleto",
-                    on_click=lambda e, sid=server_id: self._show_server_details(e, sid)
-                )
+        # Todos los servidores con .ini son válidos y pueden ser seleccionados
+        action_buttons.extend([
+            ft.IconButton(
+                icon=ft.Icons.STAR if is_default else ft.Icons.STAR_BORDER,
+                tooltip="Marcar como favorito" if not is_default else "Quitar de favoritos",
+                on_click=lambda e, sid=server_id: self._toggle_favorite(e, sid)
+            ),
+            ft.IconButton(
+                icon=ft.Icons.PLAY_ARROW,
+                tooltip="Seleccionar servidor",
+                on_click=lambda e, sid=server_id: self._select_server(e, sid)
             )
+        ])
         
-        # Color de fondo según el estado
-        card_color = None
-        if is_default and is_valid:
-            card_color = ft.Colors.ON_SURFACE_VARIANT
-        elif not is_valid:
-            card_color = ft.Colors.ERROR_CONTAINER
+        # Color de fondo según estado del servidor
+        if 'server_status' in server_data:
+            if server_data['server_status'] == "Configurado":
+                card_color = None  # Color por defecto
+            else:
+                card_color = ft.Colors.AMBER_50  # Color suave para servidores parciales
+        else:
+            card_color = None
         
         return ft.Card(
              content=ft.Container(

@@ -156,7 +156,8 @@ class PlatformUtils:
     
     def validate_server_files(self, server_path: str, server_name: str) -> Dict[str, bool]:
         """
-        Valida que existan los 4 archivos obligatorios de un servidor
+        Valida que existan los archivos de configuración de un servidor
+        El archivo .ini es obligatorio, los archivos .lua son opcionales
         
         Args:
             server_path: Ruta del directorio del servidor
@@ -165,7 +166,7 @@ class PlatformUtils:
         Returns:
             Diccionario indicando qué archivos existen
         """
-        required_files = {
+        server_files = {
             'server_settings': f"{server_name}.ini",
             'sandbox_vars': f"{server_name}_SandBoxVars.lua",
             'spawn_points': f"{server_name}_spawnpoints.lua",
@@ -174,7 +175,7 @@ class PlatformUtils:
         
         validation_result = {}
         
-        for file_type, filename in required_files.items():
+        for file_type, filename in server_files.items():
             file_path = os.path.join(server_path, filename)
             validation_result[file_type] = os.path.exists(file_path)
         
@@ -182,17 +183,19 @@ class PlatformUtils:
     
     def is_valid_server(self, server_path: str, server_name: str) -> bool:
         """
-        Verifica si un servidor tiene todos los archivos obligatorios
+        Verifica si un servidor es válido
+        Solo requiere el archivo .ini como obligatorio
         
         Args:
             server_path: Ruta del directorio del servidor
             server_name: Nombre del servidor
             
         Returns:
-            True si el servidor es válido (tiene los 4 archivos)
+            True si el servidor es válido (tiene al menos el archivo .ini)
         """
         validation = self.validate_server_files(server_path, server_name)
-        return all(validation.values())
+        # Solo requiere el archivo .ini como obligatorio
+        return validation.get('server_settings', False)
     
     def get_path_separator(self) -> str:
         """

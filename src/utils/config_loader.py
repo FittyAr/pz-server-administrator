@@ -277,67 +277,82 @@ class ConfigLoader:
             print(f"Escaneando directorio: {base_path}")
             
             # Buscar archivos .ini que indican configuraciones de servidor
+            # Cada archivo .ini representa un servidor diferente
             for item in os.listdir(base_path):
                 if item.endswith('.ini'):
                     server_name = item.replace('.ini', '')
                     server_id = server_name.lower().replace(' ', '_').replace('-', '_')
                     
-                    # Verificar que el servidor tenga los 4 archivos obligatorios
-                    if platform_utils.is_valid_server(base_path, server_name):
-                        # Obtener información de validación para mostrar qué archivos existen
-                        validation = platform_utils.validate_server_files(base_path, server_name)
-                        
-                        config_files = {
-                            'server_settings': f"{server_name}.ini",
-                            'sandbox_vars': f"{server_name}_SandBoxVars.lua",
-                            'spawn_regions': f"{server_name}_spawnregions.lua",
-                            'spawn_points': f"{server_name}_spawnpoints.lua"
+                    # Obtener información de validación para mostrar qué archivos existen
+                    validation = platform_utils.validate_server_files(base_path, server_name)
+                    
+                    # Verificar qué archivos .lua existen (son opcionales)
+                    lua_files = {
+                        'sandbox_vars': f"{server_name}_SandBoxVars.lua",
+                        'spawn_regions': f"{server_name}_spawnregions.lua",
+                        'spawn_points': f"{server_name}_spawnpoints.lua"
+                    }
+                    
+                    existing_lua_files = []
+                    missing_lua_files = []
+                    
+                    for file_type, filename in lua_files.items():
+                        if validation.get(file_type, False):
+                            existing_lua_files.append(filename)
+                        else:
+                            missing_lua_files.append(filename)
+                    
+                    config_files = {
+                        'server_settings': f"{server_name}.ini"
+                    }
+                    
+                    # Agregar archivos .lua que existen
+                    for file_type, filename in lua_files.items():
+                        if validation.get(file_type, False):
+                            config_files[file_type] = filename
+                    
+                    # Determinar el estado del servidor
+                    server_status = "Configurado"
+                    if missing_lua_files:
+                        server_status = f"Parcial ({len(existing_lua_files)}/3 archivos .lua)"
+                    
+                    description = f"Servidor {server_name} detectado automáticamente - {server_status}"
+                    if missing_lua_files:
+                        description += f" - Archivos .lua faltantes: {', '.join(missing_lua_files)}"
+                    
+                    servers_found[server_id] = {
+                        'name': server_name,
+                        'description': description,
+                        'server_path': base_path,
+                        'executable_path': self._find_pz_executable(),
+                        'config_files': config_files,
+                        'auto_detected': True,
+                        'valid': True,  # Siempre válido si tiene .ini
+                        'validation': validation,
+                        'existing_lua_files': existing_lua_files,
+                        'missing_lua_files': missing_lua_files,
+                        'server_status': server_status,
+                        'rcon': {
+                            'enabled': False,
+                            'host': '127.0.0.1',
+                            'port': 27015,
+                            'password': ''
+                        },
+                        'game_server': {
+                            'host': '0.0.0.0',
+                            'port': 16261,
+                            'udp_port': 16262
+                        },
+                        'steam_integration': {
+                            'enabled': False,
+                            'steam_port1': 8766,
+                            'steam_port2': 8767
                         }
-                        
-                        servers_found[server_id] = {
-                            'name': server_name,
-                            'description': f"Servidor {server_name} detectado automáticamente",
-                            'server_path': base_path,
-                            'executable_path': self._find_pz_executable(),
-                            'config_files': config_files,
-                            'auto_detected': True,
-                            'valid': True,
-                            'validation': validation,
-                            'rcon': {
-                                'enabled': False,
-                                'host': '127.0.0.1',
-                                'port': 27015,
-                                'password': ''
-                            },
-                            'game_server': {
-                                'host': '0.0.0.0',
-                                'port': 16261,
-                                'udp_port': 16262
-                            },
-                            'steam_integration': {
-                                'enabled': False,
-                                'steam_port1': 8766,
-                                'steam_port2': 8767
-                            }
-                        }
-                    else:
-                        # Servidor incompleto - agregar con información de validación
-                        validation = platform_utils.validate_server_files(base_path, server_name)
-                        missing_files = [file_type for file_type, exists in validation.items() if not exists]
-                        
-                        print(f"Servidor incompleto '{server_name}': faltan archivos {missing_files}")
-                        
-                        servers_found[f"{server_id}_incomplete"] = {
-                            'name': f"{server_name} (Incompleto)",
-                            'description': f"Servidor {server_name} - Faltan archivos: {', '.join(missing_files)}",
-                            'server_path': base_path,
-                            'executable_path': self._find_pz_executable(),
-                            'config_files': {},
-                            'auto_detected': True,
-                            'valid': False,
-                            'validation': validation,
-                            'missing_files': missing_files
-                        }
+                    }
+                    
+                    print(f"Servidor detectado: {server_name} - {server_status}")
+                    if missing_lua_files:
+                        print(f"  Archivos .lua faltantes: {', '.join(missing_lua_files)}")
             
             valid_servers = [k for k, v in servers_found.items() if v.get('valid', False)]
             invalid_servers = [k for k, v in servers_found.items() if not v.get('valid', False)]
