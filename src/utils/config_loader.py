@@ -258,7 +258,7 @@ class ConfigLoader:
         if base_path is None:
             # Intentar obtener la ruta configurada por el usuario
             server_config = self.get_server_config()
-            if server_config and 'custom_server_path' in server_config:
+            if server_config and 'custom_server_path' in server_config and server_config['custom_server_path'].strip():
                 base_path = server_config['custom_server_path']
             else:
                 # Usar ruta por defecto del sistema
