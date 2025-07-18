@@ -1,0 +1,114 @@
+{
+  "app_config": {
+    "app_name": "PZ Server Administrator",
+    "version": "1.0.0",
+    "language": "es",
+    "theme": "dark",
+    "auto_save_config": true,
+    "backup_retention_days": 30
+  },
+  "server_config": {
+    "default_server": "main_server",
+    "custom_server_path": "",
+    "custom_game_path": "",
+    "servers": {
+      "main_server": {
+        "name": "Servidor Principal",
+        "description": "Servidor principal de Project Zomboid",
+        "server_path": "C:\\Users\\iefqa\\Zomboid\\Server",
+        "executable_path": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\ProjectZomboid\\ProjectZomboid64.exe",
+        "config_files": {
+          "server_settings": "servertest.ini",
+          "sandbox_vars": "servertest_SandBoxVars.lua",
+          "spawn_regions": "servertest_spawnregions.lua",
+          "spawn_points": "servertest_spawnpoints.lua"
+        },
+        "rcon": {
+          "enabled": true,
+          "host": "127.0.0.1",
+          "port": 27015,
+          "password": ""
+        },
+        "game_server": {
+          "host": "0.0.0.0",
+          "port": 16261,
+          "udp_port": 16262
+        },
+        "steam_integration": {
+          "enabled": false,
+          "steam_port1": 8766,
+          "steam_port2": 8767
+        }
+      }
+    }
+  },
+  "backup_config": {
+    "backup_path": "./backups",
+    "auto_backup": {
+      "enabled": true,
+      "interval_hours": 6,
+      "max_backups": 10
+    },
+    "backup_types": {
+      "full_server": true,
+      "save_files_only": true,
+      "config_files_only": true
+    },
+    "compression": {
+      "enabled": true,
+      "format": "zip"
+    }
+  },
+  "logging_config": {
+    "log_level": "INFO",
+    "log_files": {
+      "server_log": "console.txt",
+      "chat_log": "chat.txt",
+      "admin_log": "admin.txt",
+      "error_log": "error.txt"
+    },
+    "auto_refresh": {
+      "enabled": true,
+      "interval_seconds": 5
+    },
+    "max_log_lines": 1000
+  },
+  "player_management": {
+    "whitelist_enabled": false,
+    "admin_users": [],
+    "banned_users": [],
+    "kick_timeout_minutes": 5,
+    "ban_duration_hours": 24
+  },
+  "monitoring": {
+    "performance_monitoring": true,
+    "alert_thresholds": {
+      "cpu_usage_percent": 85,
+      "memory_usage_percent": 90,
+      "disk_space_gb": 5
+    },
+    "check_interval_seconds": 30
+  },
+  "security": {
+    "admin_password_required": true,
+    "session_timeout_minutes": 60,
+    "max_login_attempts": 3,
+    "lockout_duration_minutes": 15
+  },
+  "ui_preferences": {
+    "window_size": {
+      "width": 1200,
+      "height": 800
+    },
+    "navigation_rail_extended": true,
+    "show_tooltips": true,
+    "confirm_dangerous_actions": true
+  },
+  "advanced_settings": {
+    "debug_mode": false,
+    "verbose_logging": false,
+    "auto_start_server": false,
+    "auto_restart_on_crash": true,
+    "crash_detection_timeout_minutes": 5
+  }
+}

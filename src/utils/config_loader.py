@@ -17,8 +17,8 @@ class ConfigLoader:
             config_path: Ruta al archivo de configuración. Si es None, usa la ruta por defecto.
         """
         if config_path is None:
-            # Busca el archivo config.json en la raíz del proyecto
-            current_dir = Path(__file__).parent.parent.parent
+            # Busca el archivo config.json en el directorio src junto a main.py y app.py
+            current_dir = Path(__file__).parent.parent
             self.config_path = current_dir / "config.json"
         else:
             self.config_path = Path(config_path)

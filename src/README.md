@@ -1,5 +1,9 @@
 # Project Zomboid Server Administrator
 
+⚠️ **PROYECTO EN DESARROLLO ACTIVO** ⚠️
+
+**IMPORTANTE**: Este proyecto está actualmente en desarrollo y **NO ES UTILIZABLE** para uso en producción. La aplicación está siendo desarrollada y probada. Este README será actualizado cuando el proyecto esté listo para uso general.
+
 Una aplicación de escritorio para administrar servidores dedicados de Project Zomboid, desarrollada con el framework Flet.
 
 ## Características

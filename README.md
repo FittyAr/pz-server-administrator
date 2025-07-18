@@ -1,81 +1,93 @@
-# PzServerAdministrator app
+# Project Zomboid Server Administrator
 
-## Run the app
+⚠️ **PROYECTO EN DESARROLLO ACTIVO** ⚠️
 
-### uv
+**IMPORTANTE**: Este proyecto está actualmente en desarrollo y **NO ES UTILIZABLE** para uso en producción. La aplicación está siendo desarrollada y probada. Este README será actualizado cuando el proyecto esté listo para uso general.
 
-Run as a desktop app:
+## Estado Actual del Proyecto
 
+La aplicación está en fase de desarrollo temprano con las siguientes funcionalidades implementadas:
+- ✅ Interfaz básica con navegación
+- ✅ Detección automática de servidores de Project Zomboid
+- ✅ Sistema de configuración básico
+- ✅ Alternancia entre tema claro y oscuro
+- 🚧 Control de servidores (en desarrollo)
+- 🚧 Gestión de jugadores (en desarrollo)
+- 🚧 Sistema de respaldos (en desarrollo)
+- 🚧 Visualización de logs (en desarrollo)
+
+## Pruebas de Desarrollo (Solo para Desarrolladores)
+
+**NOTA**: Estas instrucciones son únicamente para desarrolladores que deseen probar el estado actual del proyecto. La aplicación NO está lista para uso final.
+
+### Requisitos
+- Python 3.8 o superior
+- Project Zomboid instalado (para detectar servidores)
+- Windows o Linux
+
+### Configuración del Entorno de Desarrollo
+
+#### Windows
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd pz-server-administrator
+
+# Crear entorno virtual
+python -m venv venv
+venv\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Ejecutar la aplicación
+cd src
+python app.py
 ```
-uv run flet run
+
+#### Linux
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd pz-server-administrator
+
+# Crear entorno virtual
+python3 -m venv venv
+source venv/bin/activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Ejecutar la aplicación
+cd src
+python app.py
 ```
-
-Run as a web app:
-
-```
-uv run flet run --web
-```
-
-### Poetry
-
-Install dependencies from `pyproject.toml`:
-
-```
-poetry install
-```
-
-Run as a desktop app:
-
-```
-poetry run flet run
-```
-
-Run as a web app:
-
-```
-poetry run flet run --web
-```
-
 For more details on running the app, refer to the [Getting Started Guide](https://flet.dev/docs/getting-started/).
 
-## Build the app
+## Compilación y Distribución
 
-### Android
+⚠️ **NO DISPONIBLE ACTUALMENTE** ⚠️
 
-```
-flet build apk -v
-```
+La compilación y distribución de la aplicación **NO está disponible** en el estado actual del desarrollo. Estas funcionalidades serán habilitadas cuando el proyecto esté más maduro y estable.
 
-For more details on building and signing `.apk` or `.aab`, refer to the [Android Packaging Guide](https://flet.dev/docs/publish/android/).
+### Futuras Opciones de Compilación (Planificadas)
 
-### iOS
+- 📋 **Linux**: Paquetes .deb y .rpm
+- 📋 **Windows**: Ejecutable .exe e instalador .msi
 
-```
-flet build ipa -v
-```
+**Nota**: Por ahora, solo se puede ejecutar desde el código fuente siguiendo las instrucciones de desarrollo arriba.
 
-For more details on building and signing `.ipa`, refer to the [iOS Packaging Guide](https://flet.dev/docs/publish/ios/).
+## Contribución al Desarrollo
 
-### macOS
+Si eres desarrollador y deseas contribuir:
 
-```
-flet build macos -v
-```
+1. Fork del repositorio
+2. Crear rama para nueva funcionalidad
+3. Seguir las convenciones de código del proyecto
+4. Crear pull request con descripción detallada
 
-For more details on building macOS package, refer to the [macOS Packaging Guide](https://flet.dev/docs/publish/macos/).
+## Soporte y Reportes
 
-### Linux
+Para reportar bugs o problemas durante las pruebas de desarrollo, crear un issue en el repositorio del proyecto.
 
-```
-flet build linux -v
-```
-
-For more details on building Linux package, refer to the [Linux Packaging Guide](https://flet.dev/docs/publish/linux/).
-
-### Windows
-
-```
-flet build windows -v
-```
-
-For more details on building Windows package, refer to the [Windows Packaging Guide](https://flet.dev/docs/publish/windows/).
+**Recordatorio**: Este proyecto está en desarrollo activo y no debe usarse en entornos de producción.
