@@ -213,8 +213,272 @@
       "description": "Si está habilitado (true), permite a no miembros entrar a una casa segura sin invitación."
     },
     "safehouseallowfire": {
-      "title": "Permitir Fuego en Casa Segura",
-      "description": "Si está habilitado (true), permite que el fuego dañe las casas seguras."
-    }
-  }
-}
+       "title": "Permitir Fuego en Casa Segura",
+       "description": "Si está habilitado (true), permite que el fuego dañe las casas seguras."
+     },
+     "upnpleasetime": {
+       "title": "Tiempo de Arrendamiento UPnP",
+       "description": "Tiempo en segundos para el arrendamiento UPnP. Controla cuánto tiempo permanecen abiertas las reglas de mapeo de puertos UPnP."
+     },
+     "upnpzeroleasetimefallback": {
+       "title": "Respaldo Tiempo Cero UPnP",
+       "description": "Si está habilitado, usa tiempo de arrendamiento cero como respaldo cuando UPnP no soporta tiempos de arrendamiento específicos."
+     },
+     "upnpforce": {
+       "title": "Forzar UPnP",
+       "description": "Fuerza el uso de UPnP incluso si la detección automática falla. Útil para routers que soportan UPnP pero no responden correctamente a la detección."
+     },
+     "savetransactionid": {
+       "title": "Guardar ID de Transacción",
+       "description": "Guarda un ID de transacción con cada guardado del mundo. Útil para detectar corrupción de datos y problemas de sincronización."
+     },
+     "clientcommandfilter": {
+       "title": "Filtro de Comandos del Cliente",
+       "description": "Filtra comandos que los clientes pueden enviar al servidor. Usa '-' para denegar y '+' para permitir comandos específicos."
+     },
+     "itemremovallistblacklisttoggle": {
+       "title": "Alternar Lista Negra de Eliminación",
+       "description": "Cambia el comportamiento de WorldItemRemovalList. Si es true, los elementos listados NO se eliminan. Si es false, solo los elementos listados se eliminan."
+     },
+     "disableradiostaff": {
+       "title": "Deshabilitar Radio Staff",
+       "description": "Deshabilita el acceso a la radio para usuarios con permisos de staff. Controla si el personal puede usar comandos de radio."
+     },
+     "disableradioadmin": {
+       "title": "Deshabilitar Radio Admin",
+       "description": "Deshabilita el acceso a la radio para administradores. Controla si los administradores pueden usar comandos de radio."
+     },
+     "disableradiogm": {
+       "title": "Deshabilitar Radio GM",
+       "description": "Deshabilita el acceso a la radio para Game Masters. Controla si los GMs pueden usar comandos de radio."
+     },
+     "disableradiooverseer": {
+       "title": "Deshabilitar Radio Overseer",
+       "description": "Deshabilita el acceso a la radio para usuarios con permisos de overseer. Controla si los overseers pueden usar comandos de radio."
+     },
+     "disableradiomoderator": {
+       "title": "Deshabilitar Radio Moderator",
+       "description": "Deshabilita el acceso a la radio para moderadores. Controla si los moderadores pueden usar comandos de radio."
+     },
+     "disableradioinvisible": {
+        "title": "Deshabilitar Radio Invisible",
+        "description": "Deshabilita el acceso a la radio para usuarios invisibles. Controla si los usuarios en modo invisible pueden usar comandos de radio."
+      },
+      "sleepallowed": {
+        "title": "Dormir Permitido",
+        "description": "Permite a los jugadores usar camas para dormir y acelerar el tiempo. Cuando está deshabilitado, las camas solo restauran fatiga."
+      },
+      "sleepneeded": {
+         "title": "Dormir Necesario",
+         "description": "Requiere que los jugadores duerman regularmente. Si está habilitado, los jugadores sufrirán penalizaciones por fatiga si no duermen."
+       },
+       "coopserverlaunchetimeout": {
+         "title": "Tiempo de Espera de Lanzamiento Coop",
+         "description": "Tiempo de espera en segundos para el lanzamiento del servidor cooperativo. Parámetro interno que no debería modificarse."
+       },
+       "coopmasterpingtimeout": {
+         "title": "Tiempo de Espera de Ping Maestro Coop",
+         "description": "Tiempo de espera en segundos para el ping del servidor maestro en modo cooperativo. Parámetro interno que no debería modificarse."
+       },
+       "physicsdelay": {
+         "title": "Retraso de Física",
+         "description": "Retraso en milisegundos para los cálculos de física del servidor. Valor por defecto: 500. No se recomienda modificar."
+       },
+       "server_browser_announced_ip": {
+         "title": "IP Anunciada del Navegador",
+         "description": "IP específica que el servidor anunciará al navegador de servidores. Déjalo vacío para detección automática."
+       },
+       "password": {
+         "title": "Contraseña del Servidor",
+         "description": "Contraseña requerida para conectarse al servidor. Déjalo vacío para servidor sin contraseña."
+       },
+       "discordenable": {
+         "title": "Habilitar Discord",
+         "description": "Habilita la integración con Discord para sincronizar el chat del juego con un canal de Discord."
+       },
+       "discordtoken": {
+         "title": "Token de Discord",
+         "description": "Token del bot de Discord para la integración. Obténlo desde el Portal de Desarrolladores de Discord."
+       },
+       "discordchannel": {
+         "title": "Canal de Discord",
+         "description": "Nombre del canal de Discord (debe dejarse vacío para que funcione la integración)."
+       },
+       "discordchannelid": {
+         "title": "ID del Canal de Discord",
+         "description": "ID numérico del canal de Discord donde se sincronizará el chat del juego."
+       },
+       "allowdestructionbysledgehammer": {
+          "title": "Permitir Destrucción con Mazo",
+          "description": "Permite a los jugadores destruir estructuras usando un mazo. Si está deshabilitado, las estructuras serán indestructibles."
+        },
+        "dropoffwhitelistafterdeath": {
+       "title": "Remover de Lista Blanca tras Muerte",
+       "description": "Si está habilitado (true), remueve automáticamente al jugador de la lista blanca cuando su personaje muere."
+     },
+     "workshopitems": {
+       "title": "Objetos de Workshop",
+       "description": "Lista de IDs de objetos del Workshop de Steam que el servidor debe descargar. Separar múltiples IDs con punto y coma."
+     },
+     "steamport1": {
+       "title": "Puerto Steam 1",
+       "description": "Primer puerto usado para comunicación con Steam. Puerto por defecto: 8766."
+     },
+     "steamport2": {
+       "title": "Puerto Steam 2",
+       "description": "Segundo puerto usado para comunicación con Steam. Puerto por defecto: 8767."
+     },
+     "steamscoreboard": {
+       "title": "Marcador de Steam",
+       "description": "Si está habilitado (true), permite que Steam muestre información del servidor en su interfaz."
+     },
+     "steamvac": {
+       "title": "VAC de Steam",
+       "description": "Si está habilitado (true), habilita el sistema anti-trampas VAC de Steam en el servidor."
+     },
+     "upnp": {
+       "title": "UPnP",
+       "description": "Si está habilitado (true), permite el mapeo automático de puertos usando UPnP para facilitar conexiones."
+     },
+     "voiceenable": {
+       "title": "Habilitar Voz",
+       "description": "Si está habilitado (true), permite la comunicación por voz entre jugadores en el servidor."
+     },
+     "voicemindistance": {
+       "title": "Distancia Mínima de Voz",
+       "description": "Distancia mínima en metros para escuchar la voz de otros jugadores. Valor por defecto: 10.0."
+     },
+     "voicemaxdistance": {
+       "title": "Distancia Máxima de Voz",
+       "description": "Distancia máxima en metros para escuchar la voz de otros jugadores. Valor por defecto: 300.0."
+     },
+     "voice3d": {
+       "title": "Voz 3D",
+       "description": "Si está habilitado (true), la voz tendrá efectos de audio posicional 3D basado en la ubicación del jugador."
+     },
+     "speedlimit": {
+       "title": "Límite de Velocidad",
+       "description": "Velocidad máxima permitida para jugadores antes de ser considerados como posibles tramposos. Valor por defecto: 70.0."
+     },
+     "kickfastplayers": {
+       "title": "Expulsar Jugadores Rápidos",
+       "description": "Si está habilitado (true), expulsa automáticamente a jugadores que se muevan más rápido que el límite establecido."
+     },
+     "rconport": {
+       "title": "Puerto RCON",
+       "description": "Puerto para conexiones de administración remota RCON. Puerto por defecto: 27015."
+     },
+     "rconpassword": {
+       "title": "Contraseña RCON",
+       "description": "Contraseña requerida para conectarse al servidor mediante RCON para administración remota."
+     },
+     "maxaccountsperuser": {
+       "title": "Máximo de Cuentas por Usuario",
+       "description": "Número máximo de personajes que puede crear cada Steam ID. Valor por defecto: 1."
+     },
+     "serverplayerid": {
+       "title": "ID de Jugador del Servidor",
+       "description": "Identificador único del servidor para jugadores. No modificar sin hacer respaldo, puede causar pérdida de personajes."
+     },
+     "faction": {
+       "title": "Facciones",
+       "description": "Si está habilitado (true), permite a los jugadores crear y unirse a facciones en el servidor."
+     },
+     "factiondaysurvived tocreate": {
+       "title": "Días Sobrevividos para Crear Facción",
+       "description": "Número de días que un jugador debe sobrevivir antes de poder crear una facción. Valor por defecto: 0."
+     },
+     "factionplayersrequiredfortag": {
+       "title": "Jugadores Requeridos para Etiqueta de Facción",
+       "description": "Número mínimo de jugadores requeridos en una facción para poder usar etiquetas. Valor por defecto: 1."
+     },
+     "allowtradeui": {
+       "title": "Permitir Interfaz de Comercio",
+       "description": "Si está habilitado (true), permite a los jugadores usar la interfaz de comercio para intercambiar objetos."
+     },
+     "hoursforworlditemremoval": {
+       "title": "Horas para Remoción de Objetos del Mundo",
+       "description": "Horas de juego antes de que los objetos tirados en el suelo sean removidos automáticamente. 0 = nunca."
+     },
+     "worlditemremovallist": {
+       "title": "Lista de Remoción de Objetos del Mundo",
+       "description": "Lista de tipos de objetos que serán removidos automáticamente del mundo. Separar con comas."
+     },
+     "itemnumberslimitpercontainer": {
+       "title": "Límite de Números de Objetos por Contenedor",
+       "description": "Número máximo de objetos diferentes que puede contener un contenedor. 0 = sin límite."
+     },
+     "bloodsplatlifespandays": {
+       "title": "Días de Vida de Manchas de Sangre",
+       "description": "Número de días que las manchas de sangre permanecerán visibles antes de desaparecer. 0 = permanentes."
+     },
+     "allownonasciiusername": {
+       "title": "Permitir Nombres de Usuario No ASCII",
+       "description": "Si está habilitado (true), permite nombres de usuario con caracteres especiales y no latinos."
+     },
+     "bankickglobalsound": {
+       "title": "Sonido Global de Expulsión/Baneo",
+       "description": "Si está habilitado (true), reproduce un sonido audible para todos cuando un jugador es expulsado o baneado."
+     },
+     "removeplayercorpsesonc orpseremoval": {
+       "title": "Remover Cadáveres de Jugadores en Remoción de Cadáveres",
+       "description": "Si está habilitado (true), incluye los cadáveres de jugadores en la remoción automática de cadáveres."
+     },
+     "trashdeleteall": {
+       "title": "Eliminar Toda la Basura",
+       "description": "Si está habilitado (true), elimina automáticamente todos los objetos considerados basura del mundo."
+     },
+     "carengineattraction modifier": {
+       "title": "Modificador de Atracción de Motor de Auto",
+       "description": "Multiplica el ruido que hacen los motores de vehículos para atraer zombies. 1.0 = normal, 0.5 = mitad del ruido."
+     },
+     "fastforwardmultiplier": {
+       "title": "Multiplicador de Avance Rápido",
+       "description": "Velocidad del avance rápido del tiempo cuando todos los jugadores duermen. Valor por defecto: 40.0."
+     },
+     "playersaveondamage": {
+       "title": "Guardar Jugador al Recibir Daño",
+       "description": "Si está habilitado (true), guarda automáticamente el progreso del jugador cada vez que recibe daño."
+     },
+     "disablesafehousewhenplayerconnected": {
+       "title": "Deshabilitar Casa Segura Cuando Jugador Conectado",
+       "description": "Si está habilitado (true), deshabilita las protecciones de casa segura cuando hay jugadores conectados."
+     },
+     "playerrespawnwithself": {
+       "title": "Jugador Reaparece Consigo Mismo",
+       "description": "Si está habilitado (true), permite que los jugadores reaparezcan en la ubicación de su muerte anterior."
+     },
+     "playerrespawnwithother": {
+       "title": "Jugador Reaparece con Otro",
+       "description": "Si está habilitado (true), permite que los jugadores reaparezcan cerca de otros jugadores vivos."
+     },
+     "usetchpformapdownloads": {
+       "title": "Usar TCP para Descargas de Mapa",
+       "description": "Si está habilitado (true), usa protocolo TCP en lugar de UDP para descargar mapas, más lento pero más confiable."
+     },
+     "loginqueueenabled": {
+       "title": "Cola de Login Habilitada",
+       "description": "Si está habilitado (true), habilita un sistema de cola cuando el servidor está lleno."
+     },
+     "loginqueueconnecttimeout": {
+       "title": "Tiempo de Espera de Conexión de Cola",
+       "description": "Tiempo en segundos que un jugador puede permanecer en la cola de login antes de ser desconectado."
+     },
+     "zombieupdatemaxhighpriority": {
+       "title": "Máximo de Zombies de Alta Prioridad",
+       "description": "Número máximo de zombies que se actualizarán con alta prioridad simultáneamente. Valor por defecto: 50."
+     },
+     "zombieupdatedelta": {
+       "title": "Delta de Actualización de Zombies",
+       "description": "Intervalo de tiempo entre actualizaciones de zombies. Valores más bajos = más actualizaciones. Valor por defecto: 0.5."
+     },
+     "zombieupdateradiushighpriority": {
+       "title": "Radio de Alta Prioridad para Zombies",
+       "description": "Radio en metros donde los zombies se actualizarán con alta prioridad. Valor por defecto: 10.0."
+     },
+     "zombieupdateradiuslowpriority": {
+       "title": "Radio de Baja Prioridad para Zombies",
+       "description": "Radio en metros donde los zombies se actualizarán con baja prioridad. Valor por defecto: 45.0."
+     }
+   }
+ }

@@ -346,12 +346,12 @@ MaxAccountsPerUser=0"""
     def _show_snack_bar(self, page, message: str, color):
         """Mostrar mensaje en snack bar"""
         if page:
-            page.show_snack_bar(
-                ft.SnackBar(
-                    content=ft.Text(message),
-                    bgcolor=color
-                )
+            page.snack_bar = ft.SnackBar(
+                content=ft.Text(message),
+                bgcolor=color
             )
+            page.snack_bar.open = True
+            page.update()
     
     def set_server(self, server_id: str):
         """Establecer el servidor actual"""
