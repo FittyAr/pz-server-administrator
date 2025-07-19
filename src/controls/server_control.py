@@ -21,10 +21,10 @@ class ServerControl:
         self.status_icon = ft.Icon(ft.Icons.CIRCLE, color=self.status_color, size=20)
         self.server_info_container = ft.Container()
         
-        # Inicializar con el servidor por defecto si existe
-        default_server = config_loader.get_default_server_id()
-        if default_server:
-            self._on_server_change(default_server)
+        # Inicializar con el servidor favorito o por defecto si existe
+        selected_server = config_loader.initialize_selected_server()
+        if selected_server:
+            self._on_server_change(selected_server)
         
     def _on_server_change(self, server_id: str):
         """

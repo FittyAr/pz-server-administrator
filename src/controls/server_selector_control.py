@@ -10,7 +10,8 @@ class ServerSelectorControl:
     
     def __init__(self, on_server_change=None):
         self.on_server_change = on_server_change
-        self.selected_server_id = None
+        # Inicializar con el servidor favorito o seleccionado
+        self.selected_server_id = config_loader.initialize_selected_server()
         self.servers_list = ft.ListView(
             expand=True,
             spacing=5,

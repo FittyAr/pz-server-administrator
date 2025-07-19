@@ -73,6 +73,10 @@ class MainLayout:
             color=ft.Colors.ON_SURFACE
         )
         
+        # Si hay un servidor seleccionado, notificar a todos los controles
+        if self.selected_server_id:
+            self._notify_server_selection(self.selected_server_id)
+        
         # Cargar contenido inicial
         self._update_content()
     
