@@ -1,6 +1,6 @@
 import flet as ft
 from controls.server_control import ServerControl
-from controls.config_control import ConfigControl
+from controls.config_manager_control import ConfigManagerControl
 from controls.players_control import PlayersControl
 from controls.logs_control import LogsControl
 from controls.backup_control import BackupControl
@@ -36,7 +36,7 @@ class MainLayout:
         
         # Inicializar controles
         self.server_control = ServerControl()
-        self.config_control = ConfigControl()
+        self.config_control = ConfigManagerControl()
         self.players_control = PlayersControl()
         self.logs_control = LogsControl()
         self.backup_control = BackupControl()
@@ -54,7 +54,7 @@ class MainLayout:
         )
         
         # Estado del modo de edición
-        self.show_edit_mode_control = False
+
         
         # Configurar callback del selector de servidor
         if hasattr(self.server_control, 'server_selector'):
@@ -114,18 +114,6 @@ class MainLayout:
         # Cambiar a la sección de configuración usando índice especial
         self.selected_index = 99
         
-        # Si es server config (ini), mostrar el control de modo de edición
-        if file_type == "ini":
-            self.show_edit_mode_control = True
-            # Configurar el modo de edición en el control de configuración
-            if hasattr(self.config_control, 'set_edit_mode'):
-                current_mode = self.edit_mode_control.get_current_mode()
-                # Invertir la lógica: simple -> advanced, advanced -> simple
-                config_mode = "advanced" if current_mode == "simple" else "simple"
-                self.config_control.set_edit_mode(config_mode)
-        else:
-            self.show_edit_mode_control = False
-        
         # Actualizar el tipo de archivo en el control de configuración
         if hasattr(self.config_control, 'set_file_type'):
             self.config_control.set_file_type(file_type)
@@ -137,16 +125,8 @@ class MainLayout:
     
     def _on_edit_mode_change(self, mode: str):
         """Manejar cambio en el modo de edición"""
-        if hasattr(self.config_control, 'set_edit_mode'):
-            # Invertir la lógica: simple -> advanced, advanced -> simple
-            config_mode = "advanced" if mode == "simple" else "simple"
-            self.config_control.set_edit_mode(config_mode)
-            
-            # Actualizar la interfaz si estamos en la sección de configuración
-            if self.selected_index == 99:
-                self._update_content()
-                if hasattr(self, 'page') and self.page:
-                    self.page.update()
+        # El ConfigManagerControl ahora maneja su propio modo de edición internamente
+        pass
 
     def _toggle_theme(self, e):
         """
@@ -275,7 +255,7 @@ class MainLayout:
         Maneja el clic en botones de navegación personalizados
         """
         self.selected_index = index
-        self.show_edit_mode_control = False  # Ocultar control de modo de edición al cambiar sección
+
         self._update_content()
         
         if hasattr(self, 'page') and self.page:
@@ -296,18 +276,7 @@ class MainLayout:
         elif self.selected_index == 5:
             self.content_area.content = self.app_config_control.build()
         elif self.selected_index == 99:  # Índice especial para configuración
-            # Si se debe mostrar el control de modo de edición, incluirlo
-            if self.show_edit_mode_control:
-                config_content = self.config_control.build()
-                edit_mode_content = self.edit_mode_control.get_control()
-                
-                self.content_area.content = ft.Column([
-                    edit_mode_content,
-                    ft.Divider(height=1, color=ft.Colors.OUTLINE),
-                    config_content
-                ], spacing=16, expand=True)
-            else:
-                self.content_area.content = self.config_control.build()
+            self.content_area.content = self.config_control.build()
     
     def build(self):
         """

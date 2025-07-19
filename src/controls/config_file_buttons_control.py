@@ -190,6 +190,27 @@ class ConfigFileButtonsControl:
     
 
     
+    def set_selected_file(self, file_type: str):
+        """Establecer el archivo seleccionado visualmente"""
+        # Mapeo de tipos de archivo a índices de botones
+        type_to_index = {
+            "ini": 0,
+            "lua": 1,
+            "spawn_regions": 2,
+            "spawn_points": 3
+        }
+        
+        # Resetear todos los botones
+        for button in self.config_buttons:
+            if not button.disabled:
+                button.bgcolor = ft.Colors.SURFACE
+        
+        # Resaltar el botón seleccionado
+        if file_type in type_to_index:
+            index = type_to_index[file_type]
+            if index < len(self.config_buttons) and not self.config_buttons[index].disabled:
+                self.config_buttons[index].bgcolor = ft.Colors.PRIMARY_CONTAINER
+    
     def get_control(self):
         """Obtener el control completo con botón principal y botones de configuración"""
         return ft.Column([
