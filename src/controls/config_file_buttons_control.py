@@ -173,20 +173,17 @@ class ConfigFileButtonsControl:
                 # Configurar el botón según la existencia del archivo
                 if file_exists:
                     button.bgcolor = ft.Colors.SURFACE
-                    button.border = ft.border.all(1, ft.Colors.OUTLINE)
                     button.disabled = False
                     button.opacity = 1.0
                     print(f"DEBUG: Botón {i} ({config_file_types[i]['type']}) - HABILITADO (archivo existe)")
                 else:
                     button.bgcolor = ft.Colors.SURFACE
-                    button.border = ft.border.all(1, ft.Colors.OUTLINE)
                     button.disabled = True
                     button.opacity = 0.3
                     print(f"DEBUG: Botón {i} ({config_file_types[i]['type']}) - DESHABILITADO (archivo no existe)")
             else:
                 # Sin servidor seleccionado, deshabilitar todos
                 button.bgcolor = ft.Colors.SURFACE
-                button.border = ft.border.all(1, ft.Colors.OUTLINE)
                 button.disabled = True
                 button.opacity = 0.5
                 print(f"DEBUG: Botón {i} estado actualizado - disabled: {button.disabled} (sin servidor)")
