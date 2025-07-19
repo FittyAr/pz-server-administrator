@@ -78,6 +78,7 @@ class MainLayout:
     
     def _notify_server_selection(self, server_id):
         """Notificar a todos los controles sobre el cambio de servidor"""
+        print(f"DEBUG: _notify_server_selection llamado con server_id: {server_id}")
         self.selected_server_id = server_id
         
         # Notificar a todos los controles
@@ -88,16 +89,16 @@ class MainLayout:
         
         # Obtener la ruta del servidor y notificar al control de botones
         server_path = None
+        server_name = None
         if server_id:
-            from utils.server_manager import ServerManager
-            server_manager = ServerManager()
-            servers = server_manager.get_servers()
-            for server in servers:
-                if server['id'] == server_id:
-                    server_path = server['path']
-                    break
+            from utils.config_loader import config_loader
+            servers = config_loader.get_all_servers()
+            if server_id in servers:
+                server_path = servers[server_id].get('path')
+                server_name = servers[server_id].get('name')
         
-        self.config_file_buttons_control.update_server_path(server_path)
+        print(f"DEBUG: Actualizando server_path a: {server_path}, server_name: {server_name}")
+        self.config_file_buttons_control.update_server_path(server_path, server_name)
         
         # Actualizar la interfaz
         self._update_content()

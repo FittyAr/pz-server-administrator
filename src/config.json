@@ -6,7 +6,8 @@
     "theme": "dark",
     "auto_save_config": true,
     "backup_retention_days": 30,
-    "selected_server": "mateamargo_pz"
+    "selected_server": "mateamargo_pz",
+    "favorite_server": "mateamargo_pz"
   },
   "server_config": {
     "default_server": "main_server",

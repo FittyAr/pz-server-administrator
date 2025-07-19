@@ -14,6 +14,12 @@ class PlayersControl:
             {"username": "Player4", "status": "Banned", "level": 5, "playtime": "30m", "last_seen": "Hace 1d"},
         ]
         self.selected_player = None
+        self.current_server_id = None
+        
+    def set_server(self, server_id):
+        """Establece el servidor actual para el control de jugadores"""
+        self.current_server_id = server_id
+        # TODO: Cargar datos de jugadores del servidor específico
         
     def _on_player_select(self, e):
         """

@@ -87,7 +87,9 @@ class ConfigFileButtonsControl:
     
     def _toggle_config_buttons(self, e):
         """Alternar la visibilidad de los botones de configuración"""
+        print(f"DEBUG: _toggle_config_buttons llamado, expanded: {self.expanded}")
         self.expanded = not self.expanded
+        print(f"DEBUG: Nuevo estado expanded: {self.expanded}")
         
         # Cambiar el icono de la flecha
         if self.expanded:
@@ -96,13 +98,19 @@ class ConfigFileButtonsControl:
             self.arrow_icon.name = ft.Icons.KEYBOARD_ARROW_UP
         
         # Mostrar/ocultar los botones de configuración con animación
-        for button in self.config_buttons:
+        for i, button in enumerate(self.config_buttons):
             button.visible = self.expanded
             button.height = None if self.expanded else 0
+            print(f"DEBUG: Botón {i} - visible: {button.visible}, disabled: {button.disabled}")
         
         # Actualizar la página para reflejar los cambios
-        if hasattr(e.page, 'update'):
-            e.page.update()
+        try:
+            if hasattr(e, 'page') and e.page:
+                e.page.update()
+            elif hasattr(e, 'control') and hasattr(e.control, 'page') and e.control.page:
+                e.control.page.update()
+        except Exception as ex:
+            print(f"DEBUG: Error al actualizar página: {ex}")
     
     def _on_config_button_click(self, file_type: str):
         """Manejar el clic en un botón de configuración"""
@@ -116,33 +124,72 @@ class ConfigFileButtonsControl:
         else:
             print("DEBUG: No se ejecutó el callback - falta server_path o callback")
     
-    def update_server_path(self, server_path: Optional[str]):
+    def update_server_path(self, server_path: Optional[str], server_name: Optional[str] = None):
         """Actualizar la ruta del servidor actual"""
         self.current_server_path = server_path
+        self.current_server_name = server_name
         self._update_buttons_state()
     
     def _update_buttons_state(self):
         """Actualizar el estado de los botones según la ruta del servidor actual"""
         has_server = bool(self.current_server_path)
+        print(f"DEBUG: _update_buttons_state - has_server: {has_server}, current_server_path: {self.current_server_path}")
         
         # Actualizar estado del botón principal
         if has_server:
             self.main_button.disabled = False
             self.main_button.bgcolor = ft.Colors.SURFACE
+            self.main_button.opacity = 1.0
         else:
             self.main_button.disabled = True
-            self.main_button.bgcolor = ft.Colors.SURFACE_VARIANT
+            self.main_button.bgcolor = ft.Colors.SURFACE
+            self.main_button.opacity = 0.5
         
-        # Actualizar estado de los botones de configuración
-        for button in self.config_buttons:
-            if has_server:
+        # Definir los archivos esperados para cada tipo de botón
+        if hasattr(self, 'current_server_name') and self.current_server_name:
+            server_name = self.current_server_name
+        else:
+            # Fallback a un nombre genérico si no tenemos el nombre del servidor
+            server_name = "servertest"
+            
+        config_file_types = [
+            {"type": "ini", "files": [f"{server_name}.ini"]},
+            {"type": "lua", "files": [f"{server_name}_SandBoxVars.lua"]},
+            {"type": "spawn_regions", "files": [f"{server_name}_spawnregions.lua"]},
+            {"type": "spawn_points", "files": [f"{server_name}_spawnpoints.lua"]}
+        ]
+        
+        # Actualizar estado de los botones de configuración individualmente
+        for i, button in enumerate(self.config_buttons):
+            if has_server and i < len(config_file_types):
+                # Verificar si al menos uno de los archivos del tipo existe
+                file_exists = False
+                for file_name in config_file_types[i]["files"]:
+                    file_path = os.path.join(self.current_server_path, file_name)
+                    if os.path.exists(file_path):
+                        file_exists = True
+                        break
+                
+                # Configurar el botón según la existencia del archivo
+                if file_exists:
+                    button.bgcolor = ft.Colors.SURFACE
+                    button.border = ft.border.all(1, ft.Colors.OUTLINE)
+                    button.disabled = False
+                    button.opacity = 1.0
+                    print(f"DEBUG: Botón {i} ({config_file_types[i]['type']}) - HABILITADO (archivo existe)")
+                else:
+                    button.bgcolor = ft.Colors.SURFACE
+                    button.border = ft.border.all(1, ft.Colors.OUTLINE)
+                    button.disabled = True
+                    button.opacity = 0.3
+                    print(f"DEBUG: Botón {i} ({config_file_types[i]['type']}) - DESHABILITADO (archivo no existe)")
+            else:
+                # Sin servidor seleccionado, deshabilitar todos
                 button.bgcolor = ft.Colors.SURFACE
                 button.border = ft.border.all(1, ft.Colors.OUTLINE)
-                button.disabled = False
-            else:
-                button.bgcolor = ft.Colors.SURFACE_VARIANT
-                button.border = ft.border.all(1, ft.Colors.OUTLINE)
                 button.disabled = True
+                button.opacity = 0.5
+                print(f"DEBUG: Botón {i} estado actualizado - disabled: {button.disabled} (sin servidor)")
     
 
     

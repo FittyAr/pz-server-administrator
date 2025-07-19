@@ -10,12 +10,19 @@ class LogsControl:
     def __init__(self):
         self.log_type = "server"
         self.auto_refresh = False
+        self.current_server_id = None
         self.log_content = ft.ListView(
             expand=True,
             spacing=2,
             padding=10
         )
         self._load_sample_logs()
+        
+    def set_server(self, server_id):
+        """Establece el servidor actual para el control de logs"""
+        self.current_server_id = server_id
+        # TODO: Cargar logs del servidor específico
+        self._load_logs()
         
     def _on_log_type_change(self, e):
         """

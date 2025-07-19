@@ -15,6 +15,13 @@ class BackupControl:
         )
         self.auto_backup_enabled = True
         self.backup_interval = "6h"
+        self.current_server_id = None
+        self._load_sample_backups()
+        
+    def set_server(self, server_id):
+        """Establece el servidor actual para el control de respaldos"""
+        self.current_server_id = server_id
+        # TODO: Cargar respaldos del servidor específico
         self._load_sample_backups()
         
     def _create_backup(self, e):
