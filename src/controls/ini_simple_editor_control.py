@@ -1,6 +1,7 @@
 import flet as ft
 import configparser
 import os
+import json
 from typing import Optional, Dict, Any
 
 class IniSimpleEditorControl:
@@ -9,7 +10,9 @@ class IniSimpleEditorControl:
     def __init__(self):
         self.config_data = {}
         self.controls_map = {}  # Mapeo de controles para obtener valores
+        self.help_data = {}  # Datos de ayuda para parámetros
         self.container = ft.Container()
+        self._load_help_data()
         self._create_editor()
     
     def _create_editor(self):
@@ -31,6 +34,18 @@ class IniSimpleEditorControl:
             border_radius=8,
             expand=True
         )
+    
+    def _load_help_data(self):
+        """Cargar datos de ayuda desde el archivo JSON"""
+        try:
+            help_file_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'parameter_help.json')
+            if os.path.exists(help_file_path):
+                with open(help_file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.help_data = data.get('server_parameters', {})
+        except Exception as e:
+            print(f"Error loading help data: {e}")
+            self.help_data = {}
     
     def load_ini_content(self, content: str):
         """Cargar contenido INI y crear controles de edición"""
@@ -123,26 +138,65 @@ class IniSimpleEditorControl:
         # Guardar referencia del control
         self.controls_map[control_key] = input_control
         
-        return ft.Container(
-            content=ft.Row([
-                ft.Container(
-                    content=ft.Text(
-                        key,
-                        size=14,
-                        weight=ft.FontWeight.W_500,
-                        color=ft.Colors.ON_SURFACE
-                    ),
-                    width=200,
-                    alignment=ft.alignment.center_left
+        # Crear icono de ayuda si hay información disponible
+        help_icon = self._create_help_icon(key)
+        
+        # Crear la fila con label, control de entrada e icono de ayuda
+        row_controls = [
+            ft.Container(
+                content=ft.Text(
+                    key,
+                    size=14,
+                    weight=ft.FontWeight.W_500,
+                    color=ft.Colors.ON_SURFACE
                 ),
+                width=180,
+                alignment=ft.alignment.center_left
+            ),
+            ft.Container(
+                content=input_control,
+                expand=True
+            )
+        ]
+        
+        # Agregar icono de ayuda si existe
+        if help_icon:
+            row_controls.append(
                 ft.Container(
-                    content=input_control,
-                    expand=True
+                    content=help_icon,
+                    width=30,
+                    alignment=ft.alignment.center
                 )
-            ], spacing=10),
+            )
+        
+        return ft.Container(
+            content=ft.Row(row_controls, spacing=10),
             padding=ft.padding.symmetric(vertical=5, horizontal=10),
             border_radius=4,
             bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST if len(self.controls_map) % 2 == 0 else None
+        )
+    
+    def _create_help_icon(self, key: str):
+        """Crear icono de ayuda con tooltip para un parámetro"""
+        key_lower = key.lower()
+        
+        # Buscar información de ayuda para este parámetro
+        help_info = self.help_data.get(key_lower)
+        if not help_info:
+            return None
+        
+        # Crear el tooltip con la información de ayuda
+        tooltip_text = f"{help_info.get('title', key)}\n\n{help_info.get('description', 'Sin descripción disponible.')}"
+        
+        return ft.IconButton(
+            icon=ft.Icons.HELP_OUTLINE,
+            icon_size=16,
+            icon_color=ft.Colors.PRIMARY,
+            tooltip=tooltip_text,
+            style=ft.ButtonStyle(
+                padding=ft.padding.all(4),
+                shape=ft.CircleBorder()
+            )
         )
     
     def _create_input_control(self, key: str, value: str, control_key: str):

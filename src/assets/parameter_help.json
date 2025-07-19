@@ -1,0 +1,220 @@
+{
+  "server_parameters": {
+    "maxplayers": {
+      "title": "Máximo de Jugadores",
+      "description": "Número máximo de jugadores que pueden conectarse al servidor simultáneamente. Valores típicos: 2-100."
+    },
+    "port": {
+      "title": "Puerto del Servidor",
+      "description": "Puerto de red en el que el servidor escuchará las conexiones. Puerto por defecto: 16261."
+    },
+    "defaultport": {
+      "title": "Puerto por Defecto",
+      "description": "Puerto principal que los jugadores usarán para conectarse al servidor. Puerto por defecto: 16261."
+    },
+    "pinglimit": {
+      "title": "Límite de Ping",
+      "description": "Ping máximo permitido en milisegundos antes de ser expulsado del servidor. Establecer en 100 para deshabilitarlo."
+    },
+    "pingfrequency": {
+      "title": "Frecuencia de Ping",
+      "description": "Tiempo en segundos entre cada verificación de ping del cliente. Valor por defecto: 10 segundos."
+    },
+    "pauseempty": {
+      "title": "Pausar Cuando Vacío",
+      "description": "Si está habilitado (true), el servidor se pausará cuando no haya jugadores conectados, deteniendo el progreso del tiempo."
+    },
+    "zombieslore": {
+      "title": "Conocimiento de Zombies",
+      "description": "Nivel de inteligencia de los zombies. Valores más altos hacen zombies más inteligentes."
+    },
+    "zombiespopulation": {
+      "title": "Población de Zombies",
+      "description": "Multiplicador de la cantidad de zombies en el mundo. 1.0 = normal, 2.0 = doble cantidad."
+    },
+    "publicdescription": {
+      "title": "Descripción Pública",
+      "description": "Descripción del servidor que aparecerá en la lista pública de servidores y navegador de Steam."
+    },
+    "description": {
+      "title": "Descripción",
+      "description": "Descripción interna del servidor para uso administrativo."
+    },
+    "difficulty": {
+      "title": "Dificultad",
+      "description": "Nivel de dificultad del juego. Afecta la agresividad de zombies y disponibilidad de recursos."
+    },
+    "gamemode": {
+      "title": "Modo de Juego",
+      "description": "Tipo de experiencia de juego: Supervivencia (realista), Creativo (recursos ilimitados), Sandbox (personalizable)."
+    },
+    "publicname": {
+      "title": "Nombre Público",
+      "description": "Nombre del servidor que aparecerá en la lista pública de servidores y navegador de Steam."
+    },
+    "servername": {
+      "title": "Nombre del Servidor",
+      "description": "Nombre interno del servidor para identificación administrativa."
+    },
+    "password": {
+      "title": "Contraseña",
+      "description": "Contraseña requerida para conectarse al servidor. Déjalo vacío para servidor público."
+    },
+    "adminpassword": {
+      "title": "Contraseña de Administrador",
+      "description": "Contraseña para obtener privilegios de administrador en el servidor."
+    },
+    "open": {
+      "title": "Servidor Abierto",
+      "description": "Si está habilitado (true), permite que cualquier cliente se conecte sin estar en la lista blanca."
+    },
+    "public": {
+      "title": "Servidor Público",
+      "description": "Si está habilitado (true), el servidor aparecerá en el navegador de servidores del juego y Steam."
+    },
+    "pvp": {
+      "title": "Jugador vs Jugador",
+      "description": "Permite que los jugadores se ataquen entre sí cuando está habilitado (true)."
+    },
+    "safehouse": {
+      "title": "Casas Seguras",
+      "description": "Permite a los jugadores reclamar edificios como casas seguras cuando está habilitado (true)."
+    },
+    "sleepallowed": {
+      "title": "Dormir Permitido",
+      "description": "Permite a los jugadores dormir para acelerar el tiempo cuando está habilitado (true)."
+    },
+    "sleepneeded": {
+      "title": "Dormir Necesario",
+      "description": "Los jugadores necesitarán dormir para mantener su energía cuando está habilitado (true)."
+    },
+    "globalchat": {
+      "title": "Chat Global",
+      "description": "Habilita el chat global (/all) que permite a los jugadores comunicarse independientemente de la distancia."
+    },
+    "loglocalchat": {
+      "title": "Registrar Chat Local",
+      "description": "Si está habilitado (true), muestra el chat local (/s y /y) en el panel de chat del cliente."
+    },
+    "serverwelcomemessage": {
+      "title": "Mensaje de Bienvenida",
+      "description": "Mensaje que se muestra a los jugadores cuando se conectan al servidor. Puedes usar <RGB:1,0,0> para colores y <LINE> para saltos de línea."
+    },
+    "autocreateuserin whitelist": {
+      "title": "Auto-crear Usuario en Lista Blanca",
+      "description": "Si está habilitado (true), agrega automáticamente usuarios desconocidos a la lista blanca cuando se unen (solo para servidores abiertos)."
+    },
+    "displayusername": {
+      "title": "Mostrar Nombre de Usuario",
+      "description": "Si está habilitado (true), muestra los nombres de usuario sobre las cabezas de los jugadores en el juego."
+    },
+    "showfirstandlastname": {
+      "title": "Mostrar Nombre y Apellido",
+      "description": "Si está habilitado (true), muestra el nombre y apellido del personaje en lugar del nombre de usuario."
+    },
+    "spawnpoint": {
+      "title": "Punto de Aparición",
+      "description": "Coordenadas X,Y,Z donde aparecerán todos los jugadores nuevos. Usar 0,0,0 permite elegir ciudad de aparición."
+    },
+    "spawnitems": {
+      "title": "Objetos de Aparición",
+      "description": "Objetos con los que aparecen los jugadores nuevos. Separar múltiples objetos con comas (ej: Base.Axe,Base.WaterBottleFull)."
+    },
+    "safetysystem": {
+      "title": "Sistema de Seguridad",
+      "description": "Permite a los jugadores activar/desactivar el modo PvP individualmente. Solo pueden lastimarse cuando al menos uno está en modo PvP."
+    },
+    "showsafety": {
+      "title": "Mostrar Seguridad",
+      "description": "Si está habilitado (true), muestra un ícono de calavera sobre jugadores que están en modo PvP."
+    },
+    "safetytoggletimer": {
+      "title": "Tiempo de Cambio de Seguridad",
+      "description": "Tiempo en segundos que toma activar o desactivar el modo PvP. Valor por defecto: 2 segundos."
+    },
+    "safetycooldowntimer": {
+      "title": "Tiempo de Espera de Seguridad",
+      "description": "Tiempo en segundos antes de poder cambiar el modo PvP nuevamente. Valor por defecto: 3 segundos."
+    },
+    "hoursforlootrespawn": {
+      "title": "Horas para Reaparición de Botín",
+      "description": "Horas de juego que deben pasar antes de que el botín reaparezca en contenedores. 0 = nunca reaparece."
+    },
+    "maxitemsforlootrespawn": {
+      "title": "Máximo de Objetos para Reaparición",
+      "description": "Número máximo de objetos en un contenedor antes de que el botín pueda reaparecer. Valor por defecto: 4."
+    },
+    "constructionpreventslootrespawn": {
+      "title": "Construcción Previene Reaparición",
+      "description": "Si está habilitado (true), las construcciones de jugadores cerca de contenedores previenen la reaparición de botín."
+    },
+    "resetid": {
+      "title": "ID de Reinicio",
+      "description": "Determina si el servidor ha tenido un reinicio suave. Si no coincide con el cliente, debe crear un nuevo personaje."
+    },
+    "mods": {
+      "title": "Modificaciones",
+      "description": "Lista de IDs de mods instalados en el servidor. Los jugadores necesitarán tener estos mods instalados."
+    },
+    "map": {
+      "title": "Mapa",
+      "description": "Nombre del mapa que se está usando. El mapa por defecto es 'Muldraugh, KY'."
+    },
+    "doluachecksum": {
+      "title": "Verificación Lua",
+      "description": "Si está habilitado (true), expulsa a clientes cuyos archivos de juego no coincidan con los del servidor."
+    },
+    "denyloginonoverloadedserver": {
+      "title": "Denegar Login en Servidor Sobrecargado",
+      "description": "Si está habilitado (true), previene conexiones cuando el servidor está sobrecargado para evitar lag."
+    },
+    "nightlengthmodifier": {
+      "title": "Modificador de Duración de Noche",
+      "description": "Controla la duración de la noche. 1.0 = duración normal, 0.5 = mitad de duración."
+    },
+    "chatstreams": {
+      "title": "Canales de Chat",
+      "description": "Define los canales de chat disponibles: s,r,a,w,y,sh,f,all. Remover alguno lo deshabilita."
+    },
+    "hoursforzombiesrespawn": {
+      "title": "Horas para Reaparición de Zombies",
+      "description": "Horas de juego antes de que los zombies reaparezcan en áreas no vistas. 0 = nunca reaparecen."
+    },
+    "increasezombierespawnby": {
+      "title": "Incrementar Reaparición de Zombies",
+      "description": "Cantidad adicional de zombies que aparecerán si la reaparición está habilitada."
+    },
+    "nofire": {
+      "title": "Sin Fuego",
+      "description": "Si está habilitado (true), deshabilita todas las formas de fuego excepto fogatas."
+    },
+    "announcedeath": {
+      "title": "Anunciar Muerte",
+      "description": "Si está habilitado (true), muestra un mensaje global en el chat cada vez que un jugador muere."
+    },
+    "minutesperpage": {
+      "title": "Minutos por Página",
+      "description": "Número de minutos de juego que toma leer una página de un libro. Valor por defecto: 1 minuto."
+    },
+    "saveworldeveryminutes": {
+      "title": "Guardar Mundo Cada Minutos",
+      "description": "Partes cargadas del mapa se guardan después de este número de minutos reales. 0 = solo al salir de áreas."
+    },
+    "playersafehouse": {
+      "title": "Casa Segura de Jugadores",
+      "description": "Si está habilitado (true), tanto administradores como jugadores pueden reclamar casas seguras."
+    },
+    "adminsafehouse": {
+      "title": "Casa Segura de Administrador",
+      "description": "Si está habilitado (true), solo los administradores pueden reclamar casas seguras."
+    },
+    "safehouseallowt repass": {
+      "title": "Permitir Invasión de Casa Segura",
+      "description": "Si está habilitado (true), permite a no miembros entrar a una casa segura sin invitación."
+    },
+    "safehouseallowfire": {
+      "title": "Permitir Fuego en Casa Segura",
+      "description": "Si está habilitado (true), permite que el fuego dañe las casas seguras."
+    }
+  }
+}
