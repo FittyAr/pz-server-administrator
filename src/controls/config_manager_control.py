@@ -60,6 +60,9 @@ class ConfigManagerControl:
         """Callback cuando cambia el modo de edición"""
         self.current_mode = mode
         self._update_editor_view()
+        
+        # Forzar actualización de la página
+        self._force_update()
     
     def _on_file_change(self, file_type: str):
         """Callback cuando cambia el tipo de archivo seleccionado"""
@@ -90,8 +93,7 @@ class ConfigManagerControl:
                 alignment=ft.alignment.center,
                 height=300
             )
-            if hasattr(self.editor_container, 'page') and self.editor_container.page:
-                self.editor_container.page.update()
+            self._force_update()
             return
         
         # Determinar qué editor usar
@@ -102,12 +104,11 @@ class ConfigManagerControl:
             # Modo avanzado o archivos no-INI
             self.editor_container.content = self.advanced_text_editor.get_control()
         
-        # Actualizar la página después de cambiar el contenido
-        if hasattr(self.editor_container, 'page') and self.editor_container.page:
-            self.editor_container.page.update()
-        
         # Cargar contenido del archivo
         self._load_file_content()
+        
+        # Forzar actualización de la interfaz
+        self._force_update()
     
     def _load_file_content(self):
         """Cargar contenido del archivo seleccionado"""
@@ -216,6 +217,37 @@ Password=
 MaxAccountsPerUser=0"""
         }
         return templates.get(self.selected_file_type, "# Archivo de configuración")
+    
+    def _force_update(self):
+        """Forzar actualización de la interfaz"""
+        try:
+            # Intentar actualizar desde el editor_container
+            if hasattr(self.editor_container, 'page') and self.editor_container.page:
+                self.editor_container.page.update()
+                return
+            
+            # Intentar actualizar desde cualquier control hijo que tenga página
+            controls_to_check = [
+                self.ini_simple_editor,
+                self.advanced_text_editor,
+                self.edit_mode_control,
+                self.file_buttons_control
+            ]
+            
+            for control in controls_to_check:
+                if hasattr(control, 'page') and control.page:
+                    control.page.update()
+                    return
+                # Verificar si el control tiene un contenedor con página
+                if hasattr(control, 'container') and hasattr(control.container, 'page') and control.container.page:
+                    control.container.page.update()
+                    return
+                # Verificar si el control tiene un control_container con página
+                if hasattr(control, 'control_container') and hasattr(control.control_container, 'page') and control.control_container.page:
+                    control.control_container.page.update()
+                    return
+        except Exception as e:
+            print(f"Error al forzar actualización: {e}")
     
     def _on_save_click(self, e):
         """Manejar clic en botón guardar"""
