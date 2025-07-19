@@ -94,7 +94,7 @@ class MainLayout:
             from utils.config_loader import config_loader
             servers = config_loader.get_all_servers()
             if server_id in servers:
-                server_path = servers[server_id].get('path')
+                server_path = servers[server_id].get('server_path')
                 server_name = servers[server_id].get('name')
         
         print(f"DEBUG: Actualizando server_path a: {server_path}, server_name: {server_name}")
