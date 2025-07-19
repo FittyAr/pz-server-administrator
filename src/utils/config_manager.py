@@ -33,27 +33,46 @@ class ConfigManager:
         Lee un archivo INI y retorna su contenido como diccionario
         """
         try:
-            config = configparser.ConfigParser()
-            
-            # Intentar diferentes codificaciones
+            # Intentar diferentes codificaciones para leer el archivo
             encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
-            success = False
+            content = None
             
             for encoding in encodings:
                 try:
-                    config.read(file_path, encoding=encoding)
-                    success = True
+                    with open(file_path, 'r', encoding=encoding) as file:
+                        content = file.read()
                     break
                 except UnicodeDecodeError:
                     continue
             
-            if not success:
+            if content is None:
                 print(f"Error reading INI file {file_path}: No se pudo decodificar con ninguna codificación")
                 return {}
             
+            # Verificar si el contenido tiene headers de sección
+            has_sections = any(line.strip().startswith('[') and line.strip().endswith(']') 
+                             for line in content.split('\n'))
+            
             result = {}
-            for section in config.sections():
-                result[section] = dict(config[section])
+            
+            if has_sections:
+                # Parsear como INI normal con secciones
+                config = configparser.ConfigParser(allow_no_value=True)
+                config.read_string(content)
+                
+                for section in config.sections():
+                    result[section] = dict(config[section])
+            else:
+                # Tratar como archivo de configuración sin secciones (crear sección DEFAULT)
+                lines = content.strip().split('\n')
+                default_section = {}
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        default_section[key.strip()] = value.strip()
+                if default_section:
+                    result['DEFAULT'] = default_section
                 
             return result
         except Exception as e:
@@ -184,8 +203,24 @@ class ConfigManager:
         Retorna (es_válido, mensaje_error)
         """
         try:
-            config = configparser.ConfigParser()
-            config.read_string(content)
+            # Verificar si el contenido tiene headers de sección
+            has_sections = any(line.strip().startswith('[') and line.strip().endswith(']') 
+                             for line in content.split('\n'))
+            
+            if has_sections:
+                # Validar como INI normal con secciones
+                config = configparser.ConfigParser(allow_no_value=True)
+                config.read_string(content)
+            else:
+                # Validar como archivo de configuración sin secciones
+                lines = content.strip().split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        # Verificar que la línea tenga formato clave=valor válido
+                        if line.count('=') < 1:
+                            raise ValueError(f"Línea inválida: {line}")
+            
             return True, "Sintaxis válida"
         except Exception as e:
             return False, f"Error de sintaxis: {e}"

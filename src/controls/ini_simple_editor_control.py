@@ -39,19 +39,23 @@ class IniSimpleEditorControl:
             return
         
         try:
-            # Parsear el contenido INI
-            config = configparser.ConfigParser()
-            config.read_string(content)
-            
             self.config_data = {}
             self.controls_map = {}
             
-            # Convertir a diccionario
-            for section_name in config.sections():
-                self.config_data[section_name] = dict(config[section_name])
+            # Verificar si el contenido tiene headers de sección
+            has_sections = any(line.strip().startswith('[') and line.strip().endswith(']') 
+                             for line in content.split('\n'))
             
-            # Si no hay secciones, tratar como sección DEFAULT
-            if not self.config_data and content.strip():
+            if has_sections:
+                # Parsear como INI normal con secciones
+                config = configparser.ConfigParser(allow_no_value=True)
+                config.read_string(content)
+                
+                # Convertir a diccionario
+                for section_name in config.sections():
+                    self.config_data[section_name] = dict(config[section_name])
+            else:
+                # Tratar como archivo de configuración sin secciones (crear sección DEFAULT)
                 lines = content.strip().split('\n')
                 default_section = {}
                 for line in lines:
@@ -138,7 +142,7 @@ class IniSimpleEditorControl:
             ], spacing=10),
             padding=ft.padding.symmetric(vertical=5, horizontal=10),
             border_radius=4,
-            bgcolor=ft.Colors.SURFACE_VARIANT if len(self.controls_map) % 2 == 0 else None
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST if len(self.controls_map) % 2 == 0 else None
         )
     
     def _create_input_control(self, key: str, value: str, control_key: str):

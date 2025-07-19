@@ -282,8 +282,24 @@ MaxAccountsPerUser=0"""
             
             # Validación básica de sintaxis INI
             import configparser
-            config = configparser.ConfigParser()
-            config.read_string(content)
+            
+            # Verificar si el contenido tiene headers de sección
+            has_sections = any(line.strip().startswith('[') and line.strip().endswith(']') 
+                             for line in content.split('\n'))
+            
+            if has_sections:
+                # Validar como INI normal con secciones
+                config = configparser.ConfigParser(allow_no_value=True)
+                config.read_string(content)
+            else:
+                # Validar como archivo de configuración sin secciones
+                lines = content.strip().split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        # Verificar que la línea tenga formato clave=valor válido
+                        if line.count('=') < 1:
+                            raise ValueError(f"Línea inválida: {line}")
             
             self._show_snack_bar(page, "Sintaxis INI válida", ft.Colors.GREEN)
         except Exception as e:
