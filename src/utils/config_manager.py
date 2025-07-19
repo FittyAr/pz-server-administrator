@@ -34,7 +34,22 @@ class ConfigManager:
         """
         try:
             config = configparser.ConfigParser()
-            config.read(file_path, encoding='utf-8')
+            
+            # Intentar diferentes codificaciones
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            success = False
+            
+            for encoding in encodings:
+                try:
+                    config.read(file_path, encoding=encoding)
+                    success = True
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if not success:
+                print(f"Error reading INI file {file_path}: No se pudo decodificar con ninguna codificación")
+                return {}
             
             result = {}
             for section in config.sections():
@@ -70,8 +85,18 @@ class ConfigManager:
         Lee un archivo JSON y retorna su contenido
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                return json.load(file)
+            # Intentar diferentes codificaciones
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as file:
+                        return json.load(file)
+                except UnicodeDecodeError:
+                    continue
+            
+            print(f"Error reading JSON file {file_path}: No se pudo decodificar con ninguna codificación")
+            return {}
         except Exception as e:
             print(f"Error reading JSON file {file_path}: {e}")
             return {}
@@ -94,8 +119,18 @@ class ConfigManager:
         Nota: Para parsing completo de LUA se necesitaría una librería especializada
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                return file.read()
+            # Intentar diferentes codificaciones
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as file:
+                        return file.read()
+                except UnicodeDecodeError:
+                    continue
+            
+            print(f"Error reading LUA file {file_path}: No se pudo decodificar con ninguna codificación")
+            return ""
         except Exception as e:
             print(f"Error reading LUA file {file_path}: {e}")
             return ""
@@ -119,8 +154,21 @@ class ConfigManager:
         try:
             backup_path = f"{file_path}.backup"
             
-            with open(file_path, 'r', encoding='utf-8') as original:
-                content = original.read()
+            # Intentar diferentes codificaciones para leer el archivo original
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            content = None
+            
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as original:
+                        content = original.read()
+                        break
+                except UnicodeDecodeError:
+                    continue
+            
+            if content is None:
+                print(f"Error creating backup: No se pudo decodificar el archivo {file_path} con ninguna codificación")
+                return False
                 
             with open(backup_path, 'w', encoding='utf-8') as backup:
                 backup.write(content)

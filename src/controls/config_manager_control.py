@@ -120,9 +120,23 @@ class ConfigManagerControl:
             # Cargar en editor simple INI
             if file_path and os.path.exists(file_path):
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as file:
-                        content = file.read()
-                    self.ini_simple_editor.load_ini_content(content)
+                    # Intentar diferentes codificaciones
+                    encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+                    content = None
+                    
+                    for encoding in encodings:
+                        try:
+                            with open(file_path, 'r', encoding=encoding) as file:
+                                content = file.read()
+                                break
+                        except UnicodeDecodeError:
+                            continue
+                    
+                    if content is not None:
+                        self.ini_simple_editor.load_ini_content(content)
+                    else:
+                        self.ini_simple_editor.clear()
+                        print(f"Error cargando archivo INI: No se pudo decodificar con ninguna codificación")
                 except Exception as e:
                     self.ini_simple_editor.clear()
                     print(f"Error cargando archivo INI: {e}")
