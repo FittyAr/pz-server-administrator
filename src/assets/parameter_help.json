@@ -480,5 +480,315 @@
        "title": "Radio de Baja Prioridad para Zombies",
        "description": "Radio en metros donde los zombies se actualizarán con baja prioridad. Valor por defecto: 45.0."
      }
+   },
+   "sandbox_vars": {
+     "Speed": {
+       "title": "Velocidad de Zombies",
+       "description": "Velocidad de movimiento de los zombies. 1=Lentos, 2=Normales, 3=Rápidos, 4=Veloces."
+     },
+     "Zombies": {
+       "title": "Población de Zombies",
+       "description": "Cantidad de zombies en el mundo. 1=Muy Pocos, 2=Pocos, 3=Normales, 4=Muchos, 5=Muy Muchos."
+     },
+     "Distribution": {
+       "title": "Distribución de Zombies",
+       "description": "Cómo se distribuyen los zombies por el mapa. 1=Urbano Enfocado, 2=Uniforme."
+     },
+     "Survivors": {
+       "title": "Supervivientes NPC",
+       "description": "Cantidad de supervivientes NPC en el mundo. 1=Ninguno, 2=Pocos, 3=Normales, 4=Muchos."
+     },
+     "DayLength": {
+       "title": "Duración del Día",
+       "description": "Duración de un día en el juego. 1=15 min, 2=30 min, 3=1 hora, 4=2 horas, 5=3 horas, 6=4 horas, 7=5 horas, 8=6 horas, 9=7 horas, 10=8 horas, 11=9 horas, 12=10 horas, 13=11 horas, 14=12 horas."
+     },
+     "StartYear": {
+       "title": "Año de Inicio",
+       "description": "Año en que comienza el apocalipsis zombie. 1=1993, 2=1994, 3=1995, etc."
+     },
+     "StartMonth": {
+       "title": "Mes de Inicio",
+       "description": "Mes en que comienza la partida. 1=Enero, 2=Febrero, ..., 12=Diciembre."
+     },
+     "StartDay": {
+       "title": "Día de Inicio",
+       "description": "Día del mes en que comienza la partida (1-31)."
+     },
+     "StartTime": {
+       "title": "Hora de Inicio",
+       "description": "Hora del día en que comienza la partida. 1=7:00 AM, 2=9:00 AM, 3=12:00 PM, 4=2:00 PM, 5=5:00 PM, 6=9:00 PM, 7=12:00 AM, 8=2:00 AM."
+     },
+     "WaterShut": {
+       "title": "Corte de Agua",
+       "description": "Cuándo se corta el suministro de agua. 1=Inmediato, 2=0-30 días, 3=0-2 meses, 4=0-6 meses, 5=0-1 año, 6=0-5 años, 7=2-6 meses, 8=6-12 meses."
+     },
+     "ElecShut": {
+       "title": "Corte de Electricidad",
+       "description": "Cuándo se corta el suministro eléctrico. 1=Inmediato, 2=0-30 días, 3=0-2 meses, 4=0-6 meses, 5=0-1 año, 6=0-5 años, 7=2-6 meses, 8=6-12 meses."
+     },
+     "WaterShutModifier": {
+       "title": "Modificador de Corte de Agua",
+       "description": "Días adicionales antes del corte de agua. Valor por defecto: 14 días."
+     },
+     "ElecShutModifier": {
+       "title": "Modificador de Corte de Electricidad",
+       "description": "Días adicionales antes del corte eléctrico. Valor por defecto: 14 días."
+     },
+     "FoodLoot": {
+       "title": "Botín de Comida",
+       "description": "Abundancia de comida encontrada. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "CannedFoodLoot": {
+       "title": "Botín de Comida Enlatada",
+       "description": "Abundancia de comida enlatada. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "LiteratureLoot": {
+       "title": "Botín de Literatura",
+       "description": "Abundancia de libros y revistas. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "SurvivalGearsLoot": {
+       "title": "Botín de Equipo de Supervivencia",
+       "description": "Abundancia de equipo de supervivencia. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "MedicalLoot": {
+       "title": "Botín Médico",
+       "description": "Abundancia de suministros médicos. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "WeaponLoot": {
+       "title": "Botín de Armas",
+       "description": "Abundancia de armas cuerpo a cuerpo. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "RangedWeaponLoot": {
+       "title": "Botín de Armas a Distancia",
+       "description": "Abundancia de armas de fuego. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "AmmoLoot": {
+       "title": "Botín de Munición",
+       "description": "Abundancia de munición para armas de fuego. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "MechanicsLoot": {
+       "title": "Botín de Mecánica",
+       "description": "Abundancia de herramientas y piezas de vehículos. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "OtherLoot": {
+       "title": "Otro Botín",
+       "description": "Abundancia de otros objetos diversos. 1=Muy Raro, 2=Raro, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "Temperature": {
+       "title": "Temperatura",
+       "description": "Configuración de temperatura del mundo. 1=Muy Fría, 2=Fría, 3=Normal, 4=Caliente, 5=Muy Caliente."
+     },
+     "Rain": {
+       "title": "Lluvia",
+       "description": "Frecuencia de lluvia. 1=Muy Seca, 2=Seca, 3=Normal, 4=Lluviosa, 5=Muy Lluviosa."
+     },
+     "ErosionSpeed": {
+       "title": "Velocidad de Erosión",
+       "description": "Velocidad a la que se deteriora el mundo. 1=Nunca, 2=Muy Lenta, 3=Lenta, 4=Normal, 5=Rápida, 6=Muy Rápida."
+     },
+     "ErosionDays": {
+       "title": "Días de Erosión",
+       "description": "Días antes de que comience la erosión. 0=Inmediato, valores positivos=días de retraso."
+     },
+     "XpMultiplier": {
+       "title": "Multiplicador de Experiencia",
+       "description": "Multiplicador para la ganancia de experiencia. 1.0=Normal, 2.0=Doble experiencia, 0.5=Mitad de experiencia."
+     },
+     "ZombieAttractionMultiplier": {
+       "title": "Multiplicador de Atracción de Zombies",
+       "description": "Multiplicador para la atracción de zombies por ruido. 1.0=Normal, 2.0=Doble atracción."
+     },
+     "VehicleEasyUse": {
+       "title": "Uso Fácil de Vehículos",
+       "description": "Si está habilitado, los vehículos no requieren llaves para ser usados."
+     },
+     "Farming": {
+       "title": "Agricultura",
+       "description": "Velocidad de crecimiento de cultivos. 1=Muy Lenta, 2=Lenta, 3=Normal, 4=Rápida, 5=Muy Rápida."
+     },
+     "CompostTime": {
+       "title": "Tiempo de Compostaje",
+       "description": "Velocidad de creación de compost. 1=1 semana, 2=2 semanas, 3=3 semanas, 4=4 semanas, 5=6 semanas, 6=8 semanas, 7=10 semanas."
+     },
+     "StatsDecrease": {
+       "title": "Disminución de Estadísticas",
+       "description": "Velocidad de disminución de hambre, sed, etc. 1=Muy Lenta, 2=Lenta, 3=Normal, 4=Rápida, 5=Muy Rápida."
+     },
+     "NatureAbundance": {
+       "title": "Abundancia Natural",
+       "description": "Abundancia de recursos naturales (bayas, etc.). 1=Muy Poca, 2=Poca, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "Alarm": {
+       "title": "Alarmas",
+       "description": "Frecuencia de alarmas de casas y edificios. 1=Nunca, 2=Extremadamente Raro, 3=Muy Raro, 4=Raro, 5=A veces, 6=A menudo."
+     },
+     "LockedHouses": {
+       "title": "Casas Cerradas",
+       "description": "Porcentaje de casas que estarán cerradas con llave. 1=Ninguna, 2=Muy Pocas, 3=Pocas, 4=Algunas, 5=Normales, 6=Muchas, 7=Todas."
+     },
+     "StarterKit": {
+       "title": "Kit de Inicio",
+       "description": "Si está habilitado, los jugadores comenzarán con un kit básico de supervivencia."
+     },
+     "Nutrition": {
+       "title": "Nutrición",
+       "description": "Si está habilitado, los jugadores deben mantener una dieta balanceada para estar saludables."
+     },
+     "FoodRotSpeed": {
+       "title": "Velocidad de Putrefacción",
+       "description": "Velocidad a la que se pudre la comida. 1=Muy Lenta, 2=Lenta, 3=Normal, 4=Rápida, 5=Muy Rápida."
+     },
+     "FridgeFactor": {
+       "title": "Factor de Refrigerador",
+       "description": "Efectividad de los refrigeradores para preservar comida. 1=Muy Baja, 2=Baja, 3=Normal, 4=Alta, 5=Muy Alta."
+     },
+     "LootRespawn": {
+       "title": "Reaparición de Botín",
+       "description": "Si el botín reaparece en contenedores. 1=Ninguno, 2=Cada mes, 3=Cada 2 meses, 4=Cada 6 meses, 5=Cada año."
+     },
+     "LootSeenHours": {
+       "title": "Horas de Botín Visto",
+       "description": "Horas que debe pasar antes de que el botín pueda reaparecer en un contenedor visitado."
+     },
+     "WorldItemRemovalList": {
+       "title": "Lista de Eliminación de Objetos",
+       "description": "Lista de objetos que serán eliminados automáticamente del mundo después del tiempo especificado."
+     },
+     "HoursForWorldItemRemoval": {
+       "title": "Horas para Eliminación de Objetos",
+       "description": "Horas que deben pasar antes de que los objetos especificados sean eliminados del mundo."
+     },
+     "ItemRemovalListBlacklistToggle": {
+       "title": "Lista Negra de Eliminación",
+       "description": "Si está habilitado, la lista actúa como lista negra (objetos que NO se eliminan)."
+     },
+     "TimeSinceApo": {
+       "title": "Tiempo Desde el Apocalipsis",
+       "description": "Tiempo transcurrido desde el inicio del apocalipsis. 1=0 meses, 2=1 mes, 3=2 meses, 4=3 meses, 5=4 meses, 6=5 meses, 7=6 meses, 8=7 meses, 9=8 meses, 10=9 meses, 11=10 meses, 12=11 meses, 13=1 año."
+     },
+     "PlantResilience": {
+       "title": "Resistencia de Plantas",
+       "description": "Resistencia de las plantas a enfermedades y condiciones adversas. 1=Muy Baja, 2=Baja, 3=Normal, 4=Alta, 5=Muy Alta."
+     },
+     "PlantAbundance": {
+       "title": "Abundancia de Plantas",
+       "description": "Abundancia de plantas silvestres comestibles. 1=Muy Poca, 2=Poca, 3=Normal, 4=Abundante, 5=Muy Abundante."
+     },
+     "EndRegen": {
+       "title": "Regeneración de Resistencia",
+       "description": "Velocidad de regeneración de resistencia. 1=Muy Lenta, 2=Lenta, 3=Normal, 4=Rápida, 5=Muy Rápida."
+     },
+     "Helicopter": {
+       "title": "Evento de Helicóptero",
+       "description": "Frecuencia del evento de helicóptero. 1=Nunca, 2=Una vez, 3=A veces, 4=A menudo."
+     },
+     "MetaEvent": {
+       "title": "Meta Eventos",
+       "description": "Frecuencia de meta eventos (sirenas, disparos, etc.). 1=Nunca, 2=A veces, 3=A menudo."
+     },
+     "SleepingEvent": {
+       "title": "Eventos Mientras Duermes",
+       "description": "Si pueden ocurrir eventos mientras el jugador duerme. 1=Nunca, 2=A veces, 3=A menudo."
+     },
+     "GeneratorSpawning": {
+       "title": "Aparición de Generadores",
+       "description": "Frecuencia de aparición de generadores. 1=Extremadamente Raro, 2=Muy Raro, 3=Raro, 4=A veces, 5=A menudo."
+     },
+     "GeneratorFuelConsumption": {
+       "title": "Consumo de Combustible del Generador",
+       "description": "Multiplicador del consumo de combustible de los generadores. 1.0=Normal, 0.5=Mitad del consumo, 2.0=Doble consumo."
+     },
+     "SurvivorHouseChance": {
+       "title": "Probabilidad de Casa de Superviviente",
+       "description": "Probabilidad de encontrar casas con supervivientes. 1=Nunca, 2=Extremadamente Raro, 3=Muy Raro, 4=Raro, 5=A veces."
+     },
+     "VehicleStoryChance": {
+       "title": "Probabilidad de Historia de Vehículo",
+       "description": "Probabilidad de encontrar vehículos con historias especiales. 1=Nunca, 2=Extremadamente Raro, 3=Muy Raro, 4=Raro, 5=A veces."
+     },
+     "ZoneStoryChance": {
+       "title": "Probabilidad de Historia de Zona",
+       "description": "Probabilidad de encontrar zonas con historias especiales. 1=Nunca, 2=Extremadamente Raro, 3=Muy Raro, 4=Raro, 5=A veces."
+     },
+     "AnnotatedMapChance": {
+       "title": "Probabilidad de Mapa Anotado",
+       "description": "Probabilidad de encontrar mapas con anotaciones. 1=Nunca, 2=Extremadamente Raro, 3=Muy Raro, 4=Raro, 5=A veces, 6=A menudo."
+     },
+     "CharacterFreePoints": {
+       "title": "Puntos Libres de Personaje",
+       "description": "Puntos adicionales para gastar en la creación del personaje. Valor por defecto: 0."
+     },
+     "ConstructionBonusPoints": {
+       "title": "Puntos Bonus de Construcción",
+       "description": "Puntos adicionales para habilidades de construcción. 1=Muy Pocos, 2=Pocos, 3=Normales, 4=Muchos, 5=Muy Muchos."
+     },
+     "NightDarkness": {
+       "title": "Oscuridad Nocturna",
+       "description": "Nivel de oscuridad durante la noche. 1=Muy Brillante, 2=Brillante, 3=Normal, 4=Oscura, 5=Muy Oscura."
+     },
+     "InjurySeverity": {
+       "title": "Severidad de Lesiones",
+       "description": "Severidad de las lesiones recibidas. 1=Muy Baja, 2=Baja, 3=Normal, 4=Alta, 5=Muy Alta."
+     },
+     "BoneFracture": {
+       "title": "Fracturas de Huesos",
+       "description": "Si están habilitadas las fracturas de huesos por caídas y golpes fuertes."
+     },
+     "HoursForCorpseRemoval": {
+       "title": "Horas para Eliminación de Cadáveres",
+       "description": "Horas que deben pasar antes de que los cadáveres sean eliminados automáticamente. Valor por defecto: 216 horas (9 días)."
+     },
+     "DecayingCorpseHealthImpact": {
+       "title": "Impacto de Cadáveres en Descomposición",
+       "description": "Impacto en la salud por estar cerca de cadáveres en descomposición. 1=Ninguno, 2=Bajo, 3=Normal, 4=Alto, 5=Muy Alto."
+     },
+     "BloodLevel": {
+       "title": "Nivel de Sangre",
+       "description": "Cantidad de sangre mostrada en el juego. 1=Ninguna, 2=Poca, 3=Normal, 4=Mucha, 5=Ultra Gore."
+     },
+     "ClothingDegradation": {
+       "title": "Degradación de Ropa",
+       "description": "Velocidad de deterioro de la ropa. 1=Deshabilitada, 2=Muy Lenta, 3=Lenta, 4=Normal, 5=Rápida, 6=Muy Rápida."
+     },
+     "FireSpread": {
+       "title": "Propagación de Fuego",
+       "description": "Si el fuego puede propagarse entre objetos y estructuras."
+     },
+     "DaysForRottenFoodRemoval": {
+       "title": "Días para Eliminación de Comida Podrida",
+       "description": "Días antes de que la comida podrida sea eliminada automáticamente. -1=Nunca."
+     },
+     "AllowExteriorGenerator": {
+       "title": "Permitir Generador Exterior",
+       "description": "Si se permite colocar generadores en el exterior de edificios."
+     },
+     "MaxFogIntensity": {
+       "title": "Intensidad Máxima de Niebla",
+       "description": "Intensidad máxima de la niebla. 1=Normal, 2=Moderada, 3=Densa."
+     },
+     "MaxRainFxIntensity": {
+       "title": "Intensidad Máxima de Efectos de Lluvia",
+       "description": "Intensidad máxima de los efectos visuales de lluvia. 1=Normal, 2=Moderada, 3=Intensa."
+     },
+     "EnableSnowOnGround": {
+       "title": "Habilitar Nieve en el Suelo",
+       "description": "Si la nieve se acumula en el suelo durante el invierno."
+     },
+     "MultiHitZombies": {
+       "title": "Zombies Multi-Golpe",
+       "description": "Si los zombies pueden ser golpeados múltiples veces con un solo ataque."
+     },
+     "RearVulnerability": {
+       "title": "Vulnerabilidad Trasera",
+       "description": "Vulnerabilidad adicional al ser atacado por la espalda. 1=Baja, 2=Media, 3=Alta."
+     },
+     "AttackBlockMovements": {
+       "title": "Ataques Bloquean Movimiento",
+       "description": "Si los ataques impiden el movimiento temporalmente."
+     },
+     "AllClothesUnlocked": {
+       "title": "Toda la Ropa Desbloqueada",
+       "description": "Si toda la ropa está disponible desde el inicio sin restricciones de profesión."
+     }
    }
  }

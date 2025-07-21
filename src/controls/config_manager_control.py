@@ -4,6 +4,7 @@ from typing import Optional, Callable
 from utils.config_loader import config_loader
 from controls.edit_mode_control import EditModeControl
 from controls.ini_simple_editor_control import IniSimpleEditorControl
+from controls.lua_simple_editor_control import LuaSimpleEditorControl
 from controls.advanced_text_editor_control import AdvancedTextEditorControl
 from controls.config_file_buttons_control import ConfigFileButtonsControl
 
@@ -26,6 +27,7 @@ class ConfigManagerControl:
         self.edit_mode_control = EditModeControl(on_mode_change=self._on_mode_change)
         self.file_buttons_control = ConfigFileButtonsControl(on_config_file_click=self._on_file_change)
         self.ini_simple_editor = IniSimpleEditorControl()
+        self.lua_simple_editor = LuaSimpleEditorControl()
         self.advanced_text_editor = AdvancedTextEditorControl(on_save=self._on_advanced_save)
         
         # Contenedor para el editor actual
@@ -100,8 +102,11 @@ class ConfigManagerControl:
         if self.current_mode == "simple" and self.selected_file_type == "ini":
             # Modo simple para archivos INI
             self.editor_container.content = self.ini_simple_editor.get_control()
+        elif self.current_mode == "simple" and self.selected_file_type == "lua":
+            # Modo simple para archivos Lua (SandBoxVars)
+            self.editor_container.content = self.lua_simple_editor.get_control()
         else:
-            # Modo avanzado o archivos no-INI
+            # Modo avanzado o archivos no soportados en modo simple
             self.editor_container.content = self.advanced_text_editor.get_control()
         
         # Cargar contenido del archivo
@@ -145,6 +150,34 @@ class ConfigManagerControl:
                 # Cargar plantilla por defecto
                 template = self._get_template_content()
                 self.ini_simple_editor.load_ini_content(template)
+        elif self.current_mode == "simple" and self.selected_file_type == "lua":
+            # Cargar en editor simple Lua
+            if file_path and os.path.exists(file_path):
+                try:
+                    # Intentar diferentes codificaciones
+                    encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+                    content = None
+                    
+                    for encoding in encodings:
+                        try:
+                            with open(file_path, 'r', encoding=encoding) as file:
+                                content = file.read()
+                                break
+                        except UnicodeDecodeError:
+                            continue
+                    
+                    if content is not None:
+                        self.lua_simple_editor.load_lua_content(content)
+                    else:
+                        self.lua_simple_editor.clear()
+                        print(f"Error cargando archivo Lua: No se pudo decodificar con ninguna codificación")
+                except Exception as e:
+                    self.lua_simple_editor.clear()
+                    print(f"Error cargando archivo Lua: {e}")
+            else:
+                # Cargar plantilla por defecto
+                template = self._get_template_content()
+                self.lua_simple_editor.load_lua_content(template)
         else:
             # Cargar en editor avanzado
             internal_type = self._get_internal_file_type()
@@ -214,7 +247,88 @@ BindIP=0.0.0.0
 RCONPort=27015
 RCONPassword=
 Password=
-MaxAccountsPerUser=0"""
+MaxAccountsPerUser=0""",
+            "lua": """-- Configuración de SandBox Variables
+-- Generado automáticamente por PZ Server Administrator
+
+-- Configuración básica del mundo
+SandBoxVars.Speed = 2,
+SandBoxVars.Zombies = 4,
+SandBoxVars.Distribution = 1,
+SandBoxVars.Survivors = 4,
+SandBoxVars.DayLength = 1,
+SandBoxVars.StartYear = 1,
+SandBoxVars.StartMonth = 7,
+SandBoxVars.StartDay = 9,
+SandBoxVars.StartTime = 2,
+SandBoxVars.WaterShut = 2,
+SandBoxVars.ElecShut = 2,
+SandBoxVars.WaterShutModifier = 14,
+SandBoxVars.ElecShutModifier = 14,
+SandBoxVars.FoodLoot = 2,
+SandBoxVars.CannedFoodLoot = 2,
+SandBoxVars.LiteratureLoot = 2,
+SandBoxVars.SurvivalGearsLoot = 2,
+SandBoxVars.MedicalLoot = 2,
+SandBoxVars.WeaponLoot = 2,
+SandBoxVars.RangedWeaponLoot = 2,
+SandBoxVars.AmmoLoot = 2,
+SandBoxVars.MechanicsLoot = 2,
+SandBoxVars.OtherLoot = 2,
+SandBoxVars.Temperature = 3,
+SandBoxVars.Rain = 3,
+SandBoxVars.ErosionSpeed = 3,
+SandBoxVars.ErosionDays = 0,
+SandBoxVars.XpMultiplier = 1.0,
+SandBoxVars.ZombieAttractionMultiplier = 1.0,
+SandBoxVars.VehicleEasyUse = false,
+SandBoxVars.Farming = 3,
+SandBoxVars.CompostTime = 2,
+SandBoxVars.StatsDecrease = 3,
+SandBoxVars.NatureAbundance = 3,
+SandBoxVars.Alarm = 4,
+SandBoxVars.LockedHouses = 6,
+SandBoxVars.StarterKit = false,
+SandBoxVars.Nutrition = true,
+SandBoxVars.FoodRotSpeed = 3,
+SandBoxVars.FridgeFactor = 3,
+SandBoxVars.LootRespawn = 1,
+SandBoxVars.LootSeenHours = 0,
+SandBoxVars.WorldItemRemovalList = "Base.Hat,Base.Glasses,Base.Maggots",
+SandBoxVars.HoursForWorldItemRemoval = 24.0,
+SandBoxVars.ItemRemovalListBlacklistToggle = false,
+SandBoxVars.TimeSinceApo = 1,
+SandBoxVars.PlantResilience = 3,
+SandBoxVars.PlantAbundance = 3,
+SandBoxVars.EndRegen = 3,
+SandBoxVars.Helicopter = 2,
+SandBoxVars.MetaEvent = 2,
+SandBoxVars.SleepingEvent = 1,
+SandBoxVars.GeneratorSpawning = 3,
+SandBoxVars.GeneratorFuelConsumption = 1.0,
+SandBoxVars.SurvivorHouseChance = 3,
+SandBoxVars.VehicleStoryChance = 3,
+SandBoxVars.ZoneStoryChance = 3,
+SandBoxVars.AnnotatedMapChance = 4,
+SandBoxVars.CharacterFreePoints = 0,
+SandBoxVars.ConstructionBonusPoints = 3,
+SandBoxVars.NightDarkness = 3,
+SandBoxVars.InjurySeverity = 2,
+SandBoxVars.BoneFracture = true,
+SandBoxVars.HoursForCorpseRemoval = 216.0,
+SandBoxVars.DecayingCorpseHealthImpact = 3,
+SandBoxVars.BloodLevel = 3,
+SandBoxVars.ClothingDegradation = 3,
+SandBoxVars.FireSpread = true,
+SandBoxVars.DaysForRottenFoodRemoval = -1,
+SandBoxVars.AllowExteriorGenerator = true,
+SandBoxVars.MaxFogIntensity = 1,
+SandBoxVars.MaxRainFxIntensity = 1,
+SandBoxVars.EnableSnowOnGround = true,
+SandBoxVars.MultiHitZombies = false,
+SandBoxVars.RearVulnerability = 3,
+SandBoxVars.AttackBlockMovements = true,
+SandBoxVars.AllClothesUnlocked = false,"""
         }
         return templates.get(self.selected_file_type, "# Archivo de configuración")
     
@@ -229,6 +343,7 @@ MaxAccountsPerUser=0"""
             # Intentar actualizar desde cualquier control hijo que tenga página
             controls_to_check = [
                 self.ini_simple_editor,
+                self.lua_simple_editor,
                 self.advanced_text_editor,
                 self.edit_mode_control,
                 self.file_buttons_control
@@ -267,6 +382,8 @@ MaxAccountsPerUser=0"""
             # Obtener contenido según el editor activo
             if self.current_mode == "simple" and self.selected_file_type == "ini":
                 content = self.ini_simple_editor.get_ini_content()
+            elif self.current_mode == "simple" and self.selected_file_type == "lua":
+                content = self.lua_simple_editor.get_lua_content()
             else:
                 content = self.advanced_text_editor.get_content()
             
