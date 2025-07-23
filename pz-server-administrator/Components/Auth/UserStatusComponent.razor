@@ -1,7 +1,9 @@
 @using pz_server_administrator.Models
 @using pz_server_administrator.Services
 @inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
 @implements IDisposable
+@rendermode InteractiveServer
 
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right" VerticalAlignment="VerticalAlignment.Center">
     @if (AuthService.CurrentState.IsAuthenticated)
@@ -29,14 +31,13 @@
     {
         <FluentButton Appearance="Appearance.Accent"
                      IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.LockClosed())"
-                     OnClick="ShowLogin">
+                     OnClick="NavigateToLogin">
             Iniciar Sesión
         </FluentButton>
     }
 </FluentStack>
 
-<!-- Login Modal -->
-<LoginModal @bind-IsHidden="@IsLoginModalHidden" OnLoginSuccess="HandleLoginSuccess" />
+
 
 <!-- User Info Dialog -->
 <FluentDialog @bind-Hidden="@IsUserInfoHidden" Modal="true">
@@ -87,7 +88,6 @@
 </FluentDialog>
 
 @code {
-    private bool IsLoginModalHidden = true;
     private bool IsUserInfoHidden = true;
     
     protected override void OnInitialized()
@@ -100,15 +100,9 @@
         InvokeAsync(StateHasChanged);
     }
     
-    private void ShowLogin()
+    private void NavigateToLogin()
     {
-        IsLoginModalHidden = false;
-    }
-    
-    private void HandleLoginSuccess(AuthUser user)
-    {
-        IsLoginModalHidden = true;
-        StateHasChanged();
+        Navigation.NavigateTo("/login");
     }
     
     private async Task HandleLogout()

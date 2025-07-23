@@ -91,7 +91,7 @@
     private string SuccessMessage = string.Empty;
     private bool IsLoading = false;
     
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         // If user is already authenticated, redirect to home or return URL
         if (AuthService.CurrentState.IsAuthenticated)
@@ -106,6 +106,8 @@
         {
             SuccessMessage = "Has cerrado sesión exitosamente.";
         }
+        
+        return Task.CompletedTask;
     }
     
 
