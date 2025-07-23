@@ -1,0 +1,131 @@
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IAuthenticationService AuthService
+@implements IDisposable
+
+@if (ShouldRenderContent())
+{
+    @ChildContent
+}
+else if (NotAuthorizedContent != null)
+{
+    @NotAuthorizedContent
+}
+else if (ShowDefaultUnauthorized)
+{
+    <FluentMessageBar Intent="MessageIntent.Warning">
+        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())" Slot="start" />
+        No tienes permisos para acceder a este contenido.
+        @if (!AuthService.CurrentState.IsAuthenticated)
+        {
+            <text> Por favor, inicia sesión.</text>
+        }
+    </FluentMessageBar>
+}
+
+@code {
+    /// <summary>
+    /// Content to render when user is authorized
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    
+    /// <summary>
+    /// Content to render when user is not authorized
+    /// </summary>
+    [Parameter] public RenderFragment? NotAuthorizedContent { get; set; }
+    
+    /// <summary>
+    /// Required permission to view the content
+    /// </summary>
+    [Parameter] public string? RequiredPermission { get; set; }
+    
+    /// <summary>
+    /// Required role to view the content
+    /// </summary>
+    [Parameter] public UserRole? RequiredRole { get; set; }
+    
+    /// <summary>
+    /// Minimum role required to view the content
+    /// </summary>
+    [Parameter] public UserRole? MinimumRole { get; set; }
+    
+    /// <summary>
+    /// Whether to show default unauthorized message
+    /// </summary>
+    [Parameter] public bool ShowDefaultUnauthorized { get; set; } = true;
+    
+    /// <summary>
+    /// Whether authentication is required (default: true)
+    /// </summary>
+    [Parameter] public bool RequireAuthentication { get; set; } = true;
+    
+    protected override void OnInitialized()
+    {
+        AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+    
+    private void OnAuthenticationStateChanged(AuthenticationState state)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private bool ShouldRenderContent()
+    {
+        // Check authentication requirement
+        if (RequireAuthentication && !AuthService.CurrentState.IsAuthenticated)
+        {
+            return false;
+        }
+        
+        // Check specific permission
+        if (!string.IsNullOrEmpty(RequiredPermission))
+        {
+            return RequiredPermission switch
+            {
+                "AllowConfigEdit" => AuthService.HasPermission(p => p.AllowConfigEdit),
+                "AllowRcon" => AuthService.HasPermission(p => p.AllowRcon),
+                "AllowModManagement" => AuthService.HasPermission(p => p.AllowModManagement),
+                "AllowDatabaseWrite" => AuthService.HasPermission(p => p.AllowDatabaseWrite),
+                "AllowServerSwitch" => AuthService.HasPermission(p => p.AllowServerSwitch),
+                "AllowUserManagement" => AuthService.HasPermission(p => p.AllowUserManagement),
+                _ => false
+            };
+        }
+        
+        // Check exact role requirement
+        if (RequiredRole.HasValue)
+        {
+            return AuthService.CurrentState.CurrentRole == RequiredRole.Value;
+        }
+        
+        // Check minimum role requirement
+        if (MinimumRole.HasValue)
+        {
+            return HasMinimumRole(MinimumRole.Value);
+        }
+        
+        // If no specific requirements, just check authentication
+        return !RequireAuthentication || AuthService.CurrentState.IsAuthenticated;
+    }
+    
+    private bool HasMinimumRole(UserRole minimumRole)
+    {
+        if (!AuthService.CurrentState.IsAuthenticated)
+            return false;
+            
+        var currentRole = AuthService.CurrentState.CurrentRole;
+        
+        return minimumRole switch
+        {
+            UserRole.Guest => true, // Everyone has at least Guest level
+            UserRole.Moderator => currentRole == UserRole.Moderator || currentRole == UserRole.Administrator,
+            UserRole.Administrator => currentRole == UserRole.Administrator,
+            _ => false
+        };
+    }
+    
+    public void Dispose()
+    {
+        AuthService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
+}

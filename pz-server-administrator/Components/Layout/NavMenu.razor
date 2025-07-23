@@ -25,8 +25,11 @@
             @* Mods Section (Future) *@
             <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent" Disabled="true">Mods (Coming Soon)</FluentNavLink>
             
-            @* App Configuration *@
-            <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
+            @* System Administration *@
+            <FluentNavGroup Text="System" Icon="@(new Icons.Regular.Size20.Shield())" IconColor="Color.Accent" Expanded="false">
+                <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">User Management</FluentNavLink>
+                <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
+            </FluentNavGroup>
         </FluentNavMenu>
     </nav>
 </div>

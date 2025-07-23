@@ -1,0 +1,128 @@
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IAuthenticationService AuthService
+
+
+<FluentDialog @bind-Hidden="@IsHidden" Modal="true" TrapFocus="true">
+    <FluentDialogHeader>
+        <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" />
+        <FluentLabel Typo="Typography.PaneHeader">Iniciar Sesión</FluentLabel>
+    </FluentDialogHeader>
+    
+    <FluentDialogBody>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error">
+                    @ErrorMessage
+                </FluentMessageBar>
+            }
+            
+            <FluentTextField @bind-Value="Username" 
+                           Placeholder="Nombre de usuario"
+                           Label="Usuario"
+                           Required="true"
+                           Style="width: 100%" />
+            
+            <FluentTextField @bind-Value="Password" 
+                           Placeholder="Contraseña"
+                           Label="Contraseña"
+                           TextFieldType="TextFieldType.Password"
+                           Required="true"
+                           Style="width: 100%" />
+        </FluentStack>
+    </FluentDialogBody>
+    
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" 
+                     OnClick="HandleLogin"
+                     Loading="@IsLoading"
+                     Disabled="@(IsLoading || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))">
+            @if (IsLoading)
+            {
+                <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())" />
+                <span>Iniciando sesión...</span>
+            }
+            else
+            {
+                <span>Iniciar Sesión</span>
+            }
+        </FluentButton>
+        
+        <FluentButton Appearance="Appearance.Neutral" 
+                     OnClick="HandleCancel"
+                     Disabled="@IsLoading">
+            Cancelar
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
+@code {
+    [Parameter] public bool IsHidden { get; set; } = true;
+    [Parameter] public EventCallback<bool> IsHiddenChanged { get; set; }
+    [Parameter] public EventCallback<AuthUser> OnLoginSuccess { get; set; }
+    
+    private string Username = string.Empty;
+    private string Password = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = false;
+    
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Por favor, complete todos los campos.";
+            return;
+        }
+        
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        StateHasChanged();
+        
+        try
+        {
+            var success = await AuthService.LoginAsync(Username, Password);
+            if (success)
+            {
+                await OnLoginSuccess.InvokeAsync(AuthService.CurrentState.CurrentUser);
+                await CloseModal();
+                ClearForm();
+            }
+            else
+            {
+                ErrorMessage = "Credenciales inválidas. Por favor, verifique su usuario y contraseña.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al iniciar sesión: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task HandleCancel()
+    {
+        await CloseModal();
+        ClearForm();
+    }
+    
+    private async Task CloseModal()
+    {
+        IsHidden = true;
+        await IsHiddenChanged.InvokeAsync(IsHidden);
+    }
+    
+    private void ClearForm()
+    {
+        Username = string.Empty;
+        Password = string.Empty;
+        ErrorMessage = string.Empty;
+        IsLoading = false;
+    }
+    
+
+}

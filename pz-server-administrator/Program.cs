@@ -11,6 +11,8 @@ builder.Services.AddFluentUIComponents();
 
 // Register application services
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
+builder.Services.AddSingleton<IPasswordHashingService, PasswordHashingService>();
+builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 
 var app = builder.Build();
 

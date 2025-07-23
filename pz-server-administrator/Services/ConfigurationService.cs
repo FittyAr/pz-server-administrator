@@ -20,6 +20,12 @@ public interface IConfigurationService
     Task SaveConfigurationAsync(ZsmConfiguration configuration);
 
     /// <summary>
+    /// Saves the configuration to appsettings.zsm.json (synchronous)
+    /// </summary>
+    /// <param name="configuration">Configuration to save</param>
+    void SaveConfiguration(ZsmConfiguration configuration);
+
+    /// <summary>
     /// Reloads the configuration from file
     /// </summary>
     Task ReloadConfigurationAsync();
@@ -44,7 +50,7 @@ public class ConfigurationService : IConfigurationService
         _logger = logger;
         _configFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "config", "appsettings.zsm.json");
         _configuration = new ZsmConfiguration();
-        
+
         // Load configuration on startup
         LoadConfiguration();
     }
@@ -93,6 +99,37 @@ public class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
+    /// Saves configuration to file (synchronous)
+    /// </summary>
+    /// <param name="configuration">Configuration to save</param>
+    public void SaveConfiguration(ZsmConfiguration configuration)
+    {
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            var json = JsonSerializer.Serialize(configuration, options);
+            File.WriteAllText(_configFilePath, json);
+
+            lock (_lock)
+            {
+                _configuration = configuration;
+            }
+
+            _logger.LogInformation("Configuration saved successfully to {FilePath}", _configFilePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save configuration to {FilePath}", _configFilePath);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Reloads configuration from file
     /// </summary>
     public async Task ReloadConfigurationAsync()
@@ -122,7 +159,7 @@ public class ConfigurationService : IConfigurationService
             };
 
             var configuration = JsonSerializer.Deserialize<ZsmConfiguration>(json, options);
-            
+
             lock (_lock)
             {
                 _configuration = configuration ?? new ZsmConfiguration();
@@ -152,7 +189,7 @@ public class ConfigurationService : IConfigurationService
                     ActiveServer = "",
                     RCON = new RconSettings()
                 },
-                Users = new List<User>(),
+                Users = new List<AuthUser>(),
                 Roles = new Dictionary<string, RolePermissions>
                 {
                     ["Guest"] = new RolePermissions

@@ -1,0 +1,164 @@
+@page "/login"
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+
+
+<PageTitle>Iniciar Sesión - PZ Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" 
+            HorizontalAlignment="HorizontalAlignment.Center" 
+            VerticalAlignment="VerticalAlignment.Center"
+            Style="min-height: 80vh; padding: 20px;">
+    
+    <FluentCard Style="width: 400px; padding: 32px;">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+            <!-- Header -->
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.LockClosed())" Color="Color.Accent" />
+                <FluentLabel Typo="Typography.H4">PZ Server Administrator</FluentLabel>
+                <FluentLabel Typo="Typography.Body">Inicia sesión para continuar</FluentLabel>
+            </FluentStack>
+            
+            <!-- Error Message -->
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Error">
+                    @ErrorMessage
+                </FluentMessageBar>
+            }
+            
+            <!-- Success Message -->
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <FluentMessageBar Intent="MessageIntent.Success">
+                    @SuccessMessage
+                </FluentMessageBar>
+            }
+            
+            <!-- Login Form -->
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                <FluentTextField @bind-Value="Username" 
+                               Placeholder="Ingresa tu nombre de usuario"
+                               Label="Usuario"
+                               Required="true"
+                               Style="width: 100%"
+                               @onkeypress="HandleKeyPress" />
+                
+                <FluentTextField @bind-Value="Password" 
+                               Placeholder="Ingresa tu contraseña"
+                               Label="Contraseña"
+                               TextFieldType="TextFieldType.Password"
+                               Required="true"
+                               Style="width: 100%"
+                               @onkeypress="HandleKeyPress" />
+                
+                <FluentButton Appearance="Appearance.Accent" 
+                             OnClick="HandleLogin"
+                             Loading="@IsLoading"
+                             Disabled="@(IsLoading || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))"
+                             Style="width: 100%; margin-top: 8px;">
+                    @if (IsLoading)
+                    {
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowClockwise())" />
+                        <span>Iniciando sesión...</span>
+                    }
+                    else
+                    {
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.LockClosed())" />
+                        <span>Iniciar Sesión</span>
+                    }
+                </FluentButton>
+            </FluentStack>
+            
+            <!-- Footer -->
+            <FluentDivider />
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentLabel Typo="Typography.Body">¿No tienes una cuenta?</FluentLabel>
+                <FluentLabel Typo="Typography.Body">Contacta al administrador del sistema</FluentLabel>
+            </FluentStack>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    [Parameter, SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    
+    private string Username = string.Empty;
+    private string Password = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private bool IsLoading = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // If user is already authenticated, redirect to home or return URL
+        if (AuthService.CurrentState.IsAuthenticated)
+        {
+            var redirectUrl = !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/";
+            Navigation.NavigateTo(redirectUrl);
+        }
+        
+        // Check if this is a logout redirect
+        var uri = new Uri(Navigation.Uri);
+        if (uri.Query.Contains("logout=true"))
+        {
+            SuccessMessage = "Has cerrado sesión exitosamente.";
+        }
+    }
+    
+
+    
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage = "Por favor, complete todos los campos.";
+            return;
+        }
+        
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+        StateHasChanged();
+        
+        try
+        {
+            var success = await AuthService.LoginAsync(Username, Password);
+            if (success)
+            {
+                SuccessMessage = $"¡Bienvenido, {AuthService.CurrentState.CurrentUser?.Username}!";
+                StateHasChanged();
+                
+                // Small delay to show success message
+                await Task.Delay(1000);
+                
+                // Redirect to return URL or home
+                var redirectUrl = !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/";
+                Navigation.NavigateTo(redirectUrl);
+            }
+            else
+            {
+                ErrorMessage = "Credenciales inválidas. Por favor, verifique su usuario y contraseña.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al iniciar sesión: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !IsLoading && !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password))
+        {
+            await HandleLogin();
+        }
+    }
+}

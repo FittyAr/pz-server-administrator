@@ -5,3 +5,5 @@
 - Servicios inyectados vía constructor.
 - Lógica de UI separada de la lógica de negocio (por `Services`, `Models`, `ViewModels`).
 - Persistencia de configuración con `appsettings.zsm.json` bajo la carpeta `config/`.
+- **NO** utilices javascript.
+- Si llegas a necesitar javascript informalo y dare la confirmacion si lo permito o no.

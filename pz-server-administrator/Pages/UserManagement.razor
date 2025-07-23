@@ -1,0 +1,358 @@
+@page "/users"
+@using pz_server_administrator.Services
+@using pz_server_administrator.Models
+@using pz_server_administrator.Components.Auth
+@using Microsoft.FluentUI.AspNetCore.Components.Icons
+@inject IAuthenticationService AuthService
+@inject IPasswordHashingService PasswordHashingService
+
+
+<PageTitle>Gestión de Usuarios - PZ Server Administrator</PageTitle>
+
+<AuthorizedView RequiredPermission="CanEditConfig">
+    <ChildContent>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
+            <!-- Header -->
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                    <FluentLabel Typo="Typography.H3">
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.People())" />
+                        Gestión de Usuarios
+                    </FluentLabel>
+                    <FluentLabel Typo="Typography.Body">Administra los usuarios del sistema y sus permisos</FluentLabel>
+                </FluentStack>
+                
+                <FluentButton Appearance="Appearance.Accent" 
+                             IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.PersonAdd())"
+                             OnClick="ShowCreateUserDialog">
+                    Crear Usuario
+                </FluentButton>
+            </FluentStack>
+            
+            <!-- Users Table -->
+            <FluentCard>
+                <FluentDataGrid Items="@Users" GridTemplateColumns="1fr 1fr 1fr 1fr 1fr auto" Style="width: 100%;">
+                    <PropertyColumn Property="@(u => u.Username)" Title="Usuario" Sortable="true" />
+                    <PropertyColumn Property="@(u => GetRoleDisplayName(u.Role))" Title="Rol" Sortable="true" />
+                    <PropertyColumn Property="@(u => u.IsActive ? "Activo" : "Inactivo")" Title="Estado" Sortable="true">
+                        <ColumnOptions>
+                            <div class="search-box">
+                                <FluentSearch type="search" Autofocus=false @bind-Value=statusFilter @oninput="HandleStatusFilter" Placeholder="Filtrar por estado..." />
+                            </div>
+                        </ColumnOptions>
+                    </PropertyColumn>
+                    <PropertyColumn Property="@(u => u.CreatedAt.ToString("dd/MM/yyyy"))" Title="Creado" Sortable="true" />
+                    <PropertyColumn Property="@(u => u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "Nunca")" Title="Último Acceso" Sortable="true" />
+                    <TemplateColumn Title="Acciones">
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
+                            <FluentButton Appearance="Appearance.Stealth" 
+                                         IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())"
+                                         OnClick="() => ShowEditUserDialog(context)"
+                                         Title="Editar usuario" />
+                            
+                            @if (context.Username != AuthService.CurrentState.CurrentUser?.Username)
+                            {
+                                <FluentButton Appearance="Appearance.Stealth" 
+                                             IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())"
+                                             OnClick="() => ShowDeleteConfirmation(context)"
+                                             Title="Eliminar usuario" />
+                            }
+                        </FluentStack>
+                    </TemplateColumn>
+                </FluentDataGrid>
+            </FluentCard>
+        </FluentStack>
+        
+        <!-- Create/Edit User Dialog -->
+        <FluentDialog @bind-Hidden="@IsUserDialogHidden" Modal="true" TrapFocus="true">
+            <FluentDialogHeader>
+                @if (IsEditMode)
+                {
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonEdit())" />
+                }
+                else
+                {
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonAdd())" />
+                }
+                <FluentLabel Typo="Typography.PaneHeader">@(IsEditMode ? "Editar Usuario" : "Crear Usuario")</FluentLabel>
+            </FluentDialogHeader>
+            
+            <FluentDialogBody>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                    @if (!string.IsNullOrEmpty(DialogErrorMessage))
+                    {
+                        <FluentMessageBar Intent="MessageIntent.Error">
+                            @DialogErrorMessage
+                        </FluentMessageBar>
+                    }
+                    
+                    <FluentTextField @bind-Value="DialogUsername" 
+                                   Label="Nombre de usuario"
+                                   Required="true"
+                                   Disabled="@IsEditMode"
+                                   Style="width: 100%" />
+                    
+                    @if (!IsEditMode || !string.IsNullOrEmpty(DialogPassword))
+                    {
+                        <FluentTextField @bind-Value="DialogPassword" 
+                                       Label="@(IsEditMode ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña")"
+                                       TextFieldType="TextFieldType.Password"
+                                       Required="@(!IsEditMode)"
+                                       Style="width: 100%" />
+                    }
+                    
+                    <FluentSelect TOption="string" @bind-Value="DialogRole" Label="Rol" Style="width: 100%">
+                        <FluentOption TOption="string" Value="@UserRole.Guest.ToString()">@GetRoleDisplayName(UserRole.Guest)</FluentOption>
+                        <FluentOption TOption="string" Value="@UserRole.Moderator.ToString()">@GetRoleDisplayName(UserRole.Moderator)</FluentOption>
+                        <FluentOption TOption="string" Value="@UserRole.Administrator.ToString()">@GetRoleDisplayName(UserRole.Administrator)</FluentOption>
+                    </FluentSelect>
+                    
+                    <FluentCheckbox @bind-Value="DialogIsActive" Label="Usuario activo" />
+                </FluentStack>
+            </FluentDialogBody>
+            
+            <FluentDialogFooter>
+                <FluentButton Appearance="Appearance.Accent" 
+                             OnClick="SaveUser"
+                             Loading="@IsDialogLoading"
+                             Disabled="@(IsDialogLoading || string.IsNullOrWhiteSpace(DialogUsername) || (!IsEditMode && string.IsNullOrWhiteSpace(DialogPassword)))">
+                    @(IsEditMode ? "Actualizar" : "Crear")
+                </FluentButton>
+                
+                <FluentButton Appearance="Appearance.Neutral" 
+                             OnClick="CloseUserDialog"
+                             Disabled="@IsDialogLoading">
+                    Cancelar
+                </FluentButton>
+            </FluentDialogFooter>
+        </FluentDialog>
+        
+        <!-- Delete Confirmation Dialog -->
+        <FluentDialog @bind-Hidden="@IsDeleteDialogHidden" Modal="true">
+            <FluentDialogHeader>
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Warning())" Color="Color.Error" />
+                <FluentLabel Typo="Typography.PaneHeader">Confirmar Eliminación</FluentLabel>
+            </FluentDialogHeader>
+            
+            <FluentDialogBody>
+                <FluentLabel Typo="Typography.Body">
+                    ¿Estás seguro de que deseas eliminar al usuario <strong>@UserToDelete?.Username</strong>?
+                    Esta acción no se puede deshacer.
+                </FluentLabel>
+            </FluentDialogBody>
+            
+            <FluentDialogFooter>
+                <FluentButton Appearance="Appearance.Accent" 
+                             OnClick="ConfirmDeleteUser"
+                             Loading="@IsDeleteLoading">
+                    Eliminar
+                </FluentButton>
+                
+                <FluentButton Appearance="Appearance.Neutral" 
+                             OnClick="CancelDelete"
+                             Disabled="@IsDeleteLoading">
+                    Cancelar
+                </FluentButton>
+            </FluentDialogFooter>
+        </FluentDialog>
+    </ChildContent>
+    
+    <NotAuthorizedContent>
+        <FluentMessageBar Intent="MessageIntent.Warning">
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())" Slot="start" />
+            No tienes permisos para gestionar usuarios. Se requiere rol de Administrador.
+        </FluentMessageBar>
+    </NotAuthorizedContent>
+</AuthorizedView>
+
+@code {
+    private IQueryable<AuthUser> Users = new List<AuthUser>().AsQueryable();
+    private string statusFilter = string.Empty;
+    
+    // Dialog state
+    private bool IsUserDialogHidden = true;
+    private bool IsDeleteDialogHidden = true;
+    private bool IsEditMode = false;
+    private bool IsDialogLoading = false;
+    private bool IsDeleteLoading = false;
+    private string DialogErrorMessage = string.Empty;
+    
+    // Dialog form data
+    private string DialogUsername = string.Empty;
+    private string DialogPassword = string.Empty;
+    private string DialogRole = UserRole.Guest.ToString();
+    private bool DialogIsActive = true;
+    private AuthUser? EditingUser = null;
+    private AuthUser? UserToDelete = null;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+    
+    private async Task LoadUsers()
+    {
+        try
+        {
+            var usersList = await AuthService.GetAllUsersAsync();
+            Users = usersList.AsQueryable();
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            // Error loading users: log to console or handle appropriately
+        }
+    }
+    
+    private void HandleStatusFilter(ChangeEventArgs e)
+    {
+        statusFilter = e.Value?.ToString() ?? string.Empty;
+        // Implement filtering logic if needed
+    }
+    
+    private void ShowCreateUserDialog()
+    {
+        IsEditMode = false;
+        DialogUsername = string.Empty;
+        DialogPassword = string.Empty;
+        DialogRole = UserRole.Guest.ToString();
+        DialogIsActive = true;
+        DialogErrorMessage = string.Empty;
+        EditingUser = null;
+        IsUserDialogHidden = false;
+    }
+    
+    private void ShowEditUserDialog(AuthUser user)
+    {
+        IsEditMode = true;
+        DialogUsername = user.Username;
+        DialogPassword = string.Empty;
+        DialogRole = user.Role.ToString();
+        DialogIsActive = user.IsActive;
+        DialogErrorMessage = string.Empty;
+        EditingUser = user;
+        IsUserDialogHidden = false;
+    }
+    
+    private async Task SaveUser()
+    {
+        if (string.IsNullOrWhiteSpace(DialogUsername))
+        {
+            DialogErrorMessage = "El nombre de usuario es requerido.";
+            return;
+        }
+        
+        if (!IsEditMode && string.IsNullOrWhiteSpace(DialogPassword))
+        {
+            DialogErrorMessage = "La contraseña es requerida para nuevos usuarios.";
+            return;
+        }
+        
+        IsDialogLoading = true;
+        DialogErrorMessage = string.Empty;
+        StateHasChanged();
+        
+        try
+        {
+            if (IsEditMode && EditingUser != null)
+            {
+                // Update existing user
+                var updatedUser = new AuthUser
+                {
+                    Username = EditingUser.Username,
+                    PasswordHash = string.IsNullOrWhiteSpace(DialogPassword) ? 
+                                 EditingUser.PasswordHash : 
+                                 PasswordHashingService.HashPassword(DialogPassword),
+                    Role = Enum.Parse<UserRole>(DialogRole),
+                    IsActive = DialogIsActive,
+                    CreatedAt = EditingUser.CreatedAt,
+                    LastLoginAt = EditingUser.LastLoginAt
+                };
+                
+                var passwordToUpdate = string.IsNullOrWhiteSpace(DialogPassword) ? null : DialogPassword;
+                await AuthService.UpdateUserAsync(EditingUser.Username, passwordToUpdate, Enum.Parse<UserRole>(DialogRole), DialogIsActive);
+            }
+            else
+            {
+                // Create new user
+                var newUser = new AuthUser
+                {
+                    Username = DialogUsername,
+                    PasswordHash = PasswordHashingService.HashPassword(DialogPassword),
+                    Role = Enum.Parse<UserRole>(DialogRole),
+                    IsActive = DialogIsActive,
+                    CreatedAt = DateTime.Now
+                };
+                
+                await AuthService.CreateUserAsync(DialogUsername, DialogPassword, Enum.Parse<UserRole>(DialogRole));
+            }
+            
+            await LoadUsers();
+            CloseUserDialog();
+        }
+        catch (Exception ex)
+        {
+            DialogErrorMessage = $"Error al {(IsEditMode ? "actualizar" : "crear")} usuario: {ex.Message}";
+        }
+        finally
+        {
+            IsDialogLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void CloseUserDialog()
+    {
+        IsUserDialogHidden = true;
+        DialogErrorMessage = string.Empty;
+        IsDialogLoading = false;
+    }
+    
+    private void ShowDeleteConfirmation(AuthUser user)
+    {
+        UserToDelete = user;
+        IsDeleteDialogHidden = false;
+    }
+    
+    private async Task ConfirmDeleteUser()
+    {
+        if (UserToDelete == null) return;
+        
+        IsDeleteLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            await AuthService.DeleteUserAsync(UserToDelete.Username);
+            await LoadUsers();
+            CancelDelete();
+        }
+        catch (Exception)
+        {
+            // Error deleting user: log to console or handle appropriately
+        }
+        finally
+        {
+            IsDeleteLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void CancelDelete()
+    {
+        IsDeleteDialogHidden = true;
+        UserToDelete = null;
+        IsDeleteLoading = false;
+    }
+    
+    private string GetRoleDisplayName(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.Administrator => "Administrador",
+            UserRole.Moderator => "Moderador",
+            UserRole.Guest => "Invitado",
+            _ => "Desconocido"
+        };
+    }
+}
