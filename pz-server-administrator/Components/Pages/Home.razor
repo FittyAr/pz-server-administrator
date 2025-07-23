@@ -1,7 +1,134 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@inject IConfigurationService ConfigService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Project Zomboid Server Administrator</PageTitle>
 
-<h1>Hello, world!</h1>
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Home())" />
+                Bienvenido al Administrador de Servidores Project Zomboid
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta aplicación te permite administrar múltiples instancias de servidores Project Zomboid desde una interfaz moderna y fácil de usar.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
 
-Welcome to your new Fluent Blazor app.
+    <FluentGrid>
+        <FluentGridItem xs="12" md="6">
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+                    <FluentLabel Typo="Typography.H5">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Server())" />
+                        Estado del Servidor
+                    </FluentLabel>
+                    @if (!string.IsNullOrEmpty(ActiveServerName))
+                    {
+                        <FluentBadge Appearance="Appearance.Accent">
+                            Servidor Activo: @ActiveServerName
+                        </FluentBadge>
+                        <FluentLabel Typo="Typography.Body">
+                            Puedes acceder a las opciones de configuración y administración desde el menú lateral.
+                        </FluentLabel>
+                    }
+                    else
+                    {
+                        <FluentBadge Appearance="Appearance.Neutral">
+                            No hay servidor seleccionado
+                        </FluentBadge>
+                        <FluentLabel Typo="Typography.Body">
+                            Para comenzar, configura la ruta de servidores en "App Configuration" y selecciona un servidor activo.
+                        </FluentLabel>
+                    }
+                </FluentStack>
+            </FluentCard>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12" md="6">
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+                    <FluentLabel Typo="Typography.H5">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Info())" />
+                        Funcionalidades Disponibles
+                    </FluentLabel>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                        <FluentLabel Typo="Typography.Body">
+                            • Configuración de archivos del servidor (INI, Sandbox, Spawn)
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.Body">
+                            • Consola RCON para comandos remotos
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.Body">
+                            • Explorador de base de datos SQLite
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.Body">
+                            • Gestión de configuración de la aplicación
+                        </FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Color="Color.Disabled">
+                            • Gestión de mods (próximamente)
+                        </FluentLabel>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+        </FluentGridItem>
+    </FluentGrid>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H5">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" />
+                Configuración Actual
+            </FluentLabel>
+            <FluentGrid>
+                <FluentGridItem xs="12" md="4">
+                    <FluentLabel Typo="Typography.H6">Directorio de Servidores:</FluentLabel>
+                    <FluentLabel Typo="Typography.Body">
+                        @(string.IsNullOrEmpty(ServerDirectory) ? "No configurado" : ServerDirectory)
+                    </FluentLabel>
+                </FluentGridItem>
+                <FluentGridItem xs="12" md="4">
+                    <FluentLabel Typo="Typography.H6">Host RCON:</FluentLabel>
+                    <FluentLabel Typo="Typography.Body">
+                        @($"{RconHost}:{RconPort}")
+                    </FluentLabel>
+                </FluentGridItem>
+                <FluentGridItem xs="12" md="4">
+                    <FluentLabel Typo="Typography.H6">Usuarios Registrados:</FluentLabel>
+                    <FluentLabel Typo="Typography.Body">
+                        @UserCount usuario(s)
+                    </FluentLabel>
+                </FluentGridItem>
+            </FluentGrid>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    /// <summary>
+    /// Gets the name of the currently active server
+    /// </summary>
+    private string ActiveServerName => ConfigService.GetConfiguration().AppSettings.ActiveServer;
+
+    /// <summary>
+    /// Gets the server directory path
+    /// </summary>
+    private string ServerDirectory => ConfigService.GetConfiguration().AppSettings.ServerDirectoryPath;
+
+    /// <summary>
+    /// Gets the RCON host
+    /// </summary>
+    private string RconHost => ConfigService.GetConfiguration().AppSettings.RCON.Host;
+
+    /// <summary>
+    /// Gets the RCON port
+    /// </summary>
+    private int RconPort => ConfigService.GetConfiguration().AppSettings.RCON.Port;
+
+    /// <summary>
+    /// Gets the number of registered users
+    /// </summary>
+    private int UserCount => ConfigService.GetConfiguration().Users.Count;
+}

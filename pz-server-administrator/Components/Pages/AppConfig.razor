@@ -1,0 +1,190 @@
+@page "/app-config"
+@rendermode InteractiveServer
+@inject IConfigurationService ConfigService
+
+<PageTitle>App Configuration - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.SettingsChat())" />
+                Configuración de la Aplicación
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Configura los parámetros globales de la aplicación y la conexión a los servidores.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentGrid>
+        <FluentGridItem xs="12" md="6">
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+                    <FluentLabel Typo="Typography.H5">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Folder())" />
+                        Configuración de Servidores
+                    </FluentLabel>
+                    
+                    <FluentTextField @bind-Value="ServerDirectoryPath" 
+                                   Label="Directorio de Servidores" 
+                                   Placeholder="Ruta completa al directorio que contiene los servidores"
+                                   Style="width: 100%;" />
+                    
+                    <FluentTextField @bind-Value="ActiveServerName" 
+                                   Label="Servidor Activo" 
+                                   Placeholder="Nombre del servidor actualmente seleccionado"
+                                   Style="width: 100%;" />
+                    
+                    <FluentButton Appearance="Appearance.Accent" 
+                                @onclick="SaveServerConfiguration"
+                                Loading="@IsSaving">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
+                        Guardar Configuración de Servidores
+                    </FluentButton>
+                </FluentStack>
+            </FluentCard>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12" md="6">
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+                    <FluentLabel Typo="Typography.H5">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Code())" />
+                        Configuración RCON
+                    </FluentLabel>
+                    
+                    <FluentTextField @bind-Value="RconHost" 
+                                   Label="Host RCON" 
+                                   Placeholder="127.0.0.1"
+                                   Style="width: 100%;" />
+                    
+                    <FluentNumberField @bind-Value="RconPort" 
+                                     Label="Puerto RCON" 
+                                     Placeholder="27015"
+                                     Style="width: 100%;" />
+                    
+                    <FluentTextField @bind-Value="RconPassword" 
+                                   Label="Contraseña RCON" 
+                                   TextFieldType="TextFieldType.Password"
+                                   Placeholder="Contraseña del servidor RCON"
+                                   Style="width: 100%;" />
+                    
+                    <FluentButton Appearance="Appearance.Accent" 
+                                @onclick="SaveRconConfiguration"
+                                Loading="@IsSaving">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
+                        Guardar Configuración RCON
+                    </FluentButton>
+                </FluentStack>
+            </FluentCard>
+        </FluentGridItem>
+    </FluentGrid>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <FluentMessageBar Intent="@MessageIntent" 
+                        @bind-Open="ShowMessage">
+            @StatusMessage
+        </FluentMessageBar>
+    }
+</FluentStack>
+
+@code {
+    private string ServerDirectoryPath = string.Empty;
+    private string ActiveServerName = string.Empty;
+    private string RconHost = string.Empty;
+    private int RconPort = 27015;
+    private string RconPassword = string.Empty;
+    private bool IsSaving = false;
+    private string StatusMessage = string.Empty;
+    private MessageIntent MessageIntent = MessageIntent.Info;
+    private bool ShowMessage = false;
+
+    /// <summary>
+    /// Initializes the component and loads current configuration
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        LoadCurrentConfiguration();
+    }
+
+    /// <summary>
+    /// Loads the current configuration values
+    /// </summary>
+    private void LoadCurrentConfiguration()
+    {
+        var config = ConfigService.GetConfiguration();
+        ServerDirectoryPath = config.AppSettings.ServerDirectoryPath;
+        ActiveServerName = config.AppSettings.ActiveServer;
+        RconHost = config.AppSettings.RCON.Host;
+        RconPort = config.AppSettings.RCON.Port;
+        RconPassword = config.AppSettings.RCON.Password;
+    }
+
+    /// <summary>
+    /// Saves the server configuration
+    /// </summary>
+    private async Task SaveServerConfiguration()
+    {
+        IsSaving = true;
+        try
+        {
+            var config = ConfigService.GetConfiguration();
+            config.AppSettings.ServerDirectoryPath = ServerDirectoryPath;
+            config.AppSettings.ActiveServer = ActiveServerName;
+            
+            await ConfigService.SaveConfigurationAsync(config);
+            
+            ShowStatusMessage("Configuración de servidores guardada exitosamente.", MessageIntent.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowStatusMessage($"Error al guardar la configuración: {ex.Message}", MessageIntent.Error);
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    /// <summary>
+    /// Saves the RCON configuration
+    /// </summary>
+    private async Task SaveRconConfiguration()
+    {
+        IsSaving = true;
+        try
+        {
+            var config = ConfigService.GetConfiguration();
+            config.AppSettings.RCON.Host = RconHost;
+            config.AppSettings.RCON.Port = RconPort;
+            config.AppSettings.RCON.Password = RconPassword;
+            
+            await ConfigService.SaveConfigurationAsync(config);
+            
+            ShowStatusMessage("Configuración RCON guardada exitosamente.", MessageIntent.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowStatusMessage($"Error al guardar la configuración RCON: {ex.Message}", MessageIntent.Error);
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    /// <summary>
+    /// Shows a status message to the user
+    /// </summary>
+    /// <param name="message">Message to display</param>
+    /// <param name="intent">Message intent (success, error, etc.)</param>
+    private void ShowStatusMessage(string message, MessageIntent intent)
+    {
+        StatusMessage = message;
+        MessageIntent = intent;
+        ShowMessage = true;
+        StateHasChanged();
+    }
+}

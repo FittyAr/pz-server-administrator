@@ -1,0 +1,43 @@
+@page "/server-config/sandbox"
+@rendermode InteractiveServer
+
+<PageTitle>Sandbox Variables - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Box())" />
+                Variables de Sandbox
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Configura las variables de sandbox que definen las reglas del juego en el servidor.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+            <FluentLabel Typo="Typography.H5">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
+                Módulo en Desarrollo
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta funcionalidad será implementada en el Módulo 4.2 según el plan de desarrollo.
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Características planificadas:
+            </FluentLabel>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                <FluentLabel Typo="Typography.Body">• Edición de archivo SandboxVars.lua</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Controles específicos para cada variable de sandbox</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Validación de valores según tipo de variable</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Ayuda contextual desde sandboxvars-help.json</FluentLabel>
+            </FluentStack>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    // Implementation will be added in Module 4.2
+}

@@ -1,0 +1,43 @@
+@page "/server-config/spawn-points"
+@rendermode InteractiveServer
+
+<PageTitle>Spawn Points - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Circle())" />
+                Puntos de Spawn
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Configura los puntos específicos donde los jugadores aparecen en el servidor.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+            <FluentLabel Typo="Typography.H5">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
+                Módulo en Desarrollo
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta funcionalidad será implementada en el Módulo 4.4 según el plan de desarrollo.
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Características planificadas:
+            </FluentLabel>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                <FluentLabel Typo="Typography.Body">• Edición de archivo SpawnPoints.lua</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Gestión de puntos de spawn individuales</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Configuración de coordenadas exactas</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Ayuda contextual desde spawnpoints-help.json</FluentLabel>
+            </FluentStack>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    // Implementation will be added in Module 4.4
+}

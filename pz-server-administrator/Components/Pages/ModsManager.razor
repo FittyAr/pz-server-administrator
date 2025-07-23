@@ -1,0 +1,69 @@
+@page "/mods"
+@rendermode InteractiveServer
+
+<PageTitle>Mods Manager - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Apps())" />
+                Gestión de Mods
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Administra los mods del servidor Project Zomboid.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+            <FluentLabel Typo="Typography.H5">
+                <FluentIcon Value="@(new Icons.Regular.Size20.BuildingFactory())" />
+                Funcionalidad Futura
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta funcionalidad será implementada en el Módulo 9 según el plan de desarrollo.
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Características planificadas:
+            </FluentLabel>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                <FluentLabel Typo="Typography.Body">• Listado de mods activos en el servidor</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Información detallada de cada mod</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Activación / desactivación de mods</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Posible integración con Steam Workshop</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Gestión de dependencias entre mods</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Actualización automática de mods</FluentLabel>
+            </FluentStack>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H6">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Shield())" />
+                Requisitos de Acceso
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta funcionalidad requiere permisos de Administrador.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H6">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Calendar())" />
+                Estado del Desarrollo
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta sección se implementará una vez que la funcionalidad básica esté completa (Módulos 1-8).
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    // Implementation will be added in Module 9 (Future)
+}

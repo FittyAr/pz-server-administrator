@@ -1,5 +1,6 @@
 using Microsoft.FluentUI.AspNetCore.Components;
 using pz_server_administrator.Components;
+using pz_server_administrator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddFluentUIComponents();
+
+// Register application services
+builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 
 var app = builder.Build();
 

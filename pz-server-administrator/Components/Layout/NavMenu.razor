@@ -1,4 +1,5 @@
-﻿@rendermode InteractiveServer
+@rendermode InteractiveServer
+@inject IConfigurationService ConfigService
 
 <div class="navmenu">
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
@@ -6,12 +7,31 @@
     <nav class="sitenav" aria-labelledby="main-menu">
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded" CustomToggle="true">
             <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
-            <FluentNavLink Href="counter" Icon="@(new Icons.Regular.Size20.NumberSymbolSquare())" IconColor="Color.Accent">Counter</FluentNavLink>
-            <FluentNavLink Href="weather" Icon="@(new Icons.Regular.Size20.WeatherPartlyCloudyDay())" IconColor="Color.Accent">Weather</FluentNavLink>
+            
+            @* Server Config Section *@
+            <FluentNavGroup Text="Server Config" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent" Expanded="false">
+                <FluentNavLink Href="/server-config/ini" Icon="@(new Icons.Regular.Size20.Document())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Ini Config</FluentNavLink>
+                <FluentNavLink Href="/server-config/sandbox" Icon="@(new Icons.Regular.Size20.Box())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Sandbox Vars</FluentNavLink>
+                <FluentNavLink Href="/server-config/spawn-regions" Icon="@(new Icons.Regular.Size20.Location())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Spawn Regions</FluentNavLink>
+                <FluentNavLink Href="/server-config/spawn-points" Icon="@(new Icons.Regular.Size20.Circle())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Spawn Points</FluentNavLink>
+            </FluentNavGroup>
+            
+            @* RCON Section *@
+            <FluentNavLink Href="/rcon" Icon="@(new Icons.Regular.Size20.Code())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">RCON Console</FluentNavLink>
+            
+            @* Database Section *@
+            <FluentNavLink Href="/database" Icon="@(new Icons.Regular.Size20.Database())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Database Explorer</FluentNavLink>
+            
+            @* Mods Section (Future) *@
+            <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent" Disabled="true">Mods (Coming Soon)</FluentNavLink>
+            
+            @* App Configuration *@
+            <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
         </FluentNavMenu>
     </nav>
 </div>
 
 @code {
     private bool expanded = true;
+    private bool HasActiveServer => !string.IsNullOrEmpty(ConfigService.GetConfiguration().AppSettings.ActiveServer);
 }

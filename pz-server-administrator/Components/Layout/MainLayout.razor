@@ -1,8 +1,28 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@inject IConfigurationService ConfigService
 
 <FluentLayout>
     <FluentHeader>
-        pz-server-administrator
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Width="100%">
+            <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                Project Zomboid Server Administrator
+            </FluentLabel>
+            <FluentSpacer />
+            @if (!string.IsNullOrEmpty(ActiveServerName))
+            {
+                <FluentBadge Appearance="Appearance.Accent">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Server())" />
+                    @ActiveServerName
+                </FluentBadge>
+            }
+            else
+            {
+                <FluentBadge Appearance="Appearance.Neutral">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" />
+                    No Server Selected
+                </FluentBadge>
+            }
+        </FluentStack>
     </FluentHeader>
     <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
         <NavMenu />
@@ -24,3 +44,10 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    /// <summary>
+    /// Gets the name of the currently active server
+    /// </summary>
+    private string ActiveServerName => ConfigService.GetConfiguration().AppSettings.ActiveServer;
+}

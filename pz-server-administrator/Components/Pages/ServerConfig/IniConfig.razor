@@ -1,0 +1,43 @@
+@page "/server-config/ini"
+@rendermode InteractiveServer
+
+<PageTitle>INI Configuration - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Document())" />
+                Configuración INI del Servidor
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Edita los archivos de configuración INI del servidor Project Zomboid.
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+            <FluentLabel Typo="Typography.H5">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
+                Módulo en Desarrollo
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Esta funcionalidad será implementada en el Módulo 4.1 según el plan de desarrollo.
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                Características planificadas:
+            </FluentLabel>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                <FluentLabel Typo="Typography.Body">• Modo avanzado: Edición directa del archivo de texto</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Modo simple: Interfaz con controles por parámetro</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Detección de parámetros faltantes</FluentLabel>
+                <FluentLabel Typo="Typography.Body">• Sistema de tooltips con ayuda contextual</FluentLabel>
+            </FluentStack>
+        </FluentStack>
+    </FluentCard>
+</FluentStack>
+
+@code {
+    // Implementation will be added in Module 4.1
+}
