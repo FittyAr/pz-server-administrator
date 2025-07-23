@@ -1,27 +1,11 @@
-# Zomboid Server Manager - Blazor .NET 9
-
-## Descripción general
-
-Aplicación web construida con **Blazor Server en .NET 9** para administrar servidores dedicados del juego **Project Zomboid (versión 41)**. La app permitirá seleccionar, visualizar y editar la configuración de servidores, ejecutar comandos por RCON, consultar estadísticas desde la base de datos SQLite del juego y, en el futuro, gestionar mods.
-
----
-
-## 🎯 Objetivos
-
-- Permitir a administradores de servidores Zomboid configurar y administrar múltiples instancias de servidor desde una interfaz moderna.
-- Simplificar la edición de archivos de configuración `.ini` y `.lua` mediante UI amigable y/o edición directa de texto.
-- Habilitar control remoto del servidor mediante RCON.
-- Visualizar estadísticas e información persistente almacenada en SQLite.
-- Preparar la base para futuras extensiones como gestión de mods.
-
----
+# Zomboid Server Manager
 
 ## 🗂️ Estructura del Proyecto
 
 ```plaintext
-ZomboidServerManager/
+pz-server-administrator/
 │
-├── ZomboidServerManager/               # Proyecto principal Blazor Server
+├── pz-server-administrator/               # Proyecto principal Blazor Server
 │   ├── Pages/
 │   ├── Components/
 │   ├── Services/
@@ -37,7 +21,7 @@ ZomboidServerManager/
 │   ├── ini-help.json                   # Descripciones de parámetros del INI
 │   ├── sandboxvars-help.json           # Descripciones de parámetros SandboxVars
 │   ├── spawnregions-help.json          # Descripciones de parámetros Spawn Regions
-│   └── extraconfig-help.json           # Descripciones del archivo adicional
+│   └── spawnpoints-help.json           # Descripciones de parámetros Spawn Points
 │
 ├── docs/                               # Documentación detallada
 │   ├── README.md                       # (Este archivo)
@@ -49,7 +33,7 @@ ZomboidServerManager/
 │
 ├── wwwroot/
 │
-└── ZomboidServerManager.sln
+└── pz-server-administrator.sln
 ```
 
 ---
@@ -80,7 +64,7 @@ Submódulos:
 - **4.1 INI Config**
 - **4.2 SandboxVars.lua**
 - **4.3 SpawnRegion.lua**
-- **4.4 ExtraConfig.lua**
+- **4.4 SpawnPoints.lua**
 
 Para cada uno:
 - Implementar vista modo avanzado (texto editable)
@@ -96,7 +80,7 @@ Para cada uno:
   - `ini-help.json`
   - `sandboxvars-help.json`
   - `spawnregions-help.json`
-  - `extraconfig-help.json`
+  - `spawnpoints-help.json`
 - Mostrar info al pasar el mouse sobre íconos de ayuda
 
 ### 🔌 Módulo 6: Consola RCON (modo Moderador/Admin)
@@ -146,26 +130,3 @@ Para cada uno:
 - (Opcional) Pruebas de integración o e2e con Playwright para Blazor
 
 ---
-
-## 🛠️ Requisitos técnicos
-
-- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
-- Blazor Server
-- Visual Studio 2022 o Visual Studio Code
-- Permisos de lectura/escritura sobre la carpeta donde se almacenan los servidores
-- Acceso al puerto RCON (si el servidor lo tiene habilitado)
-
----
-
-## ✅ Próximos pasos inmediatos
-
-1. Crear estructura de solución
-2. Implementar sistema de autenticación y roles
-3. Agregar selector de servidor activo
-4. Iniciar con el módulo de configuración `INI`
-5. Paralelizar módulos independientes: RCON y SQLite
-6. Crear módulo de configuración de la app
-
----
-
-## 📄 Licencia
