@@ -13,7 +13,8 @@ builder.Services.AddFluentUIComponents();
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 builder.Services.AddSingleton<IPasswordHashingService, PasswordHashingService>();
 builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
-builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 
 var app = builder.Build();
 

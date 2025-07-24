@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -8,6 +9,10 @@ namespace pz_server_administrator.Services
     /// </summary>
     public interface ILocalizationService
     {
+        /// <summary>
+        /// Event that is triggered when the language or translations change.
+        /// </summary>
+        event Action OnLanguageChanged;
         /// <summary>
         /// Gets the translation for a given key in the current language.
         /// </summary>

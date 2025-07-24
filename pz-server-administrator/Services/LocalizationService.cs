@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace pz_server_administrator.Services
 {
@@ -12,7 +14,9 @@ namespace pz_server_administrator.Services
     /// </summary>
     public class LocalizationService : ILocalizationService
     {
+        public event Action OnLanguageChanged;
         private readonly IWebHostEnvironment _env;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private Dictionary<string, string> _translations = new Dictionary<string, string>();
         private string _currentLanguage = "en"; // Default language
 
@@ -20,9 +24,11 @@ namespace pz_server_administrator.Services
         /// Initializes a new instance of the <see cref="LocalizationService"/> class.
         /// </summary>
         /// <param name="env">The web host environment.</param>
-        public LocalizationService(IWebHostEnvironment env)
+        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
+        public LocalizationService(IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
         {
             _env = env;
+            _httpContextAccessor = httpContextAccessor;
             // The language loading is now fully async. 
             // We need a separate method to initialize the service.
         }
@@ -30,7 +36,14 @@ namespace pz_server_administrator.Services
         public async Task InitializeAsync()
         {
             LoadAvailableLanguages();
+
+            if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Language", out var language) ?? false)
+            {
+                _currentLanguage = language;
+            }
+
             await LoadLanguage(_currentLanguage);
+            OnLanguageChanged?.Invoke();
         }
 
         /// <inheritdoc />
@@ -51,13 +64,18 @@ namespace pz_server_administrator.Services
             if (AvailableLanguages.Contains(language))
             {
                 _currentLanguage = language;
+                _httpContextAccessor.HttpContext?.Response.Cookies.Append("Language", language);
                 await LoadLanguage(language);
+                OnLanguageChanged?.Invoke();
             }
         }
 
         private void LoadAvailableLanguages()
         {
-            var langDirPath = Path.Combine(_env.ContentRootPath, "..", "config", "lang");
+            var solutionDir = GetSolutionDirectory();
+            if (string.IsNullOrEmpty(solutionDir)) return;
+
+            var langDirPath = Path.Combine(solutionDir, "config", "lang");
             if (Directory.Exists(langDirPath))
             {
                 AvailableLanguages = Directory.GetFiles(langDirPath, "*.json")
@@ -69,7 +87,10 @@ namespace pz_server_administrator.Services
 
         private async Task LoadLanguage(string language)
         {
-            var langFilePath = Path.Combine(_env.ContentRootPath, "..", "config", "lang", $"{language}.json");
+            var solutionDir = GetSolutionDirectory();
+            if (string.IsNullOrEmpty(solutionDir)) return;
+
+            var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
             if (File.Exists(langFilePath))
             {
                 var json = await File.ReadAllTextAsync(langFilePath);
@@ -79,7 +100,10 @@ namespace pz_server_administrator.Services
 
         public async Task<string> GetLanguageNameAsync(string language)
         {
-            var langFilePath = Path.Combine(_env.ContentRootPath, "..", "config", "lang", $"{language}.json");
+            var solutionDir = GetSolutionDirectory();
+            if (string.IsNullOrEmpty(solutionDir)) return language;
+
+            var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
             if (File.Exists(langFilePath))
             {
                 var json = await File.ReadAllTextAsync(langFilePath);
@@ -90,6 +114,16 @@ namespace pz_server_administrator.Services
                 }
             }
             return language; // Fallback to language code
+        }
+
+        private string? GetSolutionDirectory()
+        {
+            var directory = new DirectoryInfo(_env.ContentRootPath);
+            while (directory != null && !directory.GetFiles("*.sln").Any())
+            {
+                directory = directory.Parent;
+            }
+            return directory?.FullName;
         }
     }
 }
