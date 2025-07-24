@@ -3,6 +3,7 @@
 @using pz_server_administrator.Models
 @inject IConfigurationService ConfigService
 @inject IAuthenticationService AuthService
+@inject ILocalizationService LocService
 @implements IDisposable
 
 @using pz_server_administrator.Components.Layout
@@ -15,36 +16,36 @@
     <label for="navmenu-toggle" class="navmenu-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" /></label>
     <nav class="sitenav" aria-labelledby="main-menu">
         <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded" CustomToggle="true">
-            <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
+            <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">@LocService.Get("NavMenu.Home")</FluentNavLink>
             
             @* Server Config Section *@
-            <FluentNavGroup Text="Server Config" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent" Expanded="false">
-                <FluentNavLink Href="/server-config/ini" Icon="@(new Icons.Regular.Size20.Document())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Ini Config</FluentNavLink>
-                <FluentNavLink Href="/server-config/sandbox" Icon="@(new Icons.Regular.Size20.Box())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Sandbox Vars</FluentNavLink>
-                <FluentNavLink Href="/server-config/spawn-regions" Icon="@(new Icons.Regular.Size20.Location())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Spawn Regions</FluentNavLink>
-                <FluentNavLink Href="/server-config/spawn-points" Icon="@(new Icons.Regular.Size20.Circle())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Spawn Points</FluentNavLink>
+            <FluentNavGroup Text="@LocService.Get("NavMenu.ServerConfig")" Icon="@(new Icons.Regular.Size20.Settings())" IconColor="Color.Accent" Expanded="false">
+                <FluentNavLink Href="/server-config/ini" Icon="@(new Icons.Regular.Size20.Document())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.IniConfig")</FluentNavLink>
+                <FluentNavLink Href="/server-config/sandbox" Icon="@(new Icons.Regular.Size20.Box())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SandboxVars")</FluentNavLink>
+                <FluentNavLink Href="/server-config/spawn-regions" Icon="@(new Icons.Regular.Size20.Location())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnRegions")</FluentNavLink>
+                <FluentNavLink Href="/server-config/spawn-points" Icon="@(new Icons.Regular.Size20.Circle())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnPoints")</FluentNavLink>
             </FluentNavGroup>
             
             @* RCON Section *@
-            <FluentNavLink Href="/rcon" Icon="@(new Icons.Regular.Size20.Code())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">RCON Console</FluentNavLink>
+            <FluentNavLink Href="/rcon" Icon="@(new Icons.Regular.Size20.Code())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.RconConsole")</FluentNavLink>
             
             @* Database Section *@
-            <FluentNavLink Href="/database" Icon="@(new Icons.Regular.Size20.Database())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">Database Explorer</FluentNavLink>
+            <FluentNavLink Href="/database" Icon="@(new Icons.Regular.Size20.Database())" IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.DatabaseExplorer")</FluentNavLink>
             
             @* Mods Section (Future) *@
-            <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent" Disabled="true">Mods (Coming Soon)</FluentNavLink>
+            <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent" Disabled="true">@LocService.Get("NavMenu.Mods")</FluentNavLink>
             
             @* System Administration *@
             @if (AuthService.HasPermission(p => p.AllowUserManagement) || AuthService.HasPermission(p => p.AllowConfigEdit))
             {
-                <FluentNavGroup Text="System" Icon="@(new Icons.Regular.Size20.Shield())" IconColor="Color.Accent" Expanded="false">
+                <FluentNavGroup Text="@LocService.Get("NavMenu.System")" Icon="@(new Icons.Regular.Size20.Shield())" IconColor="Color.Accent" Expanded="false">
                     @if (AuthService.HasPermission(p => p.AllowUserManagement))
                     {
-                        <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">User Management</FluentNavLink>
+                        <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">@LocService.Get("NavMenu.UserManagement")</FluentNavLink>
                     }
                     @if (AuthService.HasPermission(p => p.AllowConfigEdit))
                     {
-                        <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
+                        <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">@LocService.Get("NavMenu.AppConfiguration")</FluentNavLink>
                     }
                 </FluentNavGroup>
             }
