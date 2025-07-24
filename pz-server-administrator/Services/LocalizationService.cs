@@ -35,14 +35,22 @@ namespace pz_server_administrator.Services
 
         public async Task InitializeAsync()
         {
+            Console.WriteLine("[LocalizationService] InitializeAsync started");
             LoadAvailableLanguages();
+            Console.WriteLine($"[LocalizationService] Available languages loaded: {string.Join(", ", AvailableLanguages)}");
 
             if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Language", out var language) ?? false)
             {
                 _currentLanguage = language;
+                Console.WriteLine($"[LocalizationService] Language from cookie: {language}");
+            }
+            else
+            {
+                Console.WriteLine($"[LocalizationService] No language cookie found, using default: {_currentLanguage}");
             }
 
             await LoadLanguage(_currentLanguage);
+            Console.WriteLine($"[LocalizationService] Language loaded: {_currentLanguage}, translations count: {_translations.Count}");
             // No disparamos OnLanguageChanged durante la inicialización
             // ya que no hay componentes suscritos aún
         }
@@ -76,12 +84,22 @@ namespace pz_server_administrator.Services
         /// <inheritdoc />
         public async Task SetLanguage(string language)
         {
+            Console.WriteLine($"[LocalizationService] SetLanguage called with: {language}");
+            Console.WriteLine($"[LocalizationService] Available languages: {string.Join(", ", AvailableLanguages)}");
+            
             if (AvailableLanguages.Contains(language))
             {
+                Console.WriteLine($"[LocalizationService] Language {language} found, changing from {_currentLanguage}");
                 _currentLanguage = language;
                 _httpContextAccessor.HttpContext?.Response.Cookies.Append("Language", language);
                 await LoadLanguage(language);
+                Console.WriteLine($"[LocalizationService] Language loaded, translations count: {_translations.Count}");
                 OnLanguageChanged?.Invoke();
+                Console.WriteLine($"[LocalizationService] OnLanguageChanged event invoked");
+            }
+            else
+            {
+                Console.WriteLine($"[LocalizationService] Language {language} not found in available languages");
             }
         }
 

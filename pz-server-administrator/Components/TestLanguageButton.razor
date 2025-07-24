@@ -1,0 +1,38 @@
+@using pz_server_administrator.Services
+@implements IDisposable
+@inject ILocalizationService LocService
+
+<div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+    <h4>Test Language Change</h4>
+    <p>Current Language: @LocService.CurrentLanguage</p>
+    <p>Test Text: @LocService.Get("NavMenu.Home")</p>
+    
+    <button @onclick="ChangeToEnglish" style="margin: 5px;">English</button>
+    <button @onclick="ChangeToSpanish" style="margin: 5px;">Español</button>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LocService.OnLanguageChanged += StateHasChanged;
+    }
+
+    private async Task ChangeToEnglish()
+    {
+        Console.WriteLine($"[TestLanguageButton] Changing language to: en");
+        await LocService.SetLanguage("en");
+        Console.WriteLine($"[TestLanguageButton] Language change completed");
+    }
+
+    private async Task ChangeToSpanish()
+    {
+        Console.WriteLine($"[TestLanguageButton] Changing language to: es");
+        await LocService.SetLanguage("es");
+        Console.WriteLine($"[TestLanguageButton] Language change completed");
+    }
+
+    public void Dispose()
+    {
+        LocService.OnLanguageChanged -= StateHasChanged;
+    }
+}

@@ -2,6 +2,7 @@
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
 @using pz_server_administrator.Components.Layout
+@using pz_server_administrator.Components
 @implements IDisposable
 
 <FluentLayout>
@@ -44,6 +45,8 @@
         <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor" target="_blank">@LocService.Get("MainLayout.AboutBlazor")</a>
     </FluentFooter>
 </FluentLayout>
+
+<TestLanguageButton />
 
 <div id="blazor-error-ui" data-nosnippet>
     @LocService.Get("MainLayout.UnhandledError")

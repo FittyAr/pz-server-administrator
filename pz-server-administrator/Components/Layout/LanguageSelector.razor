@@ -33,8 +33,11 @@
 
     private async Task OnLanguageChangedAsync()
     {
+        Console.WriteLine($"[LanguageSelector] OnLanguageChangedAsync called with: {selectedLanguage}");
         await LocService.SetLanguage(selectedLanguage);
-        // The event will trigger the UI update, so no need to force reload.
+        Console.WriteLine($"[LanguageSelector] SetLanguage completed");
+        StateHasChanged();
+        Console.WriteLine($"[LanguageSelector] StateHasChanged called");
     }
 
     public void Dispose()
