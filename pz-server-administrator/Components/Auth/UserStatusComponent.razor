@@ -3,7 +3,7 @@
 @inject IAuthenticationService AuthService
 @inject NavigationManager Navigation
 @implements IDisposable
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode())
 
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right" VerticalAlignment="VerticalAlignment.Center">
     @if (AuthService.CurrentState.IsAuthenticated)
@@ -13,19 +13,28 @@
                       Size="PersonaSize.Size32"
                       ImageInitials="@GetUserInitials(AuthService.CurrentState.CurrentUser?.Username)" />
         
-        <FluentMenuButton Text="@AuthService.CurrentState.CurrentUser?.Username"
-                         IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Person())"
-                         Appearance="Appearance.Stealth">
-            <FluentMenuItem OnClick="ShowUserInfo">
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())" Slot="start" />
-                Información del Usuario
-            </FluentMenuItem>
-            
-            <FluentMenuItem OnClick="HandleLogout">
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowExit())" Slot="start" />
-                Cerrar Sesión
-            </FluentMenuItem>
-        </FluentMenuButton>
+        <FluentButton Id="user-menu-button"
+                     IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Person())"
+                     Appearance="Appearance.Stealth"
+                     OnClick="ToggleUserMenu">
+            @AuthService.CurrentState.CurrentUser?.Username
+        </FluentButton>
+        
+        <FluentPopover AnchorId="user-menu-button" @bind-Open="_isUserMenuOpen">
+            <Body>
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                    <FluentButton Appearance="Appearance.Stealth" OnClick="ShowUserInfo" Style="width: 100%; justify-content: flex-start;">
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())" Slot="start" />
+                        Información del Usuario
+                    </FluentButton>
+                    
+                    <FluentButton Appearance="Appearance.Stealth" OnClick="HandleLogout" Style="width: 100%; justify-content: flex-start;">
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowExit())" Slot="start" />
+                        Cerrar Sesión
+                    </FluentButton>
+                </FluentStack>
+            </Body>
+        </FluentPopover>
     }
     else
     {
@@ -89,6 +98,7 @@
 
 @code {
     private bool IsUserInfoHidden = true;
+    private bool _isUserMenuOpen = false;
     
     protected override void OnInitialized()
     {
@@ -107,12 +117,19 @@
     
     private async Task HandleLogout()
     {
+        _isUserMenuOpen = false;
         await AuthService.LogoutAsync();
     }
     
     private void ShowUserInfo()
     {
         IsUserInfoHidden = false;
+        _isUserMenuOpen = false;
+    }
+    
+    private void ToggleUserMenu()
+    {
+        _isUserMenuOpen = !_isUserMenuOpen;
     }
     
     private void CloseUserInfo()
