@@ -4,12 +4,12 @@
 @inject NavigationManager NavigationManager
 
 <FluentSelect TOption="KeyValuePair<string, string>"
-    Label="Language"
     Items="@languageNames"
     OptionText="(item) => item.Value"
     OptionValue="(item) => item.Key"
     @bind-Value="selectedLanguage"
-    @bind-Value:after="OnLanguageChangedAsync" />
+    @bind-Value:after="OnLanguageChangedAsync"
+    Style="min-width: 120px; margin-right: 8px;" />
 
 @code {
     private string selectedLanguage = string.Empty;

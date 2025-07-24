@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
+@using pz_server_administrator.Components.Layout
 
 <FluentLayout>
     <FluentHeader>
@@ -24,6 +25,7 @@
                 </FluentBadge>
             }
             <FluentSpacer />
+            <LanguageSelector />
             <UserStatusComponent />
         </FluentStack>
     </FluentHeader>
