@@ -2,6 +2,7 @@
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
 @using pz_server_administrator.Components.Layout
+@implements IDisposable
 
 <FluentLayout>
     <FluentHeader>
@@ -55,4 +56,20 @@
     /// Gets the name of the currently active server
     /// </summary>
     private string ActiveServerName => ConfigService.GetConfiguration().AppSettings.ActiveServer;
+
+    /// <summary>
+    /// Initializes the component and subscribes to language change events
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        LocService.OnLanguageChanged += StateHasChanged;
+    }
+
+    /// <summary>
+    /// Disposes the component and unsubscribes from language change events
+    /// </summary>
+    public void Dispose()
+    {
+        LocService.OnLanguageChanged -= StateHasChanged;
+    }
 }

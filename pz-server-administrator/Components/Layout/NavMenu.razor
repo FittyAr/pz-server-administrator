@@ -57,6 +57,7 @@
     protected override void OnInitialized()
     {
         AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        LocService.OnLanguageChanged += StateHasChanged;
     }
     
     private void OnAuthenticationStateChanged(AuthenticationState state)
@@ -67,5 +68,6 @@
     public void Dispose()
     {
         AuthService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        LocService.OnLanguageChanged -= StateHasChanged;
     }
 }

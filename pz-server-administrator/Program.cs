@@ -34,4 +34,14 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+// Initialize LocalizationService
+using (var scope = app.Services.CreateScope())
+{
+    var localizationService = scope.ServiceProvider.GetRequiredService<ILocalizationService>();
+    if (localizationService is LocalizationService locService)
+    {
+        await locService.InitializeAsync();
+    }
+}
+
 app.Run();
