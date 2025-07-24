@@ -1,0 +1,24 @@
+@using pz_server_administrator.Services
+@inject ILocalizationService LocService
+@inject NavigationManager NavigationManager
+
+<FluentSelect TOption="string"
+    Label="Language"
+    Items="@LocService.AvailableLanguages"
+    @bind-Value="selectedLanguage"
+    @bind-Value:after="OnLanguageChangedAsync" />
+
+@code {
+    private string selectedLanguage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        selectedLanguage = LocService.CurrentLanguage;
+    }
+
+    private async Task OnLanguageChangedAsync()
+    {
+        await LocService.SetLanguage(selectedLanguage);
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+}

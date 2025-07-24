@@ -5,9 +5,10 @@
 @using Microsoft.FluentUI.AspNetCore.Components.Icons
 @inject IAuthenticationService AuthService
 @inject IPasswordHashingService PasswordHashingService
+@inject ILocalizationService LocService
 
 
-<PageTitle>Gestión de Usuarios - PZ Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("UserManagement.Title") - PZ Server Administrator</PageTitle>
 
 <AuthorizedView RequiredPermission="AllowUserManagement">
     <ChildContent>
@@ -17,33 +18,33 @@
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
                     <FluentLabel Typo="Typography.H3">
                         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.People())" />
-                        Gestión de Usuarios
+                        @LocService.Get("UserManagement.Title")
                     </FluentLabel>
-                    <FluentLabel Typo="Typography.Body">Administra los usuarios del sistema y sus permisos</FluentLabel>
+                    <FluentLabel Typo="Typography.Body">@LocService.Get("UserManagement.Description")</FluentLabel>
                 </FluentStack>
                 
                 <FluentButton Appearance="Appearance.Accent" 
                              IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.PersonAdd())"
                              OnClick="ShowCreateUserDialog">
-                    Crear Usuario
+                    @LocService.Get("UserManagement.CreateUser")
                 </FluentButton>
             </FluentStack>
             
             <!-- Users Table -->
             <FluentCard>
                 <FluentDataGrid Items="@Users" GridTemplateColumns="1fr 1fr 1fr 1fr 1fr auto" Style="width: 100%;">
-                    <PropertyColumn Property="@(u => u.Username)" Title="Usuario" Sortable="true" />
-                    <PropertyColumn Property="@(u => GetRoleDisplayName(u.Role))" Title="Rol" Sortable="true" />
-                    <PropertyColumn Property="@(u => u.IsActive ? "Activo" : "Inactivo")" Title="Estado" Sortable="true">
+                    <PropertyColumn Property="@(u => u.Username)" Title="@LocService.Get("UserManagement.Table.Username")" Sortable="true" />
+                    <PropertyColumn Property="@(u => GetRoleDisplayName(u.Role))" Title="@LocService.Get("UserManagement.Table.Role")" Sortable="true" />
+                    <PropertyColumn Property="@(u => u.IsActive ? LocService.Get("UserManagement.Table.Active") : LocService.Get("UserManagement.Table.Inactive"))" Title="@LocService.Get("UserManagement.Table.Status")" Sortable="true">
                         <ColumnOptions>
                             <div class="search-box">
                                 <FluentSearch type="search" Autofocus=false @bind-Value=statusFilter @oninput="HandleStatusFilter" Placeholder="Filtrar por estado..." />
                             </div>
                         </ColumnOptions>
                     </PropertyColumn>
-                    <PropertyColumn Property="@(u => u.CreatedAt.ToString("dd/MM/yyyy"))" Title="Creado" Sortable="true" />
-                    <PropertyColumn Property="@(u => u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : "Nunca")" Title="Último Acceso" Sortable="true" />
-                    <TemplateColumn Title="Acciones">
+                    <PropertyColumn Property="@(u => u.CreatedAt.ToString("dd/MM/yyyy"))" Title="@LocService.Get("UserManagement.Table.Created")" Sortable="true" />
+                    <PropertyColumn Property="@(u => u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm") : LocService.Get("UserManagement.Table.Never"))" Title="@LocService.Get("UserManagement.Table.LastLogin")" Sortable="true" />
+                    <TemplateColumn Title="@LocService.Get("UserManagement.Table.Actions")">
                         <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8">
                             <FluentButton Appearance="Appearance.Stealth" 
                                          IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Edit())"
@@ -55,7 +56,7 @@
                                 <FluentButton Appearance="Appearance.Stealth" 
                                              IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Delete())"
                                              OnClick="() => ShowDeleteConfirmation(context)"
-                                             Title="Eliminar usuario" />
+                                             Title='@(LocService.Get("UserManagement.DeleteDialog.Delete") + " usuario")' />
                             }
                         </FluentStack>
                     </TemplateColumn>
@@ -74,7 +75,7 @@
                 {
                     <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonAdd())" />
                 }
-                <FluentLabel Typo="Typography.PaneHeader">@(IsEditMode ? "Editar Usuario" : "Crear Usuario")</FluentLabel>
+                <FluentLabel Typo="Typography.PaneHeader">@(IsEditMode ? LocService.Get("UserManagement.Dialog.EditUser") : LocService.Get("UserManagement.Dialog.CreateUser"))</FluentLabel>
             </FluentDialogHeader>
             
             <FluentDialogBody>
@@ -87,7 +88,7 @@
                     }
                     
                     <FluentTextField @bind-Value="DialogUsername" 
-                                   Label="Nombre de usuario"
+                                   Label="@LocService.Get("UserManagement.Dialog.Username")"
                                    Required="true"
                                    Disabled="@IsEditMode"
                                    Style="width: 100%" />
@@ -95,19 +96,19 @@
                     @if (!IsEditMode || !string.IsNullOrEmpty(DialogPassword))
                     {
                         <FluentTextField @bind-Value="DialogPassword" 
-                                       Label="@(IsEditMode ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña")"
+                                       Label="@(IsEditMode ? LocService.Get("UserManagement.Dialog.NewPassword") : LocService.Get("UserManagement.Dialog.Password"))"
                                        TextFieldType="TextFieldType.Password"
                                        Required="@(!IsEditMode)"
                                        Style="width: 100%" />
                     }
                     
-                    <FluentSelect TOption="string" @bind-Value="DialogRole" Label="Rol" Style="width: 100%">
+                    <FluentSelect TOption="string" @bind-Value="DialogRole" Label="@LocService.Get("UserManagement.Dialog.Role")" Style="width: 100%">
                         <FluentOption TOption="string" Value="@UserRole.Guest.ToString()">@GetRoleDisplayName(UserRole.Guest)</FluentOption>
                         <FluentOption TOption="string" Value="@UserRole.Moderator.ToString()">@GetRoleDisplayName(UserRole.Moderator)</FluentOption>
                         <FluentOption TOption="string" Value="@UserRole.Administrator.ToString()">@GetRoleDisplayName(UserRole.Administrator)</FluentOption>
                     </FluentSelect>
                     
-                    <FluentCheckbox @bind-Value="DialogIsActive" Label="Usuario activo" />
+                    <FluentCheckbox @bind-Value="DialogIsActive" Label="@LocService.Get("UserManagement.Dialog.ActiveUser")" />
                 </FluentStack>
             </FluentDialogBody>
             
@@ -116,13 +117,13 @@
                              OnClick="SaveUser"
                              Loading="@IsDialogLoading"
                              Disabled="@(IsDialogLoading || string.IsNullOrWhiteSpace(DialogUsername) || (!IsEditMode && string.IsNullOrWhiteSpace(DialogPassword)))">
-                    @(IsEditMode ? "Actualizar" : "Crear")
+                    @(IsEditMode ? LocService.Get("UserManagement.Dialog.Update") : LocService.Get("UserManagement.Dialog.Create"))
                 </FluentButton>
                 
                 <FluentButton Appearance="Appearance.Neutral" 
                              OnClick="CloseUserDialog"
                              Disabled="@IsDialogLoading">
-                    Cancelar
+                    @LocService.Get("UserManagement.Dialog.Cancel")
                 </FluentButton>
             </FluentDialogFooter>
         </FluentDialog>
@@ -131,13 +132,13 @@
         <FluentDialog @bind-Hidden="@IsDeleteDialogHidden" Modal="true">
             <FluentDialogHeader>
                 <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Warning())" Color="Color.Error" />
-                <FluentLabel Typo="Typography.PaneHeader">Confirmar Eliminación</FluentLabel>
+                <FluentLabel Typo="Typography.PaneHeader">@LocService.Get("UserManagement.DeleteDialog.Title")</FluentLabel>
             </FluentDialogHeader>
             
             <FluentDialogBody>
                 <FluentLabel Typo="Typography.Body">
-                    ¿Estás seguro de que deseas eliminar al usuario <strong>@UserToDelete?.Username</strong>?
-                    Esta acción no se puede deshacer.
+                    @string.Format(LocService.Get("UserManagement.DeleteDialog.Message"), UserToDelete?.Username)
+                    @LocService.Get("UserManagement.DeleteDialog.Warning")
                 </FluentLabel>
             </FluentDialogBody>
             
@@ -160,7 +161,7 @@
     <NotAuthorizedContent>
         <FluentMessageBar Intent="MessageIntent.Warning">
             <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())" Slot="start" />
-            No tienes permisos para gestionar usuarios. Se requiere rol de Administrador.
+            @LocService.Get("UserManagement.NoPermission")
         </FluentMessageBar>
     </NotAuthorizedContent>
 </AuthorizedView>

@@ -3,10 +3,11 @@
 @using pz_server_administrator.Services
 @inject IAuthenticationService AuthService
 @inject NavigationManager Navigation
+@inject ILocalizationService LocService
 @rendermode @(new InteractiveServerRenderMode())
 
 
-<PageTitle>Iniciar Sesión - PZ Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("Login.Title") - PZ Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" 
             HorizontalAlignment="HorizontalAlignment.Center" 
@@ -19,7 +20,7 @@
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" HorizontalAlignment="HorizontalAlignment.Center">
                 <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.LockClosed())" Color="Color.Accent" />
                 <FluentLabel Typo="Typography.H4">PZ Server Administrator</FluentLabel>
-                <FluentLabel Typo="Typography.Body">Inicia sesión para continuar</FluentLabel>
+                <FluentLabel Typo="Typography.Body">@LocService.Get("Login.Title")</FluentLabel>
             </FluentStack>
             
             <!-- Error Message -->
@@ -41,15 +42,15 @@
             <!-- Login Form -->
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
                 <FluentTextField @bind-Value="Username" 
-                               Placeholder="Ingresa tu nombre de usuario"
-                               Label="Usuario"
+                               Placeholder="@LocService.Get("Login.Username")"
+                               Label="@LocService.Get("Login.Username")"
                                Required="true"
                                Style="width: 100%"
                                @onkeypress="HandleKeyPress" />
                 
                 <FluentTextField @bind-Value="Password" 
-                               Placeholder="Ingresa tu contraseña"
-                               Label="Contraseña"
+                               Placeholder="@LocService.Get("Login.Password")"
+                               Label="@LocService.Get("Login.Password")"
                                TextFieldType="TextFieldType.Password"
                                Required="true"
                                Style="width: 100%"
@@ -63,12 +64,12 @@
                     @if (IsLoading)
                     {
                         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowClockwise())" />
-                        <span>Iniciando sesión...</span>
+                        <span>@LocService.Get("Login.LoggingIn")</span>
                     }
                     else
                     {
                         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.LockClosed())" />
-                        <span>Iniciar Sesión</span>
+                        <span>@LocService.Get("Login.LoginButton")</span>
                     }
                 </FluentButton>
             </FluentStack>
