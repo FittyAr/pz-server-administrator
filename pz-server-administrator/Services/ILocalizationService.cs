@@ -12,13 +12,21 @@ namespace pz_server_administrator.Services
         /// <summary>
         /// Event that is triggered when the language or translations change.
         /// </summary>
-        event Action OnLanguageChanged;
+        event Action? OnLanguageChanged;
         /// <summary>
         /// Gets the translation for a given key in the current language.
         /// </summary>
         /// <param name="key">The key of the translation string.</param>
         /// <returns>The translated string, or the key itself if not found.</returns>
         string Get(string key);
+
+        /// <summary>
+        /// Gets the translation for a given key in the current language and formats it with the provided arguments.
+        /// </summary>
+        /// <param name="key">The key of the translation string.</param>
+        /// <param name="args">The arguments to format the string with.</param>
+        /// <returns>The translated and formatted string, or the key itself if not found.</returns>
+        string Get(string key, params object[] args);
 
         /// <summary>
         /// Gets the currently selected language.

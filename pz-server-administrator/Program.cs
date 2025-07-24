@@ -14,7 +14,7 @@ builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 builder.Services.AddSingleton<IPasswordHashingService, PasswordHashingService>();
 builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ILocalizationService, LocalizationService>();
+builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
 
 var app = builder.Build();
 

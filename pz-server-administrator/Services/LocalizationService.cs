@@ -14,7 +14,7 @@ namespace pz_server_administrator.Services
     /// </summary>
     public class LocalizationService : ILocalizationService
     {
-        public event Action OnLanguageChanged;
+        public event Action? OnLanguageChanged;
         private readonly IWebHostEnvironment _env;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private Dictionary<string, string> _translations = new Dictionary<string, string>();
@@ -43,13 +43,28 @@ namespace pz_server_administrator.Services
             }
 
             await LoadLanguage(_currentLanguage);
-            OnLanguageChanged?.Invoke();
+            // No disparamos OnLanguageChanged durante la inicialización
+            // ya que no hay componentes suscritos aún
         }
 
         /// <inheritdoc />
         public string Get(string key)
         {
             return _translations.TryGetValue(key, out var value) ? value : key;
+        }
+
+        /// <inheritdoc />
+        public string Get(string key, params object[] args)
+        {
+            var template = Get(key);
+            try
+            {
+                return string.Format(template, args);
+            }
+            catch
+            {
+                return template; // Return unformatted string if formatting fails
+            }
         }
 
         /// <inheritdoc />

@@ -1,6 +1,7 @@
 @page "/"
-@rendermode @(new InteractiveServerRenderMode())
 @inject IConfigurationService ConfigService
+@inject ILocalizationService LocService
+@implements IDisposable
 
 <PageTitle>Project Zomboid Server Administrator</PageTitle>
 
@@ -9,10 +10,10 @@
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H3">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Home())" />
-                Bienvenido al Administrador de Servidores Project Zomboid
+                @LocService.Get("Home.Welcome")
             </FluentLabel>
             <FluentLabel Typo="Typography.Body">
-                Esta aplicación te permite administrar múltiples instancias de servidores Project Zomboid desde una interfaz moderna y fácil de usar.
+                @LocService.Get("Home.Description")
             </FluentLabel>
         </FluentStack>
     </FluentCard>
@@ -23,24 +24,24 @@
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
                     <FluentLabel Typo="Typography.H5">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Server())" />
-                        Estado del Servidor
+                        @LocService.Get("Home.ServerStatus")
                     </FluentLabel>
                     @if (!string.IsNullOrEmpty(ActiveServerName))
                     {
                         <FluentBadge Appearance="Appearance.Accent">
-                            Servidor Activo: @ActiveServerName
+                            @LocService.Get("Home.ActiveServer", ActiveServerName)
                         </FluentBadge>
                         <FluentLabel Typo="Typography.Body">
-                            Puedes acceder a las opciones de configuración y administración desde el menú lateral.
+                            @LocService.Get("Home.ServerStatusDescription")
                         </FluentLabel>
                     }
                     else
                     {
                         <FluentBadge Appearance="Appearance.Neutral">
-                            No hay servidor seleccionado
+                            @LocService.Get("Home.NoServerSelected")
                         </FluentBadge>
                         <FluentLabel Typo="Typography.Body">
-                            Para comenzar, configura la ruta de servidores en "App Configuration" y selecciona un servidor activo.
+                            @LocService.Get("Home.NoServerDescription")
                         </FluentLabel>
                     }
                 </FluentStack>
@@ -52,23 +53,23 @@
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
                     <FluentLabel Typo="Typography.H5">
                         <FluentIcon Value="@(new Icons.Regular.Size20.Info())" />
-                        Funcionalidades Disponibles
+                        @LocService.Get("Home.AvailableFeatures")
                     </FluentLabel>
                     <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
                         <FluentLabel Typo="Typography.Body">
-                            • Configuración de archivos del servidor (INI, Sandbox, Spawn)
+                            @LocService.Get("Home.Feature.ServerConfig")
                         </FluentLabel>
                         <FluentLabel Typo="Typography.Body">
-                            • Consola RCON para comandos remotos
+                            @LocService.Get("Home.Feature.RconConsole")
                         </FluentLabel>
                         <FluentLabel Typo="Typography.Body">
-                            • Explorador de base de datos SQLite
+                            @LocService.Get("Home.Feature.DatabaseExplorer")
                         </FluentLabel>
                         <FluentLabel Typo="Typography.Body">
-                            • Gestión de configuración de la aplicación
+                            @LocService.Get("Home.Feature.AppConfig")
                         </FluentLabel>
                         <FluentLabel Typo="Typography.Body" Color="Color.Disabled">
-                            • Gestión de mods (próximamente)
+                            @LocService.Get("Home.Feature.ModsComingSoon")
                         </FluentLabel>
                     </FluentStack>
                 </FluentStack>
@@ -80,25 +81,25 @@
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H5">
                 <FluentIcon Value="@(new Icons.Regular.Size20.Settings())" />
-                Configuración Actual
+                @LocService.Get("Home.CurrentConfig")
             </FluentLabel>
             <FluentGrid>
                 <FluentGridItem xs="12" md="4">
-                    <FluentLabel Typo="Typography.H6">Directorio de Servidores:</FluentLabel>
+                    <FluentLabel Typo="Typography.H6">@LocService.Get("Home.ServerDirectory")</FluentLabel>
                     <FluentLabel Typo="Typography.Body">
-                        @(string.IsNullOrEmpty(ServerDirectory) ? "No configurado" : ServerDirectory)
+                        @(string.IsNullOrEmpty(ServerDirectory) ? LocService.Get("Home.NotConfigured") : ServerDirectory)
                     </FluentLabel>
                 </FluentGridItem>
                 <FluentGridItem xs="12" md="4">
-                    <FluentLabel Typo="Typography.H6">Host RCON:</FluentLabel>
+                    <FluentLabel Typo="Typography.H6">@LocService.Get("Home.RconHost")</FluentLabel>
                     <FluentLabel Typo="Typography.Body">
                         @($"{RconHost}:{RconPort}")
                     </FluentLabel>
                 </FluentGridItem>
                 <FluentGridItem xs="12" md="4">
-                    <FluentLabel Typo="Typography.H6">Usuarios Registrados:</FluentLabel>
+                    <FluentLabel Typo="Typography.H6">@LocService.Get("Home.RegisteredUsers")</FluentLabel>
                     <FluentLabel Typo="Typography.Body">
-                        @UserCount usuario(s)
+                        @LocService.Get("Home.UsersCount", UserCount.ToString())
                     </FluentLabel>
                 </FluentGridItem>
             </FluentGrid>
@@ -131,4 +132,19 @@
     /// Gets the number of registered users
     /// </summary>
     private int UserCount => ConfigService.GetConfiguration().Users.Count;
+
+    protected override void OnInitialized()
+    {
+        LocService.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LocService.OnLanguageChanged -= OnLanguageChanged;
+    }
 }
