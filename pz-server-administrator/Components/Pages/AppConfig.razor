@@ -1,10 +1,13 @@
 @page "/app-config"
 @rendermode @(new InteractiveServerRenderMode())
+@using pz_server_administrator.Components.Auth
 @inject IConfigurationService ConfigService
 
 <PageTitle>App Configuration - Project Zomboid Server Administrator</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+<AuthorizedView RequiredPermission="AllowConfigEdit">
+    <ChildContent>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
     <FluentCard>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H3">
@@ -88,7 +91,16 @@
             @StatusMessage
         </FluentMessageBar>
     }
-</FluentStack>
+        </FluentStack>
+    </ChildContent>
+    
+    <NotAuthorizedContent>
+        <FluentMessageBar Intent="MessageIntent.Warning">
+            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())" Slot="start" />
+            No tienes permisos para acceder a la configuración de la aplicación. Se requiere rol de Administrador.
+        </FluentMessageBar>
+    </NotAuthorizedContent>
+</AuthorizedView>
 
 @code {
     private string ServerDirectoryPath = string.Empty;

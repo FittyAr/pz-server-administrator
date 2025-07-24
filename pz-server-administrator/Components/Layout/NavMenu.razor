@@ -1,5 +1,9 @@
 @rendermode @(new InteractiveServerRenderMode())
+@using pz_server_administrator.Services
+@using pz_server_administrator.Models
 @inject IConfigurationService ConfigService
+@inject IAuthenticationService AuthService
+@implements IDisposable
 
 <div class="navmenu">
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
@@ -26,10 +30,19 @@
             <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent" Disabled="true">Mods (Coming Soon)</FluentNavLink>
             
             @* System Administration *@
-            <FluentNavGroup Text="System" Icon="@(new Icons.Regular.Size20.Shield())" IconColor="Color.Accent" Expanded="false">
-                <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">User Management</FluentNavLink>
-                <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
-            </FluentNavGroup>
+            @if (AuthService.HasPermission(p => p.AllowUserManagement) || AuthService.HasPermission(p => p.AllowConfigEdit))
+            {
+                <FluentNavGroup Text="System" Icon="@(new Icons.Regular.Size20.Shield())" IconColor="Color.Accent" Expanded="false">
+                    @if (AuthService.HasPermission(p => p.AllowUserManagement))
+                    {
+                        <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">User Management</FluentNavLink>
+                    }
+                    @if (AuthService.HasPermission(p => p.AllowConfigEdit))
+                    {
+                        <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())" IconColor="Color.Accent">App Configuration</FluentNavLink>
+                    }
+                </FluentNavGroup>
+            }
         </FluentNavMenu>
     </nav>
 </div>
@@ -37,4 +50,19 @@
 @code {
     private bool expanded = true;
     private bool HasActiveServer => !string.IsNullOrEmpty(ConfigService.GetConfiguration().AppSettings.ActiveServer);
+    
+    protected override void OnInitialized()
+    {
+        AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+    
+    private void OnAuthenticationStateChanged(AuthenticationState state)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    public void Dispose()
+    {
+        AuthService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
 }
