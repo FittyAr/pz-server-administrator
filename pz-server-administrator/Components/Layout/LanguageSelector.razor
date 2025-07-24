@@ -2,18 +2,26 @@
 @inject ILocalizationService LocService
 @inject NavigationManager NavigationManager
 
-<FluentSelect TOption="string"
+<FluentSelect TOption="KeyValuePair<string, string>"
     Label="Language"
-    Items="@LocService.AvailableLanguages"
+    Items="@languageNames"
+    OptionText="(item) => item.Value"
+    OptionValue="(item) => item.Key"
     @bind-Value="selectedLanguage"
     @bind-Value:after="OnLanguageChangedAsync" />
 
 @code {
     private string selectedLanguage = string.Empty;
+    private Dictionary<string, string> languageNames = new Dictionary<string, string>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         selectedLanguage = LocService.CurrentLanguage;
+        foreach (var lang in LocService.AvailableLanguages)
+        {
+            var langName = await LocService.GetLanguageNameAsync(lang);
+            languageNames.Add(lang, langName);
+        }
     }
 
     private async Task OnLanguageChangedAsync()

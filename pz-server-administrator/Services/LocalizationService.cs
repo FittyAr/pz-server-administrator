@@ -76,5 +76,20 @@ namespace pz_server_administrator.Services
                 _translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             }
         }
+
+        public async Task<string> GetLanguageNameAsync(string language)
+        {
+            var langFilePath = Path.Combine(_env.ContentRootPath, "..", "config", "lang", $"{language}.json");
+            if (File.Exists(langFilePath))
+            {
+                var json = await File.ReadAllTextAsync(langFilePath);
+                var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                if (translations != null && translations.TryGetValue("Language.Name", out var name))
+                {
+                    return name;
+                }
+            }
+            return language; // Fallback to language code
+        }
     }
 }

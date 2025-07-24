@@ -37,5 +37,12 @@ namespace pz_server_administrator.Services
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
         Task InitializeAsync();
+
+        /// <summary>
+        /// Gets the name of a specific language from its localization file.
+        /// </summary>
+        /// <param name="language">The language code (e.g., "en", "es").</param>
+        /// <returns>The name of the language.</returns>
+        Task<string> GetLanguageNameAsync(string language);
     }
 }
