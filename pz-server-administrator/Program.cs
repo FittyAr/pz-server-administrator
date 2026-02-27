@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-	.AddInteractiveServerComponents();
+    .AddInteractiveServerComponents();
 builder.Services.AddFluentUIComponents();
 
 // Register application services
@@ -15,15 +15,17 @@ builder.Services.AddSingleton<IPasswordHashingService, PasswordHashingService>()
 builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+builder.Services.AddSingleton<IPzServerService, PzServerService>();
+builder.Services.AddSingleton<ISqliteService, SqliteService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-	app.UseExceptionHandler("/Error", createScopeForErrors: true);
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-	app.UseHsts();
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -32,16 +34,16 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-	.AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode();
 
 // Initialize LocalizationService
 using (var scope = app.Services.CreateScope())
 {
-	var localizationService = scope.ServiceProvider.GetRequiredService<ILocalizationService>();
-	if (localizationService is LocalizationService locService)
-	{
-		await locService.InitializeAsync();
-	}
+    var localizationService = scope.ServiceProvider.GetRequiredService<ILocalizationService>();
+    if (localizationService is LocalizationService locService)
+    {
+        await locService.InitializeAsync();
+    }
 }
 
 app.Run();

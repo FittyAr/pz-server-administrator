@@ -22,10 +22,11 @@ Este módulo permite al usuario visualizar y modificar los archivos de configura
 
 ## Consideraciones Técnicas
 
-- Se parsean archivos INI y LUA en formato clave-valor.
-- Los valores se mapean a un `ViewModel` intermedio que puede convertirse nuevamente en archivo de texto.
+- Se utilizan servicios inyectados `IPzServerService` para el manejo de archivos.
+- Los archivos se editan "al vuelo" con persistencia inmediata al guardar.
+- El proyecto utiliza .NET 10 y FluentUI Blazor.
 
 ## Próximos pasos
 
-- Añadir validación para tipos de datos.
-- Sincronización con la configuración real del servidor en tiempo real.
+- Refinar el sistema de tooltips con descripciones detalladas.
+- Añadir validaciones avanzadas para tipos de datos complejos.

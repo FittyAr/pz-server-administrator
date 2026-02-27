@@ -41,10 +41,10 @@ pz-server-administrator/
 ## 📅 Plan de Desarrollo Modular
 
 ### 🔧 Módulo 1: Inicialización del Proyecto
-- Crear solución Blazor Server en .NET 9
-- Estructurar carpetas (`Pages`, `Services`, `Components`, `Models`, etc.)
-- Crear layout principal: menú lateral y cabecera
-- Configurar inyección de dependencias y carga de configuración desde `appsettings.zsm.json`
+- Crear solución Blazor Server en .NET 10 [COMPLETADO]
+- Estructurar carpetas (`Pages`, `Services`, `Components`, `Models`, etc.) [COMPLETADO]
+- Crear layout principal: menú lateral y cabecera [COMPLETADO]
+- Configurar inyección de dependencias y carga de configuración desde `appsettings.zsm.json` [COMPLETADO]
 
 ### 📁 Módulo 2: Sistema de Roles y Autenticación
 - Definir modelo de usuario y estructura de roles: Invitado, Moderador, Administrador
@@ -67,12 +67,12 @@ Submódulos:
 - **4.4 SpawnPoints.lua**
 
 Para cada uno:
-- Implementar vista modo avanzado (texto editable)
-- Implementar vista modo simple con controles individuales
-- Detectar parámetros faltantes y mostrar tenues
-- Agregar sistema de tooltips por parámetro (tooltipService)
-- Leer definiciones desde JSONs de ayuda ubicados en `config/*.json`
-- Guardar cambios con persistencia
+- Implementar vista modo avanzado (texto editable) [COMPLETADO]
+- Implementar vista modo simple con controles individuales [COMPLETADO]
+- Detectar parámetros faltantes y mostrar tenues [COMPLETADO]
+- Agregar sistema de tooltips por parámetro (tooltipService) [COMPLETADO]
+- Leer definiciones desde JSONs de ayuda ubicados en `config/*.json` [COMPLETADO]
+- Guardar cambios con persistencia "al vuelo" [COMPLETADO]
 
 ### 🧠 Módulo 5: Sistema de Ayuda Contextual
 - Componente Tooltip con descripciones de cada parámetro
@@ -91,10 +91,10 @@ Para cada uno:
 - Agregar controles de acceso según rol
 
 ### 🗃️ Módulo 7: Explorador de Base de Datos
-- Conexión segura a archivo SQLite del servidor
-- Lectura de tablas conocidas: `players`, `logs`, etc.
-- Componente DataGrid con filtros y orden
-- Control de acceso por rol (lectura para moderador, edición solo admin en el futuro)
+- Conexión segura a archivo SQLite del servidor [COMPLETADO]
+- Lectura de tablas conocidas: `players`, `logs`, etc. [COMPLETADO]
+- Componente DataGrid con filtros y orden [COMPLETADO]
+- Control de acceso por rol (lectura para moderador, edición para admin) [COMPLETADO]
 
 ### 🧰 Módulo 8: Configuración Global de la App
 - Interfaz de configuración:

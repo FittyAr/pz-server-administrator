@@ -1,4 +1,5 @@
 @page "/server-config/sandbox"
+@inject IConfigurationService ConfigurationService
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Sandbox Variables - Project Zomboid Server Administrator</PageTitle>
@@ -16,28 +17,45 @@
         </FluentStack>
     </FluentCard>
 
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-            <FluentLabel Typo="Typography.H5">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
-                Módulo en Desarrollo
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Esta funcionalidad será implementada en el Módulo 4.2 según el plan de desarrollo.
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Características planificadas:
-            </FluentLabel>
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                <FluentLabel Typo="Typography.Body">• Edición de archivo SandboxVars.lua</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Controles específicos para cada variable de sandbox</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Validación de valores según tipo de variable</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Ayuda contextual desde sandboxvars-help.json</FluentLabel>
-            </FluentStack>
-        </FluentStack>
-    </FluentCard>
+    @if (!string.IsNullOrEmpty(_sandboxPath))
+
+    {
+        <ConfigEditorComponent FilePath="@_sandboxPath" />
+    }
+
+    else
+
+    {
+        <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
+            No se ha configurado la ruta del servidor o el archivo no existe.
+        </FluentMessageBar>
+    }
 </FluentStack>
 
 @code {
-    // Implementation will be added in Module 4.2
+    private string? _sandboxPath;
+
+
+
+    protected override void OnInitialized()
+
+    {
+
+        var config = ConfigurationService.GetConfiguration();
+
+        var serverPath = config.AppSettings.ServerDirectoryPath;
+
+        var activeServer = config.AppSettings.ActiveServer;
+
+
+
+        if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+
+        {
+
+            _sandboxPath = Path.Combine(serverPath, $"{activeServer}_SandboxVars.lua");
+
+        }
+
+    }
 }

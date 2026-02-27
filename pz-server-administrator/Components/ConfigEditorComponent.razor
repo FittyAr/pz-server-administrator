@@ -1,0 +1,132 @@
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IPzServerService PzServerService
+@inject IToastService ToastService
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+    <FluentToolbar>
+        <FluentSegmentedControl @bind-Value="@_editMode">
+            <FluentSegmentedItem Value="@EditMode.Simple" IconStart="@(new Icons.Regular.Size20.Options())">Simple</FluentSegmentedItem>
+            <FluentSegmentedItem Value="@EditMode.Advanced" IconStart="@(new Icons.Regular.Size10.TextEdit())">Avanzado</FluentSegmentedItem>
+        </FluentSegmentedControl>
+        <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical" />
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent" OnClick="SaveAsync">Guardar</FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowCounterclockwise())" OnClick="LoadAsync">Recargar</FluentButton>
+    </FluentToolbar>
+
+    @if (_isBusy)
+    {
+            <FluentProgressRing />
+    }
+    else if (_config != null)
+    {
+        @if (_editMode == EditMode.Simple)
+        {
+                    <FluentGrid>
+                @foreach (var entry in _config.Entries)
+                {
+                                <FluentGridItem xs="12" sm="6">
+                                    <FluentCard Style="padding: 10px;">
+                                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                                            <FluentLabel Typo="Typography.Caption">@entry.Key</FluentLabel>
+
+                                @if (entry.Type == "Boolean")
+                                {
+                                                    <FluentCheckbox @bind-Value="@(GetBoolValue(entry))" Label="@entry.Description" />
+                                }
+                                else if (entry.Type == "Integer" || entry.Type == "Float")
+                                {
+                                                    <FluentNumberField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
+                                }
+                                else
+                                {
+                                                    <FluentTextField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
+                                }
+                                        </FluentStack>
+                                    </FluentCard>
+                                </FluentGridItem>
+                }
+                    </FluentGrid>
+        }
+        else
+        {
+                    <FluentTextArea @bind-Value="@_rawContent" 
+                                   Style="width: 100%; min-height: 500px; font-family: monospace;" 
+                                   Resize="TextAreaResize.Vertical" />
+        }
+    }
+</FluentStack>
+
+@code {
+    [Parameter] public string? FilePath { get; set; }
+
+    private PzConfig? _config;
+    private string _rawContent = string.Empty;
+    private EditMode _editMode = EditMode.Simple;
+    private bool _isBusy = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(FilePath))
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        if (string.IsNullOrEmpty(FilePath)) return;
+
+        _isBusy = true;
+        try
+        {
+            _config = await PzServerService.ParseConfigAsync(FilePath);
+            _rawContent = await PzServerService.ReadFileContentAsync(FilePath);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrEmpty(FilePath)) return;
+
+        _isBusy = true;
+        try
+        {
+            if (_editMode == EditMode.Simple && _config != null)
+            {
+                await PzServerService.SaveConfigAsync(_config);
+                _rawContent = await PzServerService.ReadFileContentAsync(FilePath);
+            }
+            else
+            {
+                await PzServerService.SaveFileContentAsync(FilePath, _rawContent);
+                _config = await PzServerService.ParseConfigAsync(FilePath);
+            }
+            ToastService.ShowSuccess("Configuración guardada correctamente.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al guardar: {ex.Message}");
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private bool GetBoolValue(PzConfigEntry entry)
+    {
+        return bool.TryParse(entry.Value, out var val) && val;
+    }
+
+    private void SetBoolValue(PzConfigEntry entry, bool val)
+    {
+        entry.Value = val.ToString().ToLower();
+    }
+
+    private enum EditMode { Simple, Advanced }
+}

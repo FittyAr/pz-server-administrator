@@ -17,11 +17,11 @@ Este módulo permite acceder a la base de datos `.db` generada por el servidor p
 
 ## Consideraciones Técnicas
 
-- Uso de `Microsoft.Data.Sqlite` o `System.Data.SQLite`.
-- Acceso concurrente controlado (base de datos puede estar en uso por el servidor).
-- Visualización en tablas con paginación.
+- Uso de `Microsoft.Data.Sqlite` inyectado vía `ISqliteService`.
+- Exploración dinámica de tablas y carga de datos limitando el impacto en memoria.
+- Visualización en tablas con scroll y diseño responsivo.
 
 ## Próximos pasos
 
-- Obtener esquema real de la base de datos PZ.
-- Diseñar vistas específicas para cada tabla relevante.
+- Implementar edición de filas específicas para administradores.
+- Vistas predefinidas para `players` y `logs` con formateo especial.

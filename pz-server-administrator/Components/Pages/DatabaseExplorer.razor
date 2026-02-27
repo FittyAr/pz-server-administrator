@@ -1,4 +1,10 @@
 @page "/database"
+@using System.Data
+@using pz_server_administrator.Services
+@using pz_server_administrator.Models
+@inject ISqliteService SqliteService
+@inject IConfigurationService ConfigurationService
+@inject IPzServerService PzServerService
 @rendermode @(new InteractiveServerRenderMode())
 
 <PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
@@ -17,44 +23,122 @@
     </FluentCard>
 
     <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-            <FluentLabel Typo="Typography.H5">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
-                Módulo en Desarrollo
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Esta funcionalidad será implementada en el Módulo 7 según el plan de desarrollo.
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Características planificadas:
-            </FluentLabel>
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                <FluentLabel Typo="Typography.Body">• Conexión segura a archivo SQLite del servidor</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Lectura de tablas: players, logs, etc.</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Componente DataGrid con filtros y ordenamiento</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Información de jugadores (posición, inventario, conexión)</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Estadísticas generales del servidor</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Log de eventos del servidor</FluentLabel>
-            </FluentStack>
+        <FluentStack Orientation="Orientation.Horizontal" VerticalGap="10">
+            <FluentSelect Label="Seleccionar Base de Datos" 
+                          Items="@_dbFiles" 
+                          OptionText="@(f => f.Name)" 
+                          OptionValue="@(f => f.FullPath)"
+                          @bind-Value="@_selectedDbPath"
+                          SelectedOptionChanged="OnDbChanged" />
+
+            @if (!string.IsNullOrEmpty(_selectedDbPath))
+            {
+                <FluentSelect Label="Seleccionar Tabla" 
+                              Items="@_tables" 
+                              @bind-Value="@_selectedTable"
+                              SelectedOptionChanged="OnTableChanged" />
+            }
         </FluentStack>
     </FluentCard>
 
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-            <FluentLabel Typo="Typography.H6">
-                <FluentIcon Value="@(new Icons.Regular.Size16.Shield())" />
-                Permisos de Acceso
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                • Lectura: Disponible para Moderadores y Administradores
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                • Escritura: Solo Administradores (funcionalidad futura)
-            </FluentLabel>
-        </FluentStack>
-    </FluentCard>
+    @if (_isBusy)
+    {
+        <FluentProgressRing />
+    }
+    else if (_currentData != null)
+    {
+        <FluentCard Style="overflow: auto;">
+            <FluentLabel Typo="Typography.H5">Datos de @_selectedTable</FluentLabel>
+            <table class="fluent-table">
+                <thead>
+                    <tr>
+                        @foreach (DataColumn column in _currentData.Columns)
+                        {
+                            <th>@column.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in _currentData.Rows)
+                    {
+                        <tr>
+                            @foreach (var item in row.ItemArray)
+                            {
+                                <td>@item?.ToString()</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </FluentCard>
+    }
 </FluentStack>
 
+<style>
+    .fluent-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .fluent-table th, .fluent-table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+    }
+    .fluent-table th {
+        background-color: var(--neutral-layer-2);
+        position: sticky;
+        top: 0;
+    }
+</style>
+
 @code {
-    // Implementation will be added in Module 7
+    private List<PzFile> _dbFiles = new();
+    private List<string> _tables = new();
+    private string? _selectedDbPath;
+    private string? _selectedTable;
+    private DataTable? _currentData;
+    private bool _isBusy = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var config = ConfigurationService.GetConfiguration();
+        var serverPath = config.AppSettings.ServerDirectoryPath;
+        if (!string.IsNullOrEmpty(serverPath))
+        {
+            var files = await PzServerService.GetServerFilesAsync(serverPath);
+            _dbFiles = files.Where(f => f.Type == PzFileType.Database).ToList();
+        }
+    }
+
+    private async Task OnDbChanged(PzFile? file)
+    {
+        if (file == null) return;
+        _selectedDbPath = file.FullPath;
+        _isBusy = true;
+        try
+        {
+            _tables = await SqliteService.GetTablesAsync(_selectedDbPath);
+            _selectedTable = null;
+            _currentData = null;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task OnTableChanged(string? table)
+    {
+        if (string.IsNullOrEmpty(table) || string.IsNullOrEmpty(_selectedDbPath)) return;
+        _selectedTable = table;
+        _isBusy = true;
+        try
+        {
+            _currentData = await SqliteService.QueryTableAsync(_selectedDbPath, _selectedTable);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
 }
