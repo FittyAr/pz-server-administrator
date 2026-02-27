@@ -1,162 +1,155 @@
-using System.Collections.Generic;
-using System;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 
 namespace pz_server_administrator.Services
 {
-    /// <summary>
-    /// Service to manage application localization.
-    /// </summary>
-    public class LocalizationService : ILocalizationService
-    {
-        public event Action? OnLanguageChanged;
-        private readonly IWebHostEnvironment _env;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private Dictionary<string, string> _translations = new Dictionary<string, string>();
-        private string _currentLanguage = "en"; // Default language
+	/// <summary>
+	/// Service to manage application localization.
+	/// </summary>
+	public class LocalizationService : ILocalizationService
+	{
+		public event Action? OnLanguageChanged;
+		private readonly IWebHostEnvironment _env;
+		private readonly IHttpContextAccessor _httpContextAccessor;
+		private Dictionary<string, string> _translations = new Dictionary<string, string>();
+		private string _currentLanguage = "en"; // Default language
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LocalizationService"/> class.
-        /// </summary>
-        /// <param name="env">The web host environment.</param>
-        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        public LocalizationService(IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
-        {
-            _env = env;
-            _httpContextAccessor = httpContextAccessor;
-            // The language loading is now fully async. 
-            // We need a separate method to initialize the service.
-        }
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LocalizationService"/> class.
+		/// </summary>
+		/// <param name="env">The web host environment.</param>
+		/// <param name="httpContextAccessor">The HTTP context accessor.</param>
+		public LocalizationService(IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
+		{
+			_env = env;
+			_httpContextAccessor = httpContextAccessor;
+			// The language loading is now fully async. 
+			// We need a separate method to initialize the service.
+		}
 
-        public async Task InitializeAsync()
-        {
-            Console.WriteLine("[LocalizationService] InitializeAsync started");
-            LoadAvailableLanguages();
-            Console.WriteLine($"[LocalizationService] Available languages loaded: {string.Join(", ", AvailableLanguages)}");
+		public async Task InitializeAsync()
+		{
+			Console.WriteLine("[LocalizationService] InitializeAsync started");
+			LoadAvailableLanguages();
+			Console.WriteLine($"[LocalizationService] Available languages loaded: {string.Join(", ", AvailableLanguages)}");
 
-            if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Language", out var language) ?? false)
-            {
-                _currentLanguage = language;
-                Console.WriteLine($"[LocalizationService] Language from cookie: {language}");
-            }
-            else
-            {
-                Console.WriteLine($"[LocalizationService] No language cookie found, using default: {_currentLanguage}");
-            }
+			if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Language", out var language) ?? false)
+			{
+				_currentLanguage = language;
+				Console.WriteLine($"[LocalizationService] Language from cookie: {language}");
+			}
+			else
+			{
+				Console.WriteLine($"[LocalizationService] No language cookie found, using default: {_currentLanguage}");
+			}
 
-            await LoadLanguage(_currentLanguage);
-            Console.WriteLine($"[LocalizationService] Language loaded: {_currentLanguage}, translations count: {_translations.Count}");
-            // No disparamos OnLanguageChanged durante la inicialización
-            // ya que no hay componentes suscritos aún
-        }
+			await LoadLanguage(_currentLanguage);
+			Console.WriteLine($"[LocalizationService] Language loaded: {_currentLanguage}, translations count: {_translations.Count}");
+			// No disparamos OnLanguageChanged durante la inicialización
+			// ya que no hay componentes suscritos aún
+		}
 
-        /// <inheritdoc />
-        public string Get(string key)
-        {
-            return _translations.TryGetValue(key, out var value) ? value : key;
-        }
+		/// <inheritdoc />
+		public string Get(string key)
+		{
+			return _translations.TryGetValue(key, out var value) ? value : key;
+		}
 
-        /// <inheritdoc />
-        public string Get(string key, params object[] args)
-        {
-            var template = Get(key);
-            try
-            {
-                return string.Format(template, args);
-            }
-            catch
-            {
-                return template; // Return unformatted string if formatting fails
-            }
-        }
+		/// <inheritdoc />
+		public string Get(string key, params object[] args)
+		{
+			var template = Get(key);
+			try
+			{
+				return string.Format(template, args);
+			}
+			catch
+			{
+				return template; // Return unformatted string if formatting fails
+			}
+		}
 
-        /// <inheritdoc />
-        public string CurrentLanguage => _currentLanguage;
+		/// <inheritdoc />
+		public string CurrentLanguage => _currentLanguage;
 
-        /// <inheritdoc />
-        public IEnumerable<string> AvailableLanguages { get; private set; } = new List<string>();
+		/// <inheritdoc />
+		public IEnumerable<string> AvailableLanguages { get; private set; } = new List<string>();
 
-        /// <inheritdoc />
-        public async Task SetLanguage(string language)
-        {
-            Console.WriteLine($"[LocalizationService] SetLanguage called with: {language}");
-            Console.WriteLine($"[LocalizationService] Available languages: {string.Join(", ", AvailableLanguages)}");
-            
-            if (AvailableLanguages.Contains(language))
-            {
-                Console.WriteLine($"[LocalizationService] Language {language} found, changing from {_currentLanguage}");
-                _currentLanguage = language;
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("Language", language);
-                await LoadLanguage(language);
-                Console.WriteLine($"[LocalizationService] Language loaded, translations count: {_translations.Count}");
-                OnLanguageChanged?.Invoke();
-                Console.WriteLine($"[LocalizationService] OnLanguageChanged event invoked");
-            }
-            else
-            {
-                Console.WriteLine($"[LocalizationService] Language {language} not found in available languages");
-            }
-        }
+		/// <inheritdoc />
+		public async Task SetLanguage(string language)
+		{
+			Console.WriteLine($"[LocalizationService] SetLanguage called with: {language}");
+			Console.WriteLine($"[LocalizationService] Available languages: {string.Join(", ", AvailableLanguages)}");
 
-        private void LoadAvailableLanguages()
-        {
-            var solutionDir = GetSolutionDirectory();
-            if (string.IsNullOrEmpty(solutionDir)) return;
+			if (AvailableLanguages.Contains(language))
+			{
+				Console.WriteLine($"[LocalizationService] Language {language} found, changing from {_currentLanguage}");
+				_currentLanguage = language;
+				_httpContextAccessor.HttpContext?.Response.Cookies.Append("Language", language);
+				await LoadLanguage(language);
+				Console.WriteLine($"[LocalizationService] Language loaded, translations count: {_translations.Count}");
+				OnLanguageChanged?.Invoke();
+				Console.WriteLine($"[LocalizationService] OnLanguageChanged event invoked");
+			}
+			else
+			{
+				Console.WriteLine($"[LocalizationService] Language {language} not found in available languages");
+			}
+		}
 
-            var langDirPath = Path.Combine(solutionDir, "config", "lang");
-            if (Directory.Exists(langDirPath))
-            {
-                AvailableLanguages = Directory.GetFiles(langDirPath, "*.json")
-                                              .Select(Path.GetFileNameWithoutExtension)
-                                              .Where(lang => !string.IsNullOrEmpty(lang))
-                                              .ToList()!;
-            }
-        }
+		private void LoadAvailableLanguages()
+		{
+			var solutionDir = GetSolutionDirectory();
+			if (string.IsNullOrEmpty(solutionDir)) return;
 
-        private async Task LoadLanguage(string language)
-        {
-            var solutionDir = GetSolutionDirectory();
-            if (string.IsNullOrEmpty(solutionDir)) return;
+			var langDirPath = Path.Combine(solutionDir, "config", "lang");
+			if (Directory.Exists(langDirPath))
+			{
+				AvailableLanguages = Directory.GetFiles(langDirPath, "*.json")
+											  .Select(Path.GetFileNameWithoutExtension)
+											  .Where(lang => !string.IsNullOrEmpty(lang))
+											  .ToList()!;
+			}
+		}
 
-            var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
-            if (File.Exists(langFilePath))
-            {
-                var json = await File.ReadAllTextAsync(langFilePath);
-                _translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-            }
-        }
+		private async Task LoadLanguage(string language)
+		{
+			var solutionDir = GetSolutionDirectory();
+			if (string.IsNullOrEmpty(solutionDir)) return;
 
-        public async Task<string> GetLanguageNameAsync(string language)
-        {
-            var solutionDir = GetSolutionDirectory();
-            if (string.IsNullOrEmpty(solutionDir)) return language;
+			var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
+			if (File.Exists(langFilePath))
+			{
+				var json = await File.ReadAllTextAsync(langFilePath);
+				_translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+			}
+		}
 
-            var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
-            if (File.Exists(langFilePath))
-            {
-                var json = await File.ReadAllTextAsync(langFilePath);
-                var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                if (translations != null && translations.TryGetValue("Language.Name", out var name))
-                {
-                    return name;
-                }
-            }
-            return language; // Fallback to language code
-        }
+		public async Task<string> GetLanguageNameAsync(string language)
+		{
+			var solutionDir = GetSolutionDirectory();
+			if (string.IsNullOrEmpty(solutionDir)) return language;
 
-        private string? GetSolutionDirectory()
-        {
-            var directory = new DirectoryInfo(_env.ContentRootPath);
-            while (directory != null && !directory.GetFiles("*.sln").Any())
-            {
-                directory = directory.Parent;
-            }
-            return directory?.FullName;
-        }
-    }
+			var langFilePath = Path.Combine(solutionDir, "config", "lang", $"{language}.json");
+			if (File.Exists(langFilePath))
+			{
+				var json = await File.ReadAllTextAsync(langFilePath);
+				var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+				if (translations != null && translations.TryGetValue("Language.Name", out var name))
+				{
+					return name;
+				}
+			}
+			return language; // Fallback to language code
+		}
+
+		private string? GetSolutionDirectory()
+		{
+			var directory = new DirectoryInfo(_env.ContentRootPath);
+			while (directory != null && !directory.GetFiles("*.sln").Any())
+			{
+				directory = directory.Parent;
+			}
+			return directory?.FullName;
+		}
+	}
 }
