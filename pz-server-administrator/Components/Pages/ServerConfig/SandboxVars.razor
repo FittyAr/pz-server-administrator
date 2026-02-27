@@ -1,6 +1,7 @@
-@page "/server-config/sandbox"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
-@rendermode @(new InteractiveServerRenderMode())
+@rendermode InteractiveServer
 
 <PageTitle>Sandbox Variables - Project Zomboid Server Administrator</PageTitle>
 
@@ -19,11 +20,17 @@
 
     @if (!string.IsNullOrEmpty(_sandboxPath))
 
+
+
     {
         <ConfigEditorComponent FilePath="@_sandboxPath" />
     }
 
+
+
     else
+
+
 
     {
         <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
@@ -37,25 +44,49 @@
 
 
 
+
+
+
+
     protected override void OnInitialized()
+
+
 
     {
 
+
+
         var config = ConfigurationService.GetConfiguration();
 
+
+
         var serverPath = config.AppSettings.ServerDirectoryPath;
+
+
 
         var activeServer = config.AppSettings.ActiveServer;
 
 
 
+
+
+
+
         if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+
+
 
         {
 
+
+
             _sandboxPath = Path.Combine(serverPath, $"{activeServer}_SandboxVars.lua");
 
+
+
         }
+
+
 
     }
 }

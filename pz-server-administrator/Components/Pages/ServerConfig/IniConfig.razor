@@ -1,6 +1,7 @@
-@page "/server-config/ini"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
-@rendermode @(new InteractiveServerRenderMode())
+@rendermode InteractiveServer
 
 <PageTitle>INI Configuration - Project Zomboid Server Administrator</PageTitle>
 
@@ -18,10 +19,13 @@
     </FluentCard>
 
     @if (!string.IsNullOrEmpty(_iniPath))
+
     {
         <ConfigEditorComponent FilePath="@_iniPath" />
     }
+
     else
+
     {
         <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
             No se ha configurado la ruta del servidor o el archivo no existe.
@@ -32,15 +36,27 @@
 @code {
     private string? _iniPath;
 
+
+
     protected override void OnInitialized()
+
     {
+
         var config = ConfigurationService.GetConfiguration();
+
         var serverPath = config.AppSettings.ServerDirectoryPath;
+
         var activeServer = config.AppSettings.ActiveServer;
 
+
+
         if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+
         {
+
             _iniPath = Path.Combine(serverPath, $"{activeServer}.ini");
+
         }
+
     }
 }

@@ -60,7 +60,7 @@
         LocService.OnLanguageChanged += StateHasChanged;
     }
     
-    private void OnAuthenticationStateChanged(AuthenticationState state)
+    private void OnAuthenticationStateChanged(AppAuthenticationState state)
     {
         InvokeAsync(StateHasChanged);
     }

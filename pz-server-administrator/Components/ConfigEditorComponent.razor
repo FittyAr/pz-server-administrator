@@ -1,3 +1,4 @@
+@using Microsoft.FluentUI.AspNetCore.Components
 @using pz_server_administrator.Models
 @using pz_server_administrator.Services
 @inject IPzServerService PzServerService
@@ -5,54 +6,59 @@
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
     <FluentToolbar>
-        <FluentSegmentedControl @bind-Value="@_editMode">
-            <FluentSegmentedItem Value="@EditMode.Simple" IconStart="@(new Icons.Regular.Size20.Options())">Simple</FluentSegmentedItem>
-            <FluentSegmentedItem Value="@EditMode.Advanced" IconStart="@(new Icons.Regular.Size10.TextEdit())">Avanzado</FluentSegmentedItem>
-        </FluentSegmentedControl>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Options())"
+                      Appearance="@(_editMode == EditMode.Simple ? Appearance.Accent : Appearance.Stealth)"
+                      OnClick="@(() => _editMode = EditMode.Simple)">Simple</FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Code())"
+                      Appearance="@(_editMode == EditMode.Advanced ? Appearance.Accent : Appearance.Stealth)"
+                      OnClick="@(() => _editMode = EditMode.Advanced)">Avanzado</FluentButton>
         <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical" />
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent" OnClick="SaveAsync">Guardar</FluentButton>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowCounterclockwise())" OnClick="LoadAsync">Recargar</FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent" OnClick="SaveAsync">
+            Guardar</FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowCounterclockwise())" OnClick="LoadAsync">Recargar
+        </FluentButton>
     </FluentToolbar>
 
     @if (_isBusy)
     {
-            <FluentProgressRing />
+        <FluentProgressRing />
     }
     else if (_config != null)
     {
         @if (_editMode == EditMode.Simple)
         {
-                    <FluentGrid>
+            <FluentGrid>
                 @foreach (var entry in _config.Entries)
                 {
-                                <FluentGridItem xs="12" sm="6">
-                                    <FluentCard Style="padding: 10px;">
-                                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                                            <FluentLabel Typo="Typography.Caption">@entry.Key</FluentLabel>
+                    <FluentGridItem xs="12" sm="6">
+                        <FluentCard Style="padding: 10px;">
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                                <FluentLabel Typo="Typography.Body" Color="Color.Neutral">@entry.Key</FluentLabel>
 
                                 @if (entry.Type == "Boolean")
                                 {
-                                                    <FluentCheckbox @bind-Value="@(GetBoolValue(entry))" Label="@entry.Description" />
+                                    <FluentCheckbox Value="@GetBoolValue(entry)" ValueChanged="@(v => SetBoolValue(entry, v))"
+                                        Label="@entry.Description" />
                                 }
                                 else if (entry.Type == "Integer" || entry.Type == "Float")
                                 {
-                                                    <FluentNumberField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
+                                    <FluentNumberField TValue="int" Value="@GetNumberValue(entry)"
+                                        ValueChanged="@(v => SetNumberValue(entry, v))" Label="@entry.Description" FullWidth="true" />
                                 }
                                 else
                                 {
-                                                    <FluentTextField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
+                                    <FluentTextField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
                                 }
-                                        </FluentStack>
-                                    </FluentCard>
-                                </FluentGridItem>
+                            </FluentStack>
+                        </FluentCard>
+                    </FluentGridItem>
                 }
-                    </FluentGrid>
+            </FluentGrid>
         }
         else
         {
-                    <FluentTextArea @bind-Value="@_rawContent" 
-                                   Style="width: 100%; min-height: 500px; font-family: monospace;" 
-                                   Resize="TextAreaResize.Vertical" />
+            <FluentTextArea @bind-Value="@_rawContent" Style="width: 100%; min-height: 500px; font-family: monospace;"
+                Resize="TextAreaResize.Vertical" />
         }
     }
 </FluentStack>
@@ -126,6 +132,16 @@
     private void SetBoolValue(PzConfigEntry entry, bool val)
     {
         entry.Value = val.ToString().ToLower();
+    }
+
+    private int GetNumberValue(PzConfigEntry entry)
+    {
+        return int.TryParse(entry.Value, out var val) ? val : 0;
+    }
+
+    private void SetNumberValue(PzConfigEntry entry, int val)
+    {
+        entry.Value = val.ToString();
     }
 
     private enum EditMode { Simple, Advanced }

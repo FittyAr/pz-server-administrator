@@ -1,11 +1,12 @@
 @page "/database"
+@using Microsoft.FluentUI.AspNetCore.Components
 @using System.Data
 @using pz_server_administrator.Services
 @using pz_server_administrator.Models
 @inject ISqliteService SqliteService
 @inject IConfigurationService ConfigurationService
 @inject IPzServerService PzServerService
-@rendermode @(new InteractiveServerRenderMode())
+@rendermode InteractiveServer
 
 <PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
 
@@ -24,28 +25,26 @@
 
     <FluentCard>
         <FluentStack Orientation="Orientation.Horizontal" VerticalGap="10">
-            <FluentSelect Label="Seleccionar Base de Datos" 
-                          Items="@_dbFiles" 
-                          OptionText="@(f => f.Name)" 
-                          OptionValue="@(f => f.FullPath)"
-                          @bind-Value="@_selectedDbPath"
-                          SelectedOptionChanged="OnDbChanged" />
+            <FluentSelect TValue="string" Label="Seleccionar Base de Datos" Items="@_dbFiles"
+                OptionText="@(f => f.Name)" OptionValue="@(f => f.FullPath)" @bind-Value="@_selectedDbPath"
+                SelectedOptionChanged="@((PzFile? f) => OnDbChanged(f))" />
 
             @if (!string.IsNullOrEmpty(_selectedDbPath))
             {
-                <FluentSelect Label="Seleccionar Tabla" 
-                              Items="@_tables" 
-                              @bind-Value="@_selectedTable"
-                              SelectedOptionChanged="OnTableChanged" />
+                <FluentSelect TValue="string" Label="Seleccionar Tabla" Items="@_tables" @bind-Value="@_selectedTable"
+                    SelectedOptionChanged="@((string? t) => OnTableChanged(t))" />
             }
         </FluentStack>
     </FluentCard>
 
     @if (_isBusy)
+
     {
         <FluentProgressRing />
     }
+
     else if (_currentData != null)
+
     {
         <FluentCard Style="overflow: auto;">
             <FluentLabel Typo="Typography.H5">Datos de @_selectedTable</FluentLabel>
@@ -60,9 +59,11 @@
                 </thead>
                 <tbody>
                     @foreach (DataRow row in _currentData.Rows)
+
                     {
                         <tr>
                             @foreach (var item in row.ItemArray)
+
                             {
                                 <td>@item?.ToString()</td>
                             }
@@ -79,11 +80,14 @@
         width: 100%;
         border-collapse: collapse;
     }
-    .fluent-table th, .fluent-table td {
+
+    .fluent-table th,
+    .fluent-table td {
         padding: 8px;
         text-align: left;
         border-bottom: 1px solid var(--neutral-stroke-rest);
     }
+
     .fluent-table th {
         background-color: var(--neutral-layer-2);
         position: sticky;
@@ -93,52 +97,93 @@
 
 @code {
     private List<PzFile> _dbFiles = new();
+
     private List<string> _tables = new();
+
     private string? _selectedDbPath;
+
     private string? _selectedTable;
+
     private DataTable? _currentData;
+
     private bool _isBusy = false;
 
+
+
     protected override async Task OnInitializedAsync()
+
     {
+
         var config = ConfigurationService.GetConfiguration();
+
         var serverPath = config.AppSettings.ServerDirectoryPath;
+
         if (!string.IsNullOrEmpty(serverPath))
         {
             var files = await PzServerService.GetServerFilesAsync(serverPath);
             _dbFiles = files.Where(f => f.Type == PzFileType.Database).ToList();
         }
+
     }
 
     private async Task OnDbChanged(PzFile? file)
     {
+
         if (file == null) return;
+
         _selectedDbPath = file.FullPath;
+
         _isBusy = true;
+
         try
+
         {
+
             _tables = await SqliteService.GetTablesAsync(_selectedDbPath);
+
             _selectedTable = null;
+
             _currentData = null;
+
         }
+
         finally
+
         {
+
             _isBusy = false;
+
         }
+
     }
 
+
+
     private async Task OnTableChanged(string? table)
+
     {
+
         if (string.IsNullOrEmpty(table) || string.IsNullOrEmpty(_selectedDbPath)) return;
+
         _selectedTable = table;
+
         _isBusy = true;
+
         try
+
         {
+
             _currentData = await SqliteService.QueryTableAsync(_selectedDbPath, _selectedTable);
+
         }
+
         finally
+
         {
+
             _isBusy = false;
+
         }
+
     }
 }
