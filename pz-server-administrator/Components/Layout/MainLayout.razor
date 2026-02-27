@@ -42,11 +42,11 @@
     <FluentFooter>
         <a href="https://www.fluentui-blazor.net" target="_blank">@LocService.Get("MainLayout.DocsAndDemos")</a>
         <FluentSpacer />
-        <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor" target="_blank">@LocService.Get("MainLayout.AboutBlazor")</a>
+        <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor"
+            target="_blank">@LocService.Get("MainLayout.AboutBlazor")</a>
     </FluentFooter>
 </FluentLayout>
 
-<TestLanguageButton />
 
 <div id="blazor-error-ui" data-nosnippet>
     @LocService.Get("MainLayout.UnhandledError")
@@ -65,7 +65,7 @@
     /// </summary>
     protected override void OnInitialized()
     {
-        LocService.OnLanguageChanged += StateHasChanged;
+        LocService.OnLanguageChanged += () => InvokeAsync(StateHasChanged);
     }
 
     /// <summary>

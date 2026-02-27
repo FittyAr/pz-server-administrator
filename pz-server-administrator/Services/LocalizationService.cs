@@ -82,9 +82,25 @@ namespace pz_server_administrator.Services
 
             if (AvailableLanguages.Contains(language))
             {
-                Console.WriteLine($"[LocalizationService] Language {language} found, changing from {_currentLanguage}");
                 _currentLanguage = language;
-                _httpContextAccessor.HttpContext?.Response.Cookies.Append("Language", language);
+
+                try
+                {
+                    if (_httpContextAccessor.HttpContext != null && !_httpContextAccessor.HttpContext.Response.HasStarted)
+                    {
+                        _httpContextAccessor.HttpContext.Response.Cookies.Append("Language", language);
+                        Console.WriteLine($"[LocalizationService] Language cookie saved: {language}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[LocalizationService] Cannot save language cookie (Response already started or HttpContext null)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[LocalizationService] Error saving language cookie: {ex.Message}");
+                }
+
                 await LoadLanguage(language);
                 Console.WriteLine($"[LocalizationService] Language loaded, translations count: {_translations.Count}");
                 OnLanguageChanged?.Invoke();

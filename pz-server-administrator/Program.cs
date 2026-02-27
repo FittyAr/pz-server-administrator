@@ -12,9 +12,9 @@ builder.Services.AddFluentUIComponents();
 // Register application services
 builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
 builder.Services.AddSingleton<IPasswordHashingService, PasswordHashingService>();
-builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<ILocalizationService, LocalizationService>();
+builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddSingleton<IPzServerService, PzServerService>();
 builder.Services.AddSingleton<ISqliteService, SqliteService>();
 
@@ -36,14 +36,6 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Initialize LocalizationService
-using (var scope = app.Services.CreateScope())
-{
-    var localizationService = scope.ServiceProvider.GetRequiredService<ILocalizationService>();
-    if (localizationService is LocalizationService locService)
-    {
-        await locService.InitializeAsync();
-    }
-}
+// Localization initialization is handled per-session by AppLoader
 
 app.Run();

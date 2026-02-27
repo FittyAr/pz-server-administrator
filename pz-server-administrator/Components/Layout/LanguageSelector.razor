@@ -2,14 +2,15 @@
 @implements IDisposable
 @inject ILocalizationService LocService
 @inject NavigationManager NavigationManager
+@inject NavigationManager NavigationManager
 
-<FluentSelect TOption="KeyValuePair<string, string>"
-    Items="@languageNames"
-    OptionText="(item) => item.Value"
-    OptionValue="(item) => item.Key"
-    @bind-Value="selectedLanguage"
-    @bind-Value:after="OnLanguageChangedAsync"
-    Style="min-width: 120px; margin-right: 8px;" />
+<FluentSelect TValue="string" TOption="string" Value="@selectedLanguage" ValueChanged="@OnLanguageChangedAsync"
+    Style="min-width: 120px; margin-right: 8px;">
+    @foreach (var lang in languageNames)
+    {
+        <FluentOption TValue="string" Value="@lang.Key">@lang.Value</FluentOption>
+    }
+</FluentSelect>
 
 @code {
     private string selectedLanguage = string.Empty;
@@ -31,13 +32,12 @@
         }
     }
 
-    private async Task OnLanguageChangedAsync()
+    private async Task OnLanguageChangedAsync(string newLang)
     {
-        Console.WriteLine($"[LanguageSelector] OnLanguageChangedAsync called with: {selectedLanguage}");
-        await LocService.SetLanguage(selectedLanguage);
-        Console.WriteLine($"[LanguageSelector] SetLanguage completed");
+        if (string.IsNullOrEmpty(newLang) || newLang == selectedLanguage) return;
+        selectedLanguage = newLang;
+        await LocService.SetLanguage(newLang);
         StateHasChanged();
-        Console.WriteLine($"[LanguageSelector] StateHasChanged called");
     }
 
     public void Dispose()

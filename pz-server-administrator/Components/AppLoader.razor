@@ -17,29 +17,15 @@ else
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
     private bool isInitialized = false;
-    private static bool isGloballyInitialized = false;
-    private static readonly object initLock = new object();
 
     protected override async Task OnInitializedAsync()
     {
-        lock (initLock)
-        {
-            if (isGloballyInitialized)
-            {
-                isInitialized = true;
-                return;
-            }
-        }
+        if (isInitialized) return;
 
         Console.WriteLine("[AppLoader] Starting initialization...");
         await LocalizationService.InitializeAsync();
         Console.WriteLine("[AppLoader] LocalizationService initialized");
-        
-        lock (initLock)
-        {
-            isGloballyInitialized = true;
-        }
-        
+
         isInitialized = true;
         Console.WriteLine("[AppLoader] Initialization completed");
     }
