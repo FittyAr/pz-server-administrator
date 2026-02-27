@@ -1,0 +1,26 @@
+services:
+  pz-admin:
+    build:
+      context: ../pz-server-administrator
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: pz-admin
+    ports:
+      - 8080:8080
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - DOTNET_RUNNING_IN_CONTAINER=true
+    volumes:
+      # MODIFICACIÓN: Montamos la carpeta de datos del servidor PZ que ya tienes en ejecución.
+      # Asegúrate de que esta ruta local (./server-data) sea la misma que usa tu contenedor actual.
+      - ./server-data:/project-zomboid-config:rw
+
+      # Persistencia de la propia app (usuarios, config de la app, etc.)
+      - ./admin-config:/app/config:rw
+
+    # Si necesitas comunicación RCON interna y los contenedores no están en la misma red,
+    # podrías descomentar 'network_mode: host' o conectarlos a la red del servidor PZ.
+    # network_mode: host 
+
+    security_opt:
+      - label=disable

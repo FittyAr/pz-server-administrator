@@ -1,5 +1,11 @@
 *.txt
 
+# Docker container data folders
+container/admin-config/*
+!container/admin-config/.gitkeep
+container/server-data/*
+!container/server-data/.gitkeep
+
 # Specific to the EFCore-Blazor sample app
 *.db
 *.db-shm

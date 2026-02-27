@@ -164,28 +164,48 @@ namespace pz_server_administrator.Services
         /// </summary>
         private string? GetConfigDirectory()
         {
-            // First: check if config/lang exists directly in ContentRootPath (copied by MSBuild)
+            // 1. Check a dedicated 'localization' folder in ContentRoot 
+            // This is safer in Docker because the user might mount over /app/config
+            var localizationPath = Path.Combine(_env.ContentRootPath, "localization");
+            if (Directory.Exists(localizationPath))
+            {
+                // We return this path, but the service expects /lang inside it
+                // So we actually want to return the parent that contains 'lang'
+                // BUT, to keep it simple, we check if 'lang' is directly here
+                if (Directory.Exists(Path.Combine(localizationPath, "lang"))) return localizationPath;
+
+                // If the folder itself contains the JSON files, we'd need to adjust logic.
+                // Let's assume we copy 'config/lang' to 'localization/lang'
+            }
+
+            // 2. Check config/lang directly in ContentRootPath
             var directPath = Path.Combine(_env.ContentRootPath, "config");
             if (Directory.Exists(Path.Combine(directPath, "lang")))
             {
-                Console.WriteLine($"[LocalizationService] Found config at ContentRootPath: {directPath}");
                 return directPath;
             }
 
-            // Fallback: walk up directories looking for config/lang (dev scenario without file copy)
+            // 3. Fallback: walk up (Development)
             var directory = new DirectoryInfo(_env.ContentRootPath);
             while (directory != null)
             {
                 var candidate = Path.Combine(directory.FullName, "config");
                 if (Directory.Exists(Path.Combine(candidate, "lang")))
                 {
-                    Console.WriteLine($"[LocalizationService] Found config by walking up: {candidate}");
                     return candidate;
                 }
                 directory = directory.Parent;
             }
 
-            Console.WriteLine($"[LocalizationService] WARNING: config/lang directory not found from {_env.ContentRootPath}!");
+            // 4. Check if we are in bin/Debug... and go up
+            var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (currentDir != null)
+            {
+                var candidate = Path.Combine(currentDir.FullName, "config");
+                if (Directory.Exists(Path.Combine(candidate, "lang"))) return candidate;
+                currentDir = currentDir.Parent;
+            }
+
             return null;
         }
     }

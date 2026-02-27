@@ -18,9 +18,8 @@
 
   <ItemGroup>
     <!-- Copy config files to output directory -->
-    <Content Include="..\config\**\*.*">
+    <Content Update="config\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>config\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
 </Project>
