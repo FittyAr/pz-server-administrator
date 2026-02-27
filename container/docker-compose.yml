@@ -11,9 +11,10 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - DOTNET_RUNNING_IN_CONTAINER=true
     volumes:
-      # MODIFICACIÓN: Montamos la carpeta de datos del servidor PZ que ya tienes en ejecución.
-      # Asegúrate de que esta ruta local (./server-data) sea la misma que usa tu contenedor actual.
-      - ./server-data:/project-zomboid-config:rw
+      # Montamos las rutas reales de tu servidor indifferentbroccoli
+      # - ./server-data:/project-zomboid-config:rw
+      - D:\Docker\indifferentbroccoli-pzserver\server-data:/project-zomboid-config:rw
+      - D:\Docker\indifferentbroccoli-pzserver\server-files:/project-zomboid-files:rw
 
       # Persistencia de la propia app (usuarios, config de la app, etc.)
       - ./admin-config:/app/config:rw
