@@ -51,4 +51,9 @@ public interface IModDiscoveryService
     /// Marca un mod para ser actualizado forzosamente en el siguiente reinicio o vía SteamCMD.
     /// </summary>
     Task TriggerModUpdateAsync(string workshopId);
+
+    /// <summary>
+    /// Aplica un conjunto de acciones correctivas generadas por la IA.
+    /// </summary>
+    Task BatchApplyAiActionsAsync(IEnumerable<AiAction> actions);
 }

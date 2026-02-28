@@ -1,0 +1,50 @@
+# Plan de Implementación: Agente de IA - Mod Harmony & Auto-Fix
+
+Este plan detalla la transformación del módulo de IA actual de un "analista pasivo" a un "agente activo" capaz de realizar cambios en la configuración para resolver conflictos.
+
+## User Review Required
+
+> [!IMPORTANT]
+> El sistema de IA tendrá la capacidad de **modificar archivos de configuración** (modlist, load order) y **desactiva mods** automáticamente si se detectan conflictos críticos. 
+> ¿Deseas que los cambios se apliquen automáticamente tras el análisis o que requieran una confirmación individual por cada acción sugerida?
+
+## Proposed Changes
+
+### 1. Data Models & Interface
+Añadiremos estructuras para que la IA se comunique de forma programática.
+
+#### [NEW] [AiAction.cs](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Data/Database/Mods/AiAction.cs)
+- `ActionType`: Enum (Deactivate, Reorder, ChangeConfig, UpdateFlag).
+- `TargetId`: ID del mod afectado.
+- `Parameters`: Diccionario con datos extra (ej: `new_order`).
+- `Reason`: Explicación técnica de por qué se realiza la acción.
+
+#### [MODIFY] [IAiService.cs](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IAiService.cs)
+- Nuevo método `AnalyzeAndFixAsync`: Retorna una lista de `AiAction`.
+
+### 2. Engine Enhancements (AI Intelligence)
+
+#### [MODIFY] [AiService.cs](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/AiService.cs)
+- **System Prompt**: Redefinición del rol como "Senior System Engineer specializing in Java/Lua game engines and Project Zomboid modding".
+- **Context Gathering**: Inyectar [IPzServerService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IPzServerService.cs#5-22) para leer archivos del servidor y [IModDiscoveryService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IModDiscoveryService.cs#8-55) para obtener hashes y metadatos de Steam.
+- **Output Parsing**: Forzar a la IA a responder en un esquema JSON estricto que represente la lista de `AiAction`.
+
+### 3. Execution Layer
+
+#### [MODIFY] [ModDiscoveryService.cs](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ModDiscoveryService.cs)
+- Implementar métodos de ejecución para las acciones: `BatchApplyActionsAsync(IEnumerable<AiAction> actions)`.
+
+### 4. UI Layer
+
+#### [MODIFY] [ModManager.razor](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Components/Pages/ModManager.razor)
+- **AI Dashboard**: Visualización de "Acciones Sugeridas".
+- **Execution Button**: "Armonizar Servidor con IA".
+
+## Verification Plan
+
+### Automated Tests
+- Simular un archivo `server-console.txt` con un error de `StackOverflow` provocado por un mod específico y verificar que la IA propone desactivarlo.
+- Simular un mapa cargado antes que su framework y verificar que la IA propone reordenarlo.
+
+### Manual Verification
+- Cargar mods conocidos por causar conflictos y validar la respuesta del agente.

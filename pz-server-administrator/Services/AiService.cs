@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using pz_server_administrator.Data.Database.Mods;
@@ -192,6 +194,89 @@ public class AiService : IAiService
         {
             _logger.LogError(ex, "[AI] Error analizando log.");
             return "❌ Excepción durante el análisis del log.";
+        }
+    }
+
+    public async Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null)
+    {
+        var profile = await _modDiscovery.GetCloudProfileAsync();
+        if (string.IsNullOrEmpty(profile?.ApiKey) || !profile.ApiKey.StartsWith("AI-"))
+        {
+            return new List<AiAction> {
+                new AiAction {
+                    Type = AiActionType.Recommendation,
+                    Reason = "Configura una Gemini API Key (AI-) para habilitar el Agente de Diagnóstico Autónomo."
+                }
+            };
+        }
+
+        try
+        {
+            var apiKey = profile.ApiKey.Replace("AI-", "");
+            var client = _httpClientFactory.CreateClient();
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+
+            var modData = string.Join("\n", currentMods.Select(m => $"- ID: {m.ModId}, Category: {m.Category}, Workshop: {m.WorkshopItemId}, Order: {m.Order}"));
+
+            var systemPrompt = @"Actúa como un Ingeniero de Sistemas Senior y experto en Inteligencia Artificial especializado en el motor de Project Zomboid (Java/Lua). 
+Tu objetivo es analizar la lista de mods y el contexto de error opcional para proponer una lista de acciones técnicas que estabilicen el servidor.
+
+REGLAS TÉCNICAS:
+1. Frameworks/Core Libs (Tsar's Common Library, Mod Options, etc.) DEBEN cargar primero (Categoría Framework).
+2. Mapas (Categoría Maps) cargan después de los Frameworks. Si hay conflictos de celdas, el mapa de menor prioridad (abajo) sobreescribe al de arriba.
+3. Localizaciones (Categoría Localization) siempre al final.
+4. Si detectas un mod redundante o que causa crash en el log, propone Deactivate.
+
+Responde ÚNICAMENTE con un JSON válido que siga este esquema exacto (Array de objetos):
+[
+  {
+    ""Type"": ""Deactivate"" | ""Activate"" | ""Reorder"" | ""FixConfig"",
+    ""TargetId"": ""ID del mod"",
+    ""Parameters"": { ""new_order"": ""valor_numerico"" },
+    ""Reason"": ""Explicación técnica en español"",
+    ""Confidence"": 0.95
+  }
+]
+Si no hay problemas, devuelve un array vacío [].";
+
+            var fullPrompt = $"MODS ACTUALES:\n{modData}\n\nCONTEXTO DE ERROR (LOG/DESC):\n{logContext ?? "No proporcionado"}\n\nAnaliza y genera las acciones necesarias en formato JSON.";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new {
+                        parts = new[]
+                        {
+                            new { text = systemPrompt },
+                            new { text = fullPrompt }
+                        }
+                    }
+                },
+                generationConfig = new
+                {
+                    response_mime_type = "application/json"
+                }
+            };
+
+            var response = await client.PostAsJsonAsync(url, requestBody);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<dynamic>();
+                string? jsonText = result?.candidates[0].content.parts[0].text;
+
+                if (!string.IsNullOrEmpty(jsonText))
+                {
+                    return JsonSerializer.Deserialize<List<AiAction>>(jsonText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                }
+            }
+
+            return new List<AiAction>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AI Agent] Error en ciclo agéntico.");
+            return new List<AiAction> { new AiAction { Type = AiActionType.Recommendation, Reason = $"Error en el Agente: {ex.Message}" } };
         }
     }
 }

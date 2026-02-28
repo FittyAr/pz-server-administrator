@@ -101,11 +101,18 @@
                                     <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                         @foreach (var instance in item.Instances)
                                         {
+                                            var hasAiWarning = _aiActions.Any(a => a.TargetId == instance.ModId && (a.Type == AiActionType.Deactivate || a.Type == AiActionType.Reorder));
+
                                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                                 <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)"
                                                              Style="cursor: pointer;" 
                                                              @onclick="@(() => ToggleActive(item.Id, instance))">
-                                                    @(instance.IsActive ? "✅ " : "❌ ") @instance.ModId
+                                                    @(instance.IsActive ? "✅ " : "❌ ") 
+                                                    @if (hasAiWarning)
+                                                    {
+                                                        <span title="Este mod tiene advertencias de la IA" style="margin-right: 4px;">⚠️</span>
+                                                    }
+                                                    @instance.ModId
                                                 </FluentBadge>
                                                 <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
                                                     @GetCategoryIcon(instance.Category) @instance.Category
@@ -205,6 +212,12 @@
                             Analizar Log Servidor
                         </FluentButton>
                     </FluentStack>
+
+                    <FluentStack VerticalAlignment="VerticalAlignment.Center" Style="margin-top: 1rem;">
+                        <FluentCheckbox @bind-Value="@(_cloudProfile.AiAutoFixEnabled)" 
+                                        Label="Modo Automático (Permitir que la IA aplique cambios sin confirmar)" 
+                                        @bind-Value:after="SaveCloudProfile" />
+                    </FluentStack>
                     
                     <FluentDivider Style="margin: 1rem 0;" />
 
@@ -213,6 +226,36 @@
                         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
                             <FluentProgressRing />
                             <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiLoading")</FluentLabel>
+                        </FluentStack>
+                    }
+                    else if (_aiActions.Any())
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" Spacing="3">
+                            <FluentLabel Typo="Typography.Subject">Plan de Acción Recomendado</FluentLabel>
+                            @foreach (var action in _aiActions)
+                            {
+                                <FluentCard Style="padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
+                                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                        <FluentStack Orientation="Orientation.Vertical" Spacing="1">
+                                            <FluentLabel Weight="FontWeight.Bold">@action.Type: @action.TargetId</FluentLabel>
+                                            <FluentLabel Typo="Typography.Body" Style="font-size: 0.85rem;">@action.Reason</FluentLabel>
+                                            @if (action.Parameters.Any())
+                                            {
+                                                <FluentBadge Appearance="Appearance.Neutral">Params: @string.Join(", ", action.Parameters.Select(p => $"{p.Key}={p.Value}"))</FluentBadge>
+                                            }
+                                        </FluentStack>
+                                        <FluentBadge Appearance="Appearance.Accent">@(Math.Round(action.Confidence * 100))%</FluentBadge>
+                                    </FluentStack>
+                                </FluentCard>
+                            }
+                            
+                            <FluentDivider Style="margin: 1rem 0;" />
+                            
+                            <FluentButton Appearance="Appearance.Accent" 
+                                          IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())"
+                                          OnClick="ApplyAiActions">
+                                Aplicar Armonización Automática
+                            </FluentButton>
                         </FluentStack>
                     }
                     else if (!string.IsNullOrEmpty(_aiReport))
@@ -383,6 +426,7 @@
     private bool _isSaving;
     private bool _isAiLoading;
     private string? _aiReport;
+    private List<AiAction> _aiActions = new();
     private string? _recommendation;
     private ModInstance? _selectedForMove;
     private List<ModPreset>? _presets;
@@ -460,13 +504,56 @@
     {
         _isAiLoading = true;
         _aiReport = null;
+        _aiActions.Clear();
         try
         {
-            _aiReport = await AiService.AnalyzeModConflictsAsync(ActiveModsOrdered);
+            // Ejecutar análisis agéntico profundo
+            _aiActions = await AiService.AnalyzeAndFixAsync(ActiveModsOrdered);
+            
+            if (!_aiActions.Any())
+            {
+                // Fallback al análisis heurístico si no hay acciones
+                _aiReport = await AiService.AnalyzeModConflictsAsync(ActiveModsOrdered);
+            }
+            else 
+            {
+                if (_cloudProfile?.AiAutoFixEnabled == true)
+                {
+                    ToastService.ShowInfo("Modo Automático: Aplicando armonización...");
+                    await ApplyAiActions();
+                }
+                else
+                {
+                    ToastService.ShowInfo($"El Agente de IA ha identificado {_aiActions.Count} mejoras potenciales.");
+                }
+            }
         }
         catch (Exception ex)
         {
-            _aiReport = $"Error en el servicio de IA: {ex.Message}";
+            _aiReport = $"Error en el servicio agéntico: {ex.Message}";
+        }
+        finally
+        {
+            _isAiLoading = false;
+        }
+    }
+
+    private async Task ApplyAiActions()
+    {
+        if (!_aiActions.Any()) return;
+
+        _isAiLoading = true;
+        try
+        {
+            await ModDiscovery.BatchApplyAiActionsAsync(_aiActions);
+            ToastService.ShowSuccess("Armonización completada. Los cambios han sido aplicados y guardados.");
+            _aiActions.Clear();
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Fallo al aplicar acciones: {ex.Message}");
         }
         finally
         {

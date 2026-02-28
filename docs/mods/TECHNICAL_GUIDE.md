@@ -42,7 +42,8 @@ Se utilizará una base de datos independiente para no interferir con las bases d
 - **Funcionalidades**:
   - **Detección de Incompatibilidades**: Enviar a la IA el nombre, descripción y archivos modificados de los mods para identificar solapamientos críticos.
   - **Sugerencias de Orden**: Basado en el tipo de archivos (LUA vs Scripts), la IA sugerirá un orden óptimo.
-  - **Bloqueo Preventivo**: Si un mod se marca como incompatible con otro ya activo, la interfaz de usuario bloqueará preventivo su activación.
+  - **Bloqueo Preventivo**: Si un mod se marca como incompatible con otro ya activo, la interfaz de usuario bloqueará su activación.
+  - **Modo Agéntico (Auto-Fix)**: Configuración opcional para permitir que la IA aplique cambios de orden y activación sin intervención humana. Consultar [Guía del Agente de IA](file:///d:/GitHub/pz-server-administrator/docs/mods/AI_AGENT_GUIDE.md).
 
 ---
 
@@ -112,6 +113,7 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Mod Presets**: Sistema de perfiles (`ModPresetService`) para guardar y cargar configuraciones de mods en archivos JSON.
 - [x] **Gestión de Perfiles UI**: Interfaz para crear, aplicar y eliminar perfiles de mods.
 - [x] **Optimización IA**: Integración real con Google Gemini Pro para análisis semántico.
+- [x] **Comportamiento Agéntico**: Generación y ejecución de planes de acción (`AiAction`) con modo automático opcional.
 
 ### ✅ Finalizado (Sprint 6: Automatización de Infraestructura)
 - [x] **Cloud Sync Avanzado**: Capacidad de compartir y descargar perfiles (`ModPreset`) desde la nube de la comunidad.

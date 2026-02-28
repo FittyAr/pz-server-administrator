@@ -1,0 +1,23 @@
+# AI Agentic Mod Management Tasks
+
+- [x] **Fase 1: Diseño y Estructura de Datos**
+    - [x] Definir el modelo [AiAction](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Data/Database/Mods/AiAction.cs#8-32) para representar cambios sugeridos (Desactivar, Reordenar, Fix Config).
+    - [x] Ampliar [IAiService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IAiService.cs#11-44) para soportar retornos estructurados (JSON/Objetos) en lugar de solo texto.
+- [x] **Fase 2: Enriquecimiento de Datos (Contexto Agéntico)**
+    - [x] Implementar recolector de contexto extendido: `mod.info`, dependencias declaradas y metadatos de Steam.
+    - [x] Investigar/Simular integración con MCP para base de conocimientos externa de conflictos conocidos.
+- [x] **Fase 3: Implementación del Motor de IA**
+    - [x] Refinar los Prompts de System para el rol de "Ingeniero de Sistemas e IA".
+    - [x] Implementar la lógica de análisis profundo de conflictos y armonización de carga.
+    - [x] Implementar parser de acciones para transformar el output de la IA en comandos ejecutables.
+- [x] **Fase 4: UI y Ejecución Autónoma**
+    - [x] Crear el "AI Command Center" en la UI de Mods.
+    - [x] Implementar el botón "Aplicar Correcciones de IA" (Batch processing of actions).
+    - [x] Notificaciones de "Auto-Fix" realizado.
+- [x] **Fase 5: Verificación**
+    - [x] Simular conflictos comunes (Mod IDs duplicados, carga de mapas incorrecta).
+    - [x] Validar que la IA propone y ejecuta el orden correcto.
+- [x] **Fase 6: Documentación y Roadmap**
+    - [x] Crear el registro técnico del Agente de IA ([AI_AGENT_GUIDE.md](file:///d:/GitHub/pz-server-administrator/docs/mods/AI_AGENT_GUIDE.md)).
+    - [x] Definir el ROADMAP global del proyecto.
+    - [x] Implementar el toggle "Modo Automático" en la configuración de la nube.

@@ -31,4 +31,9 @@ public class CloudProfile
     /// Fecha de la última sincronización en la nube.
     /// </summary>
     public DateTime? LastSync { get; set; }
+
+    /// <summary>
+    /// Indica si el Agente de IA tiene permiso para aplicar cambios automáticamente.
+    /// </summary>
+    public bool AiAutoFixEnabled { get; set; }
 }

@@ -1,0 +1,83 @@
+# Plan Maestro Revisado: Sistema Avanzado de Gestión de Mods (v2.0)
+
+Este documento detalla la estrategia final para el gestor de mods, corrigiendo distinciones técnicas y ampliando la visión de conectividad.
+
+---
+
+## 🏗️ 1. Arquitectura de Datos (EF Core + SQLite)
+
+Se creará `Mods.db` para persistir metadatos enriquecidos.
+
+### Modelos de Datos Actualizados:
+- **`WorkshopItem`**: El paquete de Steam (ej. "Filibuster Rhymes' Used Cars").
+  - `Id`, `Title`, `Description`, `ThumbnailUrl`, `LastUpdated`, `LocalHash`.
+- **`ModInstance`**: Las partes activables (ej. "frusedcars", "frusedcars_lore", "frusedcars_no_armor").
+  - `ModId` (ID interno), `Name`, `WorkshopItemId` (FK), `IsActive` (Sincronizado), `Category` (Enum).
+- **`ModIncompatibility`**: Matriz de conflictos.
+- **`UserConfiguration`**: 
+  - `ApiKey` (Para telemetría identificada), `CloudSyncEnabled`, `AutoReport`.
+
+---
+
+## 🔍 2. Detección y Escaneo
+
+### Metodología de escaneo:
+1. **Parser Local de `mod.info`**:
+   - Escaneo recursivo de la carpeta `workshop/content/108600/`.
+   - Mapeo de múltiples `ModInstance` por cada `WorkshopItem`.
+2. **Scraper de Steam Workshop**:
+   - Recuperación de imágenes y metadatos (Scraping/REST si disponible).
+3. **Control de Versiones**:
+   - Hashing selectivo para detectar actualizaciones silenciosas de Steam.
+
+---
+
+## 🧠 3. IA y Diagnóstico de Conflictos
+
+### Moderación Inteligente:
+- **Proveedores**: Google Gemini, OpenAI, Anthropic, Ollama.
+- **Funcionalidad**: 
+  - Análisis de descripciones para detectar scripts que sobrescriben las mismas funciones LUA.
+  - Generación de reportes de "Por qué este mod rompe el otro".
+
+---
+
+## 📋 4. Orden de Carga Dinámico (Ordering Engine)
+
+**Nota: El ordenamiento se refiere exclusivamente a la carga de Mods en el juego, no a las DBs de vehículos.**
+
+### Jerarquía Automática Estándar:
+1. **Framework/API/Tweak mods**: Bases necesarias para otros mods.
+2. **Resources/Textures**: Assets visuales y auditivos.
+3. **Maps/Locations**: Nuevos territorios (el orden aquí es vital para el "masking").
+4. **Vehicles (Mod-Based)**: Lógica y modelos de vehículos añadidos por mods.
+5. **Code-only mods**: Tweaks de lógica pura.
+6. **Clothing/Interface**: Equipamiento y cambios en la UI.
+7. **Other mods**: Mods generales.
+8. **Localization**: Traducciones (deben cargar al final para sobrescribir textos base).
+
+---
+
+## 🌐 5. Telemetría y Ecosistema Cloud
+
+- **Telemetría Anónima**: Envío de configuraciones funcionales para estadísticas globales.
+- **Cuenta de Usuario (API Key)**: 
+  - Soporte para vincular la aplicación con un perfil centralizado.
+  - Recuperación de configuraciones guardadas en la nube.
+  - Sincronización de listas negras de incompatibilidades descubiertas por el usuario.
+
+---
+
+## 🎨 6. Interfaz de Usuario (UI/UX)
+
+- **Gestion de Mods con Drag & Drop**: Interfaz intuitiva para el ordenamiento manual.
+- **Badge de Incompatibilidad**: Icono de advertencia cuando la IA o la base de datos detectan un conflicto activo.
+- **Consola de IA**: Chat integrado para preguntar "Optimiza mi orden de carga" o "Busca conflictos en mis 200 mods".
+
+---
+
+## 🚀 7. Próximos Pasos (Sprint 5)
+
+1. **Presets de Modding**: Capacidad de guardar el estado `Active` y `Order` en archivos JSON externos para compartir configuraciones (ej: "Profile_Hardcore.json").
+2. **Auto-Updater**: Integración con comandos de consola para forzar a SteamCMD a actualizar los mods detectados como "Outdated" mediante el `VersionHash`.
+3. **Refinamiento Gemini**: Ajuste del prompt de sistema para incluir logs de error reales del servidor y obtener diagnósticos de crash en tiempo real.

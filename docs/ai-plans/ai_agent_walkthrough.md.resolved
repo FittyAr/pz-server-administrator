@@ -1,0 +1,32 @@
+# Walkthrough: Agente de IA - Mod Harmony & Auto-Fix
+
+Hemos elevado el módulo de IA de un simple analizador a un **Agente de Sistemas autónomo** capaz de realizar cambios técnicos para estabilizar el servidor.
+
+## 🚀 Logros Principales
+
+### 1. Motor Agéntico (Engineer Brain)
+- **Rol Senior**: La IA ahora actúa con el contexto de un Ingeniero de Sistemas especializado en Project Zomboid.
+- **Salida Estructurada**: El servicio genera planes de acción en formato JSON, permitiendo una integración programática precisa.
+- **Contexto Extendido**: El agente analiza IDs de workshop, categorías, dependencias y logs críticos para tomar decisiones.
+
+### 2. Auto-Corrección (The "Fixer")
+Implementamos [BatchApplyAiActionsAsync](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ModDiscoveryService.cs#499-534) que permite al administrador aplicar múltiples correcciones con un solo clic:
+- **Desactivación de Mods Conflictivos**: Identifica mods que causan crashes en el log y los deshabilita.
+- **Reordenamiento Inteligente**: Ajusta el [Order](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/AiService.cs#94-105) de carga para cumplir con las jerarquías técnicas (Frameworks > Maps > Localization).
+- **Persistencia**: Todos los cambios se guardan en la base de datos y se escriben automáticamente en los archivos `.ini` y `.lua` del servidor.
+
+### 3. Centro de Comando de IA (UI)
+- **Panel de Acciones**: Las recomendaciones de la IA se presentan como tarjetas de acción con nivel de confianza y justificación técnica.
+- **Ejecución por Lotes**: Botón "Aplicar Armonización Automática" para resolver todos los problemas detectados de una vez.
+
+## 🛠️ Cómo Probarlo
+1. Ve a la pestaña **Diagnóstico IA** en el Gestor de Mods.
+2. Haz clic en **Analyze with AI**.
+3. Si hay conflictos (ej: Frameworks cargando tarde), verás el **Plan de Acción Recomendado**.
+4. Haz clic en **Aplicar Armonización Automática**.
+5. Verifica que los mods se han reordenado o desactivado según el plan y que la configuración del servidor se ha actualizado.
+
+## 🛡️ Verificación Técnica
+- Se validó el parser de JSON de IA para manejar respuestas consistentes.
+- Se corrigieron los errores de inyección del repositorio y acceso a contextos de base de datos.
+- Se verificó que la persistencia al archivo `.ini` se dispara tras la armonización.

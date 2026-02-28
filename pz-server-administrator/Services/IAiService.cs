@@ -35,4 +35,9 @@ public interface IAiService
     /// Analiza un log de error (server-console.txt) para encontrar la causa de un crash o error de mods.
     /// </summary>
     Task<string> AnalyzeLogAsync(string logContent);
+
+    /// <summary>
+    /// Realiza un análisis profundo de la configuración actual y propone acciones correctivas.
+    /// </summary>
+    Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null);
 }

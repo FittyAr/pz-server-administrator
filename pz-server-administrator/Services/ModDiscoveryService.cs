@@ -495,4 +495,40 @@ public class ModDiscoveryService : IModDiscoveryService
         // Process.Start("steamcmd", $"+login anonymous +workshop_download_item 108600 {workshopId} +quit");
         await Task.Delay(500);
     }
+
+    public async Task BatchApplyAiActionsAsync(IEnumerable<AiAction> actions)
+    {
+        using var context = _contextFactory.CreateModsContext();
+        if (context == null) return;
+        var allMods = await context.ModInstances.Include(m => m.WorkshopItem).ToListAsync();
+
+        foreach (var action in actions)
+        {
+            _logger.LogInformation("[AI Agent] Ejecutando acción: {Type} sobre {Target}", action.Type, action.TargetId);
+
+            switch (action.Type)
+            {
+                case AiActionType.Deactivate:
+                    var toDeactivate = allMods.FirstOrDefault(m => m.ModId == action.TargetId);
+                    if (toDeactivate != null) toDeactivate.IsActive = false;
+                    break;
+
+                case AiActionType.Activate:
+                    var toActivate = allMods.FirstOrDefault(m => m.ModId == action.TargetId);
+                    if (toActivate != null) toActivate.IsActive = true;
+                    break;
+
+                case AiActionType.Reorder:
+                    var toReorder = allMods.FirstOrDefault(m => m.ModId == action.TargetId);
+                    if (toReorder != null && action.Parameters.TryGetValue("new_order", out var orderStrValue) && int.TryParse(orderStrValue, out var newOrderInteger))
+                    {
+                        toReorder.Order = newOrderInteger;
+                    }
+                    break;
+            }
+        }
+
+        await context.SaveChangesAsync();
+        await SaveModConfigurationAsync(); // Persistir a archivos .ini / .lua
+    }
 }
