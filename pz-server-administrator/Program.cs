@@ -18,6 +18,7 @@ builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddSingleton<IPzServerService, PzServerService>();
 builder.Services.AddSingleton<ISqliteService, SqliteService>();
 builder.Services.AddScoped<IRconService, RconService>();
+builder.Services.AddScoped<IDatabaseContextFactory, DatabaseContextFactory>();
 
 var app = builder.Build();
 

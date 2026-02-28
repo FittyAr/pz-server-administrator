@@ -1,12 +1,15 @@
 @page "/database"
 @using Microsoft.FluentUI.AspNetCore.Components
+@using Microsoft.EntityFrameworkCore
 @using System.Data
 @using pz_server_administrator.Services
 @using pz_server_administrator.Models
-@inject ISqliteService SqliteService
-@inject IConfigurationService ConfigurationService
-@inject IPzServerService PzServerService
-
+@using pz_server_administrator.Data.Database.Players
+@using pz_server_administrator.Data.Database.Vehicles
+@using pz_server_administrator.Data.Database.ServerTest
+@inject IDatabaseContextFactory DatabaseContextFactory
+@inject IToastService ToastService
+@implements IDisposable
 
 <PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
 
@@ -15,175 +18,224 @@
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H3">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
-                Explorador de Base de Datos
+                Explorador de Base de Datos (EF Core)
             </FluentLabel>
             <FluentLabel Typo="Typography.Body">
-                Explora y consulta la base de datos SQLite del servidor Project Zomboid.
+                Explora y controla directamente las bases de datos SQlite del servidor Project Zomboid (Players,
+                Vehicles, ServerTest).
             </FluentLabel>
-        </FluentStack>
-    </FluentCard>
-
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Horizontal" VerticalGap="10">
-            <FluentSelect TValue="string" Label="Seleccionar Base de Datos" Items="@_dbFiles"
-                OptionText="@(f => f.Name)" OptionValue="@(f => f.FullPath)" @bind-Value="@_selectedDbPath"
-                SelectedOptionChanged="@((PzFile? f) => OnDbChanged(f))" />
-
-            @if (!string.IsNullOrEmpty(_selectedDbPath))
-            {
-                <FluentSelect TValue="string" Label="Seleccionar Tabla" Items="@_tables" @bind-Value="@_selectedTable"
-                    SelectedOptionChanged="@((string? t) => OnTableChanged(t))" />
-            }
         </FluentStack>
     </FluentCard>
 
     @if (_isBusy)
-
     {
         <FluentProgressRing />
     }
-
-    else if (_currentData != null)
-
+    else if (!_isConfigured)
     {
-        <FluentCard Style="overflow: auto;">
-            <FluentLabel Typo="Typography.H5">Datos de @_selectedTable</FluentLabel>
-            <table class="fluent-table">
-                <thead>
-                    <tr>
-                        @foreach (DataColumn column in _currentData.Columns)
-                        {
-                            <th>@column.ColumnName</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (DataRow row in _currentData.Rows)
-
-                    {
-                        <tr>
-                            @foreach (var item in row.ItemArray)
-
-                            {
-                                <td>@item?.ToString()</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <FluentCard>
+            <FluentMessageBar Intent="MessageIntent.Warning">
+                El directorio del servidor no está configurado correctamente o no se encontraron los archivos `.db`.
+                Asegúrate de configurar la ruta del servidor en "Ajustes de Servidor".
+            </FluentMessageBar>
         </FluentCard>
+    }
+    else
+    {
+        <FluentTabs @bind-ActiveTabId="activeTabId" OnTabChange="HandleTabChange">
+            <FluentTab Id="tab-players" Label="Players DB">
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
+                    <FluentSelect TValue="string" Items="@_playersTables" @bind-Value="@_selectedPlayerTable"
+                        Label="Seleccionar Tabla" />
+
+                    @if (_selectedPlayerTable == "NetworkPlayers" && _netPlayers != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_netPlayers" TGridItem="NetworkPlayer" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(p => p.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Username)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Steamid)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.X)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                    else if (_selectedPlayerTable == "LocalPlayers" && _locPlayers != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_locPlayers" TGridItem="LocalPlayer" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(p => p.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.X)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
+                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                </FluentStack>
+            </FluentTab>
+
+            <FluentTab Id="tab-vehicles" Label="Vehicles DB">
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
+                    <FluentLabel Typo="Typography.H6">Tabla: Vehicles</FluentLabel>
+                    @if (_vehicles != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_vehicles" TGridItem="Vehicle" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(v => v.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(v => v.X)" Sortable="true" />
+                                <PropertyColumn Property="@(v => v.Y)" Sortable="true" />
+                                <PropertyColumn Property="@(v => v.Wx)" Sortable="true" />
+                                <PropertyColumn Property="@(v => v.Wy)" Sortable="true" />
+                                <PropertyColumn Property="@(v => v.Worldversion)" Sortable="true" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                </FluentStack>
+            </FluentTab>
+
+            <FluentTab Id="tab-server" Label="ServerTest DB">
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
+                    <FluentSelect TValue="string" Items="@_serverTables" @bind-Value="@_selectedServerTable"
+                        Label="Seleccionar Tabla" />
+
+                    @if (_selectedServerTable == "Whitelist" && _whitelists != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_whitelists" TGridItem="Whitelist" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(w => w.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(w => w.Username)" Sortable="true" />
+                                <PropertyColumn Property="@(w => w.Steamid)" Sortable="true" />
+                                <PropertyColumn Property="@(w => w.AuthType)" Sortable="true" />
+                                <PropertyColumn Property="@(w => w.Role)" Sortable="true" />
+                                <PropertyColumn Property="@(w => w.LastConnection)" Sortable="true" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                    else if (_selectedServerTable == "Userlog" && _userlogs != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_userlogs" TGridItem="Userlog" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(u => u.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(u => u.Username)" Sortable="true" />
+                                <PropertyColumn Property="@(u => u.Type)" Sortable="true" />
+                                <PropertyColumn Property="@(u => u.Amount)" Sortable="true" />
+                                <PropertyColumn Property="@(u => u.Text)" Sortable="true" />
+                                <PropertyColumn Property="@(u => u.IssuedBy)" Sortable="true" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                    else if (_selectedServerTable == "Tickets" && _tickets != null)
+                    {
+                        <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
+                            <FluentDataGrid Items="@_tickets" TGridItem="Ticket" Pagination="@pagination"
+                                GenerateHeader="GenerateHeaderOption.Default">
+                                <PropertyColumn Property="@(t => t.Id)" Sortable="true" />
+                                <PropertyColumn Property="@(t => t.Author)" Sortable="true" />
+                                <PropertyColumn Property="@(t => t.Message)" Sortable="true" />
+                                <PropertyColumn Property="@(t => t.Viewed)" Sortable="true" />
+                                <PropertyColumn Property="@(t => t.AnsweredId)" Sortable="true" />
+                            </FluentDataGrid>
+                            <FluentPaginator State="@pagination" />
+                        </div>
+                    }
+                </FluentStack>
+            </FluentTab>
+        </FluentTabs>
     }
 </FluentStack>
 
-<style>
-    .fluent-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .fluent-table th,
-    .fluent-table td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid var(--neutral-stroke-rest);
-    }
-
-    .fluent-table th {
-        background-color: var(--neutral-layer-2);
-        position: sticky;
-        top: 0;
-    }
-</style>
-
 @code {
-    private List<PzFile> _dbFiles = new();
+    private bool _isBusy = true;
+    private bool _isConfigured = false;
+    private string activeTabId = "tab-players";
 
-    private List<string> _tables = new();
+    private PlayersContext? _playersContext;
+    private VehiclesContext? _vehiclesContext;
+    private ServerTestContext? _serverContext;
 
-    private string? _selectedDbPath;
+    // Data queryables
+    private IQueryable<NetworkPlayer>? _netPlayers;
+    private IQueryable<LocalPlayer>? _locPlayers;
+    private IQueryable<Vehicle>? _vehicles;
+    private IQueryable<Whitelist>? _whitelists;
+    private IQueryable<Userlog>? _userlogs;
+    private IQueryable<Ticket>? _tickets;
 
-    private string? _selectedTable;
+    // Dropdowns
+    private List<string> _playersTables = new() { "NetworkPlayers", "LocalPlayers" };
+    private string _selectedPlayerTable = "NetworkPlayers";
 
-    private DataTable? _currentData;
+    private List<string> _serverTables = new() { "Whitelist", "Userlog", "Tickets" };
+    private string _selectedServerTable = "Whitelist";
 
-    private bool _isBusy = false;
-
-
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 20 };
 
     protected override async Task OnInitializedAsync()
-
     {
-
-        var config = ConfigurationService.GetConfiguration();
-
-        var serverPath = config.AppSettings.ServerDirectoryPath;
-
-        if (!string.IsNullOrEmpty(serverPath))
+        _isBusy = true;
+        try
         {
-            var files = await PzServerService.GetServerFilesAsync(serverPath);
-            _dbFiles = files.Where(f => f.Type == PzFileType.Database).ToList();
-        }
+            _playersContext = DatabaseContextFactory.CreatePlayersContext();
+            _vehiclesContext = DatabaseContextFactory.CreateVehiclesContext();
+            _serverContext = DatabaseContextFactory.CreateServerTestContext();
 
+            if (_playersContext != null || _vehiclesContext != null || _serverContext != null)
+            {
+                _isConfigured = true;
+                LoadTabData();
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error loading databases: {ex.Message}");
+        }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 
-    private async Task OnDbChanged(PzFile? file)
+    private void HandleTabChange(FluentTab tab)
     {
-
-        if (file == null) return;
-
-        _selectedDbPath = file.FullPath;
-
-        _isBusy = true;
-
-        try
-
-        {
-
-            _tables = await SqliteService.GetTablesAsync(_selectedDbPath);
-
-            _selectedTable = null;
-
-            _currentData = null;
-
-        }
-
-        finally
-
-        {
-
-            _isBusy = false;
-
-        }
-
+        LoadTabData();
     }
 
-
-
-    private async Task OnTableChanged(string? table)
-
+    private void LoadTabData()
     {
-
-        if (string.IsNullOrEmpty(table) || string.IsNullOrEmpty(_selectedDbPath)) return;
-
-        _selectedTable = table;
-
-        _isBusy = true;
-
-        try
-
+        if (activeTabId == "tab-players" && _playersContext != null)
         {
-
-            _currentData = await SqliteService.QueryTableAsync(_selectedDbPath, _selectedTable);
-
+            _netPlayers = _playersContext.NetworkPlayers.AsQueryable();
+            _locPlayers = _playersContext.LocalPlayers.AsQueryable();
         }
-
-        finally
-
+        else if (activeTabId == "tab-vehicles" && _vehiclesContext != null)
         {
-
-            _isBusy = false;
-
+            _vehicles = _vehiclesContext.Vehicles.AsQueryable();
         }
+        else if (activeTabId == "tab-server" && _serverContext != null)
+        {
+            _whitelists = _serverContext.Whitelists.AsQueryable();
+            _userlogs = _serverContext.Userlogs.AsQueryable();
+            _tickets = _serverContext.Tickets.AsQueryable();
+        }
+    }
 
+    public void Dispose()
+    {
+        _playersContext?.Dispose();
+        _vehiclesContext?.Dispose();
+        _serverContext?.Dispose();
     }
 }
