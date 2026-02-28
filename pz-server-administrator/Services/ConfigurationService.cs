@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 namespace pz_server_administrator.Services;
 
 /// <summary>
-/// Service for managing application configuration from appsettings.zsm.json
+/// Service for managing application configuration from appsettings.json
 /// </summary>
 public interface IConfigurationService
 {
@@ -27,8 +27,7 @@ public class ConfigurationService : IConfigurationService
     {
         _logger = logger;
 
-        var configDir = FindConfigDirectory(env.ContentRootPath);
-        _configFilePath = Path.Combine(configDir, "appsettings.zsm.json");
+        _configFilePath = Path.Combine(env.ContentRootPath, "appsettings.json");
         _configuration = new ZsmConfiguration();
 
         _logger.LogInformation("[Configuration] Initializing with config file: {FilePath}", _configFilePath);
@@ -41,32 +40,7 @@ public class ConfigurationService : IConfigurationService
         }
     }
 
-    private string FindConfigDirectory(string rootPath)
-    {
-        var searchPaths = new[]
-        {
-            Path.Combine(rootPath, "config"),
-            Path.Combine(Directory.GetCurrentDirectory(), "config"),
-        };
 
-        foreach (var path in searchPaths)
-        {
-            if (Directory.Exists(path)) return path;
-        }
-
-        var dir = new DirectoryInfo(rootPath);
-        while (dir != null)
-        {
-            var candidate = Path.Combine(dir.FullName, "config");
-            if (Directory.Exists(candidate)) return candidate;
-            dir = dir.Parent;
-        }
-
-        // Fallback: create in current directory
-        var fallback = Path.Combine(Directory.GetCurrentDirectory(), "config");
-        Directory.CreateDirectory(fallback);
-        return fallback;
-    }
 
     private void AutoDetectPzServer()
     {
@@ -184,8 +158,25 @@ public class ConfigurationService : IConfigurationService
         try
         {
             var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var json = JsonSerializer.Serialize(configuration, options);
-            await File.WriteAllTextAsync(_configFilePath, json);
+
+            var existingJson = File.Exists(_configFilePath) ? await File.ReadAllTextAsync(_configFilePath) : "{}";
+            var jsonObj = System.Text.Json.Nodes.JsonNode.Parse(existingJson) as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+
+            var configNode = JsonSerializer.SerializeToNode(configuration, options) as System.Text.Json.Nodes.JsonObject;
+            if (configNode != null)
+            {
+                foreach (var prop in configNode)
+                {
+                    if (prop.Value == null)
+                        jsonObj[prop.Key] = null;
+                    else
+                        jsonObj[prop.Key] = prop.Value.DeepClone();
+                }
+            }
+
+            var newJsonString = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(_configFilePath, newJsonString);
+
             lock (_lock) _configuration = configuration;
             _logger.LogInformation("[Configuration] Saved to {FilePath}", _configFilePath);
         }
@@ -201,8 +192,25 @@ public class ConfigurationService : IConfigurationService
         try
         {
             var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var json = JsonSerializer.Serialize(configuration, options);
-            File.WriteAllText(_configFilePath, json);
+
+            var existingJson = File.Exists(_configFilePath) ? File.ReadAllText(_configFilePath) : "{}";
+            var jsonObj = System.Text.Json.Nodes.JsonNode.Parse(existingJson) as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+
+            var configNode = JsonSerializer.SerializeToNode(configuration, options) as System.Text.Json.Nodes.JsonObject;
+            if (configNode != null)
+            {
+                foreach (var prop in configNode)
+                {
+                    if (prop.Value == null)
+                        jsonObj[prop.Key] = null;
+                    else
+                        jsonObj[prop.Key] = prop.Value.DeepClone();
+                }
+            }
+
+            var newJsonString = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_configFilePath, newJsonString);
+
             lock (_lock) _configuration = configuration;
             _logger.LogInformation("[Configuration] Saved to {FilePath}", _configFilePath);
         }

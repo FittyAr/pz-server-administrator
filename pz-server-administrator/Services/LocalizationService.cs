@@ -114,10 +114,9 @@ namespace pz_server_administrator.Services
 
         private void LoadAvailableLanguages()
         {
-            var configDir = GetConfigDirectory();
-            if (string.IsNullOrEmpty(configDir)) return;
+            var langDirPath = GetLangDirectory();
+            if (string.IsNullOrEmpty(langDirPath)) return;
 
-            var langDirPath = Path.Combine(configDir, "lang");
             if (Directory.Exists(langDirPath))
             {
                 AvailableLanguages = Directory.GetFiles(langDirPath, "*.json")
@@ -129,10 +128,10 @@ namespace pz_server_administrator.Services
 
         private async Task LoadLanguage(string language)
         {
-            var configDir = GetConfigDirectory();
-            if (string.IsNullOrEmpty(configDir)) return;
+            var langDirPath = GetLangDirectory();
+            if (string.IsNullOrEmpty(langDirPath)) return;
 
-            var langFilePath = Path.Combine(configDir, "lang", $"{language}.json");
+            var langFilePath = Path.Combine(langDirPath, $"{language}.json");
             if (File.Exists(langFilePath))
             {
                 var json = await File.ReadAllTextAsync(langFilePath);
@@ -142,10 +141,10 @@ namespace pz_server_administrator.Services
 
         public async Task<string> GetLanguageNameAsync(string language)
         {
-            var configDir = GetConfigDirectory();
-            if (string.IsNullOrEmpty(configDir)) return language;
+            var langDirPath = GetLangDirectory();
+            if (string.IsNullOrEmpty(langDirPath)) return language;
 
-            var langFilePath = Path.Combine(configDir, "lang", $"{language}.json");
+            var langFilePath = Path.Combine(langDirPath, $"{language}.json");
             if (File.Exists(langFilePath))
             {
                 var json = await File.ReadAllTextAsync(langFilePath);
@@ -159,50 +158,35 @@ namespace pz_server_administrator.Services
         }
 
         /// <summary>
-        /// Gets the 'config' directory. Checks ContentRootPath first (where build copies files),
-        /// then walks up directories looking for a config/lang folder.
+        /// Gets the 'lang' directory path. Checks ContentRootPath/Resources/lang.
         /// </summary>
-        private string? GetConfigDirectory()
+        private string? GetLangDirectory()
         {
-            // 1. Check a dedicated 'localization' folder in ContentRoot 
-            // This is safer in Docker because the user might mount over /app/config
-            var localizationPath = Path.Combine(_env.ContentRootPath, "localization");
-            if (Directory.Exists(localizationPath))
-            {
-                // We return this path, but the service expects /lang inside it
-                // So we actually want to return the parent that contains 'lang'
-                // BUT, to keep it simple, we check if 'lang' is directly here
-                if (Directory.Exists(Path.Combine(localizationPath, "lang"))) return localizationPath;
-
-                // If the folder itself contains the JSON files, we'd need to adjust logic.
-                // Let's assume we copy 'config/lang' to 'localization/lang'
-            }
-
-            // 2. Check config/lang directly in ContentRootPath
-            var directPath = Path.Combine(_env.ContentRootPath, "config");
-            if (Directory.Exists(Path.Combine(directPath, "lang")))
+            // 1. Check in ContentRootPath
+            var directPath = Path.Combine(_env.ContentRootPath, "Resources", "lang");
+            if (Directory.Exists(directPath))
             {
                 return directPath;
             }
 
-            // 3. Fallback: walk up (Development)
+            // 2. Fallback: walk up (Development, especially useful for unit testing if ContentRootPath is bin/Debug)
             var directory = new DirectoryInfo(_env.ContentRootPath);
             while (directory != null)
             {
-                var candidate = Path.Combine(directory.FullName, "config");
-                if (Directory.Exists(Path.Combine(candidate, "lang")))
+                var candidate = Path.Combine(directory.FullName, "Resources", "lang");
+                if (Directory.Exists(candidate))
                 {
                     return candidate;
                 }
                 directory = directory.Parent;
             }
 
-            // 4. Check if we are in bin/Debug... and go up
+            // 3. Fallback: check current directory (Fallback for other runners)
             var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
             while (currentDir != null)
             {
-                var candidate = Path.Combine(currentDir.FullName, "config");
-                if (Directory.Exists(Path.Combine(candidate, "lang"))) return candidate;
+                var candidate = Path.Combine(currentDir.FullName, "Resources", "lang");
+                if (Directory.Exists(candidate)) return candidate;
                 currentDir = currentDir.Parent;
             }
 

@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Copy config files to output directory -->
-    <Content Update="config\**\*.*">
+    <!-- Copy language files to output directory -->
+    <Content Update="Resources\lang\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

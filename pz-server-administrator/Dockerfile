@@ -21,9 +21,6 @@ EXPOSE 8080
 
 COPY --from=publish /app/publish .
 
-# Create localization folder so it's not hidden by the config volume mount
-RUN mkdir -p /app/localization && cp -r config/lang /app/localization/
-
 # Create config directory and ensure permissions
 RUN mkdir -p /app/config && chmod 777 /app/config
 

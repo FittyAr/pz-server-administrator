@@ -15,13 +15,13 @@ El sistema de i18n permite que la interfaz de usuario de la aplicación se muest
 
 ## Estructura de Archivos
 
-- **Archivos de idioma**: Se encuentran en `config/lang/`. Cada archivo se nombra con el código de idioma de dos letras (por ejemplo, `en.json`, `es.json`).
+- **Archivos de idioma**: Se encuentran en `Resources/lang/`. Cada archivo se nombra con el código de idioma de dos letras (por ejemplo, `en.json`, `es.json`).
 - **Servicio de Localización**: La interfaz `ILocalizationService` y su implementación `LocalizationService` se encuentran en `pz-server-administrator/Services/`.
 - **Componente Selector de Idioma**: El componente `LanguageSelector.razor` se encuentra en `pz-server-administrator/Components/Layout/`.
 
 ## Cómo Agregar un Nuevo Idioma
 
-1.  **Crear el archivo JSON**: Crea un nuevo archivo en la carpeta `config/lang/` con el código del nuevo idioma (por ejemplo, `fr.json` para francés).
+1.  **Crear el archivo JSON**: Crea un nuevo archivo en la carpeta `Resources/lang/` con el código del nuevo idioma (por ejemplo, `fr.json` para francés).
 2.  **Copiar y traducir**: Copia el contenido de un archivo de idioma existente (por ejemplo, `en.json`) en el nuevo archivo y traduce todos los valores de las cadenas.
 
 ¡Eso es todo! La aplicación detectará automáticamente el nuevo idioma y lo mostrará en el selector de idiomas.
