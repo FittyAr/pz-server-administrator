@@ -22,6 +22,7 @@ builder.Services.AddScoped<IDatabaseContextFactory, DatabaseContextFactory>();
 builder.Services.AddScoped<IServerLoggerService, ServerLoggerService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IModDiscoveryService, ModDiscoveryService>();
+builder.Services.AddScoped<IAiService, AiService>();
 
 var app = builder.Build();
 

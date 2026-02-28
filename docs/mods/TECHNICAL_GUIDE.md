@@ -82,7 +82,7 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 ## 🚀 7. Estado de la Implementación (Roadmap)
 
 ### ✅ Finalizado (Sprint 1: Cimientos y Descubrimiento)
-- [x] **Infraestructura de Datos**: Creación de `Mods.db`, `ModsContext` y modelos relacionales (`WorkshopItem`, `ModInstance`, `CloudProfile`).
+- [x] **Infraestructura de Datos**: Creación de `Mods.db`, `ModsContext` y modelos relacionales (`WorkshopItem`, `ModInstance`).
 - [x] **Motor de Descubrimiento (`ModDiscoveryService`)**: 
   - Escaneo recursivo y robusto de carpetas de Workshop.
   - Sincronización automática de IDs y nombres desde archivos `mod.info`.
@@ -91,12 +91,18 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Interfaz Base**: Página `ModManager.razor` funcional con grid responsivo y sistema de notificaciones.
 - [x] **Localización**: Soporte completo para inglés y español en el módulo de gestión.
 
-### ⏳ En Progreso (Sprint 2: Ordenamiento y Persistencia)
-- [ ] **Mod List Ordering**: Interfaz de arrastrar y soltar para definir el orden de carga técnico.
-- [ ] **Escritura en `.ini`**: Lógica para actualizar las claves `Mods=` y `WorkshopItems=` preservando el orden manual del usuario.
-- [ ] **Gestión de Categorías**: Implementar el motor de categorización automática (Enum `ModCategory`).
+### ✅ Finalizado (Sprint 2: Ordenamiento y Persistencia)
+- [x] **Mod List Ordering**: Interfaz de pestañas y botones de movimiento para definir el orden de carga técnico.
+- [x] **Escritura en `.ini`**: Lógica robusta para actualizar las claves `Mods=` y `WorkshopItems=` preservando el orden manual.
+- [x] **Gestión de Categorías**: Implementación del motor de categorización automática (Enum `ModCategory`) basado en heurísticas.
+- [x] **Búsqueda y Filtrado**: Filtro en tiempo real por título o ID para gestionar grandes listas de mods.
 
-### 🚀 Pendiente (Sprint 3: IA e Integración Cloud)
-- [ ] **IA Conflict Resolver**: Servicio para analizar incompatibilidades y sugerir órdenes óptimos mediante LLMs.
-- [ ] **Cloud Presets**: Telemetría y carga/descarga de configuraciones de mods vía API Key.
-- [ ] **Version Control**: Sistema de hashes para detectar cambios en los archivos de mods y notificar actualizaciones.
+### ⏳ En Progreso (Sprint 3: IA e Integración Inteligente)
+- [ ] **IA Conflict Resolver**: Servicio para analizar incompatibilidades y sugerir órdenes óptimos mediante LLMs (Gemini/OpenAI).
+- [ ] **Cloud Metadata**: Identificación por API Key para recuperar configuraciones compartidas.
+- [ ] **Version Control**: Sistema de hashes para detectar cambios en los archivos de mods locales vs versiones de Steam.
+
+### 🚀 Pendiente (Sprint 4: Telemetría y Ecosistema)
+- [ ] **Community API**: Reporte anónimo y estadísticas de uso de mods.
+- [ ] **Cloud Presets**: Guardado de perfiles enteros de mods en la nube.
+- [ ] **Sync Automático**: Sincronización de configuraciones entre múltiples nodos de servidor.

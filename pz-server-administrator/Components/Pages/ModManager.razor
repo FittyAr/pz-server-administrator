@@ -1,6 +1,7 @@
 @page "/mods"
 @using pz_server_administrator.Services
 @using pz_server_administrator.Data.Database.Mods
+@using pz_server_administrator.Components.Layout
 @inject IModDiscoveryService ModDiscovery
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
@@ -9,116 +10,201 @@
 
 <PageTitle>@LocService.Get("Mods.Title")</PageTitle>
 
+@*
+    Componente para la gestión avanzada de mods.
+    Permite el descubrimiento, activación, ordenamiento y actualización de metadatos.
+*@
+
 <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
     <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.Title")</FluentLabel>
     <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent"
-            OnClick="SaveConfigAsync" Loading="@_isSaving">
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" 
+                      Appearance="Appearance.Accent"
+                      OnClick="SaveConfigAsync" 
+                      Loading="@_isSaving">
             @LocService.Get("Mods.SaveConfig")
         </FluentButton>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" Appearance="Appearance.Neutral"
-            OnClick="ScanModsAsync" Loading="@_isScanning">
+        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" 
+                      Appearance="Appearance.Neutral"
+                      OnClick="ScanModsAsync" 
+                      Loading="@_isScanning">
             @LocService.Get("Mods.ScanButton")
-        </FluentButton>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Cloud())" Appearance="Appearance.Neutral" Disabled="true">
-            @LocService.Get("Mods.SyncCloud")
         </FluentButton>
     </FluentStack>
 </FluentStack>
 
 <FluentDivider Style="margin: 1rem 0;" />
 
-<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-    <FluentSearch @bind-Value="_filterText" @bind-Value:after="StateHasChanged"
-        Placeholder="@LocService.Get("Mods.SearchPlaceholder")" Style="width: 300px;" />
-</div>
+<FluentTabs ActiveTabId="tab-explorer" OnTabSelect="OnTabHandle">
+    <FluentTab Id="tab-explorer" Label="@LocService.Get("Mods.TabExplorer")">
+        <div style="margin-top: 1rem;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <FluentSearch @bind-Value="_filterText" 
+                              @bind-Value:after="StateHasChanged"
+                              Placeholder="@LocService.Get("Mods.SearchPlaceholder")" 
+                              Style="width: 300px;" />
+            </div>
 
-@if (_items == null)
-{
-    <FluentProgressRing Style="margin: 2rem auto;" />
-}
-else if (!FilteredItems?.Any() ?? true)
-{
-    <div
-        style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
-        <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Neutral" />
-        <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoModsFound")</FluentLabel>
-    </div>
-}
-else
-{
-    <FluentGrid Spacing="3" AdaptiveRendering="true">
-        @foreach (var item in FilteredItems!)
-        {
-            <FluentGridItem xs="12" sm="6" md="4" lg="3">
-                <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
-                    @if (!string.IsNullOrEmpty(item.ThumbnailPath))
+            @if (_items == null)
+            {
+                <FluentProgressRing Style="margin: 2rem auto;" />
+            }
+            else if (!FilteredItems?.Any() ?? true)
+            {
+                <div style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Neutral" />
+                    <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoModsFound")</FluentLabel>
+                </div>
+            }
+            else
+            {
+                <FluentGrid Spacing="3" AdaptiveRendering="true">
+                    @foreach (var item in FilteredItems!)
                     {
-                        <img src="@item.ThumbnailPath" style="width: 100%; height: 150px; object-fit: cover;" alt="@item.Title" />
-                    }
-                    else
-                    {
-                        <div
-                            style="width: 100%; height: 150px; background: var(--neutral-layer-2); display: flex; align-items: center; justify-content: center;">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Apps())" Color="Color.Neutral" />
-                        </div>
-                    }
+                        <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                            <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden; position: relative;">
+                                @if (!string.IsNullOrEmpty(item.ThumbnailPath))
+                                {
+                                    <img src="@item.ThumbnailPath" style="width: 100%; height: 150px; object-fit: cover;" alt="@item.Title" />
+                                }
+                                else
+                                {
+                                    <div style="width: 100%; height: 150px; background: var(--neutral-layer-2); display: flex; align-items: center; justify-content: center;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Apps())" Color="Color.Neutral" />
+                                    </div>
+                                }
 
-                    <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
-                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
-                        <FluentLabel Typo="Typography.Body" Color="Color.Neutral">ID: @item.Id</FluentLabel>
+                                <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
+                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
+                                    <FluentLabel Typo="Typography.Body" Color="Color.Neutral" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
 
-                        <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            @foreach (var instance in item.Instances)
+                                    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                        @foreach (var instance in item.Instances)
+                                        {
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)"
+                                                             Style="cursor: pointer;" 
+                                                             @onclick="@(() => ToggleActive(item.Id, instance))">
+                                                    @(instance.IsActive ? "✅ " : "❌ ") @instance.ModId
+                                                </FluentBadge>
+                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
+                                                    @GetCategoryIcon(instance.Category) @instance.Category
+                                                </FluentLabel>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div style="margin-top: auto; padding-top: 1rem;">
+                                        <FluentButton IconStart="@(new Icons.Regular.Size20.Info())" 
+                                                      Appearance="Appearance.Stealth"
+                                                      Style="width: 100%;" 
+                                                      OnClick="@(() => FetchMetadata(item.Id))">
+                                            @LocService.Get("Mods.UpdateInfo")
+                                        </FluentButton>
+                                    </div>
+                                </div>
+                            </FluentCard>
+                        </FluentGridItem>
+                    }
+                </FluentGrid>
+            }
+        </div>
+    </FluentTab>
+
+    <FluentTab Id="tab-order" Label="@LocService.Get("Mods.TabOrder")">
+        <div style="margin-top: 1rem;">
+            <FluentMessageBar Title="Information" Intent="@MessageIntent.Info" AllowDismiss="false">
+                @LocService.Get("Mods.OrderTip")
+            </FluentMessageBar>
+
+            <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+                 @if (_items != null)
+                 {
+                    <FluentListbox Items="@ActiveModsOrdered" 
+                                   TValue="ModInstance" 
+                                   @bind-SelectedOption="@_selectedForMove"
+                                   Style="min-height: 400px; width: 100%;">
+                        <OptionTemplate Context="option">
+                            @if (option != null)
                             {
-                                <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)"
-                                    Style="cursor: pointer;" @onclick="@(() => ToggleActive(item.Id, instance))">
-                                    @(instance.IsActive ? "✅ " : "❌ ") @instance.ModId
-                                </FluentBadge>
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <FluentIcon Value="@(GetIconForCategory(option.Category))" Color="Color.Accent" />
+                                        <span style="font-weight: bold; margin-left: 8px;">@option.ModId</span>
+                                        <span style="margin-left: 10px; opacity: 0.7; font-size: 0.8rem;">(@option.Name)</span>
+                                    </div>
+                                    <div>
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowUp())" 
+                                                      Appearance="Appearance.Stealth" 
+                                                      OnClick="@(() => MoveOrder(option, -1))" />
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDown())" 
+                                                      Appearance="Appearance.Stealth" 
+                                                      OnClick="@(() => MoveOrder(option, 1))" />
+                                    </div>
+                                </div>
                             }
-                        </div>
-
-                        <div style="margin-top: auto; padding-top: 1rem;">
-                            <FluentButton IconStart="@(new Icons.Regular.Size20.Info())" Appearance="Appearance.Stealth"
-                                Style="width: 100%;" OnClick="@(() => FetchMetadata(item.Id))">
-                                @LocService.Get("Mods.UpdateInfo")
-                            </FluentButton>
-                        </div>
-                    </div>
-                </FluentCard>
-            </FluentGridItem>
-        }
-    </FluentGrid>
-}
+                        </OptionTemplate>
+                    </FluentListbox>
+                 }
+            </div>
+        </div>
+    </FluentTab>
+</FluentTabs>
 
 @code {
     private List<WorkshopItem>? _items;
     private string _filterText = "";
     private bool _isScanning;
     private bool _isSaving;
+    private ModInstance? _selectedForMove;
 
     private IEnumerable<WorkshopItem>? FilteredItems => _items?
-    .Where(i => string.IsNullOrEmpty(_filterText) ||
-    i.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ||
-    i.Id.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
+        .Where(i => string.IsNullOrEmpty(_filterText) ||
+        i.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ||
+        i.Id.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
 
+    private List<ModInstance> ActiveModsOrdered => _items?
+        .SelectMany(i => i.Instances)
+        .Where(i => i.IsActive)
+        .OrderBy(i => i.Order)
+        .ToList() ?? new List<ModInstance>();
+
+    /// <summary>
+    /// Inicializa el componente cargando los datos de la base de datos local.
+    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
     }
 
+    /// <summary>
+    /// Manejador para el cambio de pestañas.
+    /// </summary>
+    private void OnTabHandle(FluentTab tab)
+    {
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Carga los items del workshop y sus instancias.
+    /// </summary>
     private async Task LoadDataAsync()
     {
         _items = await ModDiscovery.GetWorkshopItemsAsync();
     }
 
+    /// <summary>
+    /// Activa o desactiva un mod de forma atómica.
+    /// </summary>
     private async Task ToggleActive(string workshopId, ModInstance instance)
     {
         instance.IsActive = !instance.IsActive;
         await ModDiscovery.ToggleModActiveAsync(workshopId, instance.ModId, instance.IsActive);
-        // No recargamos todo para mantener fluidez, el objeto ya está actualizado por referencia.
     }
 
+    /// <summary>
+    /// Persiste el orden y activación actual en el archivo de configuración del servidor.
+    /// </summary>
     private async Task SaveConfigAsync()
     {
         _isSaving = true;
@@ -137,28 +223,62 @@ else
         }
     }
 
+    /// <summary>
+    /// Mueve el orden de carga de un mod.
+    /// </summary>
+    private void MoveOrder(ModInstance instance, int direction)
+    {
+        var list = ActiveModsOrdered;
+        int index = list.IndexOf(instance);
+        int newIndex = index + direction;
+
+        if (newIndex >= 0 && newIndex < list.Count)
+        {
+            // Intercambiar orden con el elemento en la nueva posición
+            var other = list[newIndex];
+            var tempOrder = other.Order;
+            other.Order = instance.Order;
+            instance.Order = tempOrder;
+            
+            // Forzar actualización de la lista ordenada para la UI
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Escanea las carpetas locales para descubrir nuevos mods.
+    /// </summary>
     private async Task ScanModsAsync()
     {
-        // ... (mismo contenido que antes para ScanModsAsync)
         _isScanning = true;
         try
         {
-            var serverDir = ConfigService.GetConfiguration().AppSettings.ServerDirectoryPath;
+            var config = ConfigService.GetConfiguration();
+            var serverDir = config.AppSettings.ServerDirectoryPath;
+            
             if (string.IsNullOrEmpty(serverDir) || !Directory.Exists(serverDir))
             {
                 ToastService.ShowError(LocService.Get("Mods.ScanError.NoServerDir"));
                 return;
             }
 
-            // Heurística: la carpeta Workshop suele ser hermana de Server en la raíz de Zomboid
-            var zomboidRoot = Directory.GetParent(serverDir)?.FullName;
-            if (zomboidRoot != null)
+            var possibleWorkshopPaths = new List<string> {
+                Path.Combine(Directory.GetParent(serverDir)?.FullName ?? "", "Workshop"),
+                Path.GetFullPath(Path.Combine(serverDir, "../../Workshop"))
+            };
+
+            foreach (var workshopPath in possibleWorkshopPaths)
             {
-                var workshopPath = Path.Combine(zomboidRoot, "Workshop");
-                await ModDiscovery.DiscoverLocalModsAsync(workshopPath);
-                await LoadDataAsync();
-                ToastService.ShowSuccess(LocService.Get("Mods.ScanSuccess"));
+                if (Directory.Exists(workshopPath))
+                {
+                    await ModDiscovery.DiscoverLocalModsAsync(workshopPath);
+                    await LoadDataAsync();
+                    ToastService.ShowSuccess(LocService.Get("Mods.ScanSuccess"));
+                    return;
+                }
             }
+            
+            ToastService.ShowWarning(LocService.Get("Mods.NoModsFound"));
         }
         catch (Exception ex)
         {
@@ -168,9 +288,11 @@ else
         {
             _isScanning = false;
         }
-        // ...
     }
 
+    /// <summary>
+    /// Descarga metadatos desde Steam Workshop.
+    /// </summary>
     private async Task FetchMetadata(string workshopId)
     {
         var result = await ModDiscovery.FetchSteamMetadataAsync(workshopId);
@@ -184,4 +306,24 @@ else
             ToastService.ShowWarning(LocService.Get("Mods.MetadataError"));
         }
     }
+
+    private string GetCategoryIcon(ModCategory cat) => cat switch
+    {
+        ModCategory.Maps => "🗺️",
+        ModCategory.Vehicles => "🚗",
+        ModCategory.Framework => "🛠️",
+        ModCategory.Localization => "🌐",
+        ModCategory.ClothingInterface => "👕",
+        _ => "📦"
+    };
+
+    private Icon GetIconForCategory(ModCategory cat) => cat switch
+    {
+        ModCategory.Maps => new Icons.Regular.Size20.Map(),
+        ModCategory.Vehicles => new Icons.Regular.Size20.VehicleCar(),
+        ModCategory.Framework => new Icons.Regular.Size20.Wrench(),
+        ModCategory.Localization => new Icons.Regular.Size20.Globe(),
+        ModCategory.ClothingInterface => new Icons.Regular.Size20.Key(),
+        _ => new Icons.Regular.Size20.Box()
+    };
 }

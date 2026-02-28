@@ -33,6 +33,10 @@ public class ModDiscoveryService : IModDiscoveryService
         _configurationService = configurationService;
     }
 
+    /// <summary>
+    /// Escanea las carpetas de mods locales y sincroniza con la base de datos Mods.db.
+    /// </summary>
+    /// <param name="workshopPath">La ruta base donde se encuentran los mods de Steam Workshop.</param>
     public async Task DiscoverLocalModsAsync(string workshopPath)
     {
         if (string.IsNullOrEmpty(workshopPath) || !Directory.Exists(workshopPath))
@@ -149,7 +153,8 @@ public class ModDiscoveryService : IModDiscoveryService
                     Name = modName,
                     WorkshopItemId = workshopId,
                     IsActive = activeModIds.Contains(modId),
-                    Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999
+                    Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999,
+                    Category = CategorizeMod(modId, modName, modData)
                 };
                 item.Instances.Add(instance);
             }
@@ -158,6 +163,7 @@ public class ModDiscoveryService : IModDiscoveryService
                 instance.Name = modName;
                 instance.IsActive = activeModIds.Contains(modId);
                 instance.Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999;
+                instance.Category = CategorizeMod(modId, modName, modData);
             }
         }
 
@@ -184,6 +190,9 @@ public class ModDiscoveryService : IModDiscoveryService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Busca metadatos en Steam Workshop para un artículo específico.
+    /// </summary>
     public async Task<bool> FetchSteamMetadataAsync(string workshopId)
     {
         var client = _httpClientFactory.CreateClient();
@@ -289,7 +298,13 @@ public class ModDiscoveryService : IModDiscoveryService
                 var parts = trimmed.Split('=', 2);
                 if (parts.Length == 2)
                 {
-                    result[parts[0].Trim()] = parts[1].Trim();
+                    var key = parts[0].Trim().ToLower();
+                    var val = parts[1].Trim();
+
+                    if (result.ContainsKey(key))
+                        result[key] += ";" + val; // Manejar múltiples líneas de mapas o requerimientos
+                    else
+                        result[key] = val;
                 }
             }
 
@@ -302,5 +317,36 @@ public class ModDiscoveryService : IModDiscoveryService
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Intenta categorizar el mod basado en su ID, nombre y contenido de mod.info.
+    /// </summary>
+    private ModCategory CategorizeMod(string id, string name, Dictionary<string, string> data)
+    {
+        id = id.ToLower();
+        name = name.ToLower();
+
+        // Maps: Si tiene la entrada 'map'
+        if (data.ContainsKey("map")) return ModCategory.Maps;
+
+        // Localization: Si contiene palabras clave
+        if (id.Contains("localization") || id.Contains("translate") || name.Contains("traduccion") || name.Contains("spanish") || name.Contains("english"))
+            return ModCategory.Localization;
+
+        // Vehicles: Entrada en tags o palabras clave en el ID
+        if (id.Contains("car") || id.Contains("vehicle") || id.Contains("truck") || name.Contains("car") || name.Contains("vehicle"))
+            return ModCategory.Vehicles;
+
+        // Framework: Whitelist básica
+        var frameworks = new[] { "framework", "library", "lib", "api", "hook", "moodles" };
+        if (frameworks.Any(f => id.Contains(f) || name.Contains(f)))
+            return ModCategory.Framework;
+
+        // Clothing/UI
+        if (id.Contains("clothing") || id.Contains("skin") || id.Contains("interface") || id.Contains("ui"))
+            return ModCategory.ClothingInterface;
+
+        return ModCategory.Other;
     }
 }

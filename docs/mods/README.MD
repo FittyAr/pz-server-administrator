@@ -1,20 +1,22 @@
-# Gestión de Mods (Futuro)
+# Módulo de Gestión de Mods (V2.0)
 
-Este módulo permitirá listar, activar y desactivar mods del servidor Zomboid.
+Este módulo permite la administración avanzada de mods y artículos del Steam Workshop para servidores de Project Zomboid.
 
-## Objetivos
+## Características Implementadas 🚀
 
-- Mostrar todos los mods cargados.
-- Permitir activación/desactivación de mods.
-- Mostrar información básica de cada mod (nombre, workshopID, descripción).
+- **Descubrimiento Inteligente**: Escaneo recursivo y robusto de carpetas `Workshop` para detectar archivos `mod.info`.
+- **Sincronización Bidireccional**: Lee y escribe directamente en el archivo `.ini` del servidor (`Mods=` y `WorkshopItems=`).
+- **Gestión de Orden**: Interfaz para reordenar la carga de mods, vital para la estabilidad y conflictos de mapas.
+- **Categorización Automática**: Clasifica mods en *Maps*, *Vehicles*, *Frameworks*, *Localization*, etc.
+- **Integración con Steam**: Web scraping automático para obtener títulos y miniaturas oficiales.
+- **Interfaz Premium**: Diseñada con Fluent UI, incluye búsqueda en tiempo real, pestañas de gestión y notificaciones interactivas.
 
-## Consideraciones
+## Documentación Detallada
 
-- Se obtiene desde los archivos `.ini` o desde `mods.txt`.
-- Posible integración con la API de Steam Workshop.
+- [Guía Técnica de Implementación](TECHNICAL_GUIDE.md): Detalles sobre arquitectura de datos, IA y roadmap.
 
-## Próximos pasos
+## Próximos pasos (Sprint 3)
 
-- Confirmar cómo se listan los mods en Project Zomboid.
-- Analizar integración con Workshop.
-- Diseñar UI para listado de mods.
+- **IA Conflict Resolver**: Diagnóstico de incompatibilidades basado en inteligencia artificial.
+- **Cloud Metadata**: Perfiles de configuración compartidos en la nube.
+- **Detección de Versiones**: Notificación automática cuando un mod en el servidor está desactualizado respecto a Steam.
