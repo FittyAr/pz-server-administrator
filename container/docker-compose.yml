@@ -18,6 +18,7 @@ services:
 
       # Persistencia de la propia app (usuarios, config de la app, etc.)
       - ./admin-config:/app/config:rw
+      - ./admin-config/keys:/root/.aspnet/DataProtection-Keys:rw
 
     # Si necesitas comunicación RCON interna y los contenedores no están en la misma red,
     # podrías descomentar 'network_mode: host' o conectarlos a la red del servidor PZ.

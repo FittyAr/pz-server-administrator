@@ -1,43 +1,225 @@
 @page "/server-config/spawn-regions"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IConfigurationService ConfigurationService
+@inject IPzServerService PzServerService
+@inject IToastService ToastService
 
-
-<PageTitle>Spawn Regions - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>Regiones de Spawn - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-            <FluentLabel Typo="Typography.H3">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Location())" />
-                Regiones de Spawn
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Configura las regiones donde los jugadores pueden aparecer en el servidor.
-            </FluentLabel>
-        </FluentStack>
-    </FluentCard>
+    <!-- Header Premium con Acciones -->
+    <div
+        style="background: var(--neutral-fill-layer-rest); padding: 24px; border-radius: 12px; border-left: 6px solid var(--accent-fill-rest); box-shadow: var(--elevation-shadow-card-rest);">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch"
+            VerticalAlignment="VerticalAlignment.Center" Wrap="true" Style="gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div
+                    style="background: var(--accent-fill-rest); padding: 12px; border-radius: 12px; color: white; display: flex; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <FluentIcon Value="@(new Icons.Filled.Size24.Location())" />
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Regiones de Spawn
+                    </FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gestiona las zonas de aparición inicial
+                        para nuevos jugadores.</FluentLabel>
+                </div>
+            </div>
 
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-            <FluentLabel Typo="Typography.H5">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
-                Módulo en Desarrollo
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Esta funcionalidad será implementada en el Módulo 4.3 según el plan de desarrollo.
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Características planificadas:
-            </FluentLabel>
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                <FluentLabel Typo="Typography.Body">• Edición de archivo SpawnRegion.lua</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Gestión visual de regiones de spawn</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Configuración de coordenadas y parámetros</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Ayuda contextual desde spawnregions-help.json</FluentLabel>
+            <FluentSpacer />
+
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10"
+                VerticalAlignment="VerticalAlignment.Center">
+                <div
+                    style="display: flex; background: var(--neutral-fill-secondary-rest); padding: 4px; border-radius: 8px; border: 1px solid var(--neutral-stroke-rest);">
+                    <FluentButton Appearance="@(_editMode == "simple" ? Appearance.Accent : Appearance.Stealth)"
+                        OnClick="@(() => _editMode = "simple")"
+                        IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
+                        Visual
+                    </FluentButton>
+                    <FluentButton Appearance="@(_editMode == "advanced" ? Appearance.Accent : Appearance.Stealth)"
+                        OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
+                        Código LUA
+                    </FluentButton>
+                </div>
+
+                <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical"
+                    Style="height: 20px; margin: 0 10px;" />
+
+                @if (_editMode == "simple")
+                {
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="Appearance.Accent"
+                        OnClick="AddRegion">Nueva Región</FluentButton>
+                }
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Outline"
+                    OnClick="SaveAsync">Guardar</FluentButton>
             </FluentStack>
         </FluentStack>
-    </FluentCard>
+    </div>
+
+    @if (_regions == null)
+    {
+        <div style="display: flex; justify-content: center; padding: 50px;">
+            <FluentProgressRing />
+        </div>
+    }
+    else
+    {
+        @if (_editMode == "simple")
+        {
+            @if (_regions.Count == 0)
+            {
+                <FluentMessageBar Intent="MessageIntent.Info">No hay regiones definidas. Usa el botón "Nueva Región" para añadir
+                    una.</FluentMessageBar>
+            }
+            else
+            {
+                <FluentGrid Spacing="3">
+                    @foreach (var region in _regions)
+                    {
+                        <FluentGridItem xs="12" sm="6" md="4">
+                            <FluentCard
+                                Style="padding: 15px; position: relative; border-radius: 8px; border-top: 4px solid var(--accent-fill-rest);">
+                                <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+                                    <FluentTextField @bind-Value="region.Name" Label="Nombre de la Región" FullWidth="true" />
+
+                                    <FluentSelect TOption="string" Label="Tipo de Archivo" Value="@GetFileType(region)"
+                                        ValueChanged="@(v => SetFileType(region, v))" Appearance="Appearance.Outline" FullWidth="true">
+                                        <FluentOption TOption="string" Value="file">Mapa Estándar (media/maps/...)</FluentOption>
+                                        <FluentOption TOption="string" Value="serverfile">Archivo del Servidor (serverfile)
+                                        </FluentOption>
+                                    </FluentSelect>
+
+                                    @if (GetFileType(region) == "file")
+                                    {
+                                        <FluentTextField @bind-Value="region.File" Label="Ruta LUA" FullWidth="true"
+                                            Placeholder="Ej: media/maps/Muldraugh, KY/spawnpoints.lua" />
+                                    }
+                                    else
+                                    {
+                                        <FluentTextField @bind-Value="region.ServerFile" Label="Nombre de Archivo" FullWidth="true"
+                                            Placeholder="Ej: mi_spawn.lua" />
+                                    }
+
+                                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth"
+                                            OnClick="@(() => RemoveRegion(region))" Color="Color.Error">Eliminar</FluentButton>
+                                    </div>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                    }
+                </FluentGrid>
+            }
+        }
+        else
+        {
+            <FluentCard Style="padding: 0; overflow: hidden; border-radius: 8px;">
+                <div
+                    style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest);">
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Editor de Texto Plano
+                        (Precaución: La edición incorrecta puede romper el archivo LUA)</FluentLabel>
+                </div>
+                <FluentTextArea @bind-Value="@_rawContent"
+                    Style="width: 100%; height: 500px; font-family: 'Consolas', monospace; border: none;"
+                    Resize="TextAreaResize.Vertical" />
+            </FluentCard>
+        }
+    }
 </FluentStack>
 
 @code {
-    // Implementation will be added in Module 4.3
+    private List<SpawnRegion>? _regions;
+    private string? _filePath;
+    private string _editMode = "simple";
+    private string _rawContent = string.Empty;
+    private Dictionary<SpawnRegion, string> _fileTypeMap = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var config = ConfigurationService.GetConfiguration();
+        var serverPath = config.AppSettings.ServerDirectoryPath;
+        var activeServer = config.AppSettings.ActiveServer;
+
+        if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+        {
+            _filePath = Path.Combine(serverPath, $"{activeServer}_spawnregions.lua");
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (string.IsNullOrEmpty(_filePath)) return;
+
+        _regions = await PzServerService.ParseSpawnRegionsAsync(_filePath);
+        _rawContent = await PzServerService.ReadFileContentAsync(_filePath);
+
+        foreach (var r in _regions)
+        {
+            _fileTypeMap[r] = string.IsNullOrEmpty(r.ServerFile) ? "file" : "serverfile";
+        }
+    }
+
+    private void AddRegion()
+    {
+        var newRegion = new SpawnRegion { Name = "Nueva Región", File = "media/maps/Muldraugh, KY/spawnpoints.lua" };
+        _regions?.Add(newRegion);
+        _fileTypeMap[newRegion] = "file";
+    }
+
+    private void RemoveRegion(SpawnRegion region)
+    {
+        _regions?.Remove(region);
+        _fileTypeMap.Remove(region);
+    }
+
+    private string GetFileType(SpawnRegion region)
+    {
+        if (!_fileTypeMap.TryGetValue(region, out var type))
+        {
+            type = string.IsNullOrEmpty(region.ServerFile) ? "file" : "serverfile";
+            _fileTypeMap[region] = type;
+        }
+        return type;
+    }
+
+    private void SetFileType(SpawnRegion region, string? value)
+    {
+        if (value != null)
+        {
+            _fileTypeMap[region] = value;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrEmpty(_filePath)) return;
+
+        try
+        {
+            if (_editMode == "advanced")
+            {
+                await PzServerService.SaveFileContentAsync(_filePath, _rawContent);
+            }
+            else if (_regions != null)
+            {
+                // Sync values based on selected type
+                foreach (var r in _regions)
+                {
+                    if (GetFileType(r) == "file") r.ServerFile = null;
+                    else r.File = null;
+                }
+                await PzServerService.SaveSpawnRegionsAsync(_filePath, _regions);
+            }
+
+            await LoadDataAsync();
+            ToastService.ShowSuccess("Regiones de spawn guardadas correctamente.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al guardar: {ex.Message}");
+        }
+    }
 }

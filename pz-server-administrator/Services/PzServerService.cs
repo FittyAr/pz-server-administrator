@@ -196,6 +196,108 @@ public class PzServerService : IPzServerService
         return sb.ToString();
     }
 
+    public async Task<List<SpawnRegion>> ParseSpawnRegionsAsync(string filePath)
+    {
+        var regions = new List<SpawnRegion>();
+        if (!File.Exists(filePath)) return regions;
+
+        var content = await File.ReadAllTextAsync(filePath);
+        // Match { name = "...", file = "..." } or { name = "...", serverfile = "..." }
+        var regex = new Regex(@"\{\s*name\s*=\s*""([^""]+)"",\s*(file|serverfile)\s*=\s*""([^""]+)""\s*\}");
+        var matches = regex.Matches(content);
+
+        foreach (Match match in matches)
+        {
+            var region = new SpawnRegion { Name = match.Groups[1].Value };
+            if (match.Groups[2].Value == "file") region.File = match.Groups[3].Value;
+            else region.ServerFile = match.Groups[3].Value;
+            regions.Add(region);
+        }
+
+        return regions;
+    }
+
+    public async Task SaveSpawnRegionsAsync(string filePath, List<SpawnRegion> regions)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("function SpawnRegions()");
+        sb.AppendLine("        return {");
+        foreach (var region in regions)
+        {
+            var fileType = !string.IsNullOrEmpty(region.File) ? "file" : "serverfile";
+            var fileName = region.File ?? region.ServerFile;
+            sb.AppendLine($"                {{ name = \"{region.Name}\", {fileType} = \"{fileName}\" }},");
+        }
+        sb.AppendLine("        }");
+        sb.AppendLine("end");
+        await File.WriteAllTextAsync(filePath, sb.ToString());
+    }
+
+    public async Task<SpawnPointsConfig> ParseSpawnPointsAsync(string filePath)
+    {
+        var config = new SpawnPointsConfig { FilePath = filePath };
+        if (!File.Exists(filePath)) return config;
+
+        var content = await File.ReadAllTextAsync(filePath);
+
+        // Improved regex to handle nested braces (profession = { {点}, {点} })
+        // This matches key = { ... } where ... can contain nested braces
+        var profRegex = new Regex(@"(\w+)\s*=\s*\{([\s\S]*?)\n\s*\},?", RegexOptions.Multiline);
+        var profMatches = profRegex.Matches(content);
+
+        foreach (Match profMatch in profMatches)
+        {
+            var profession = profMatch.Groups[1].Value;
+            var pointsContent = profMatch.Groups[2].Value;
+
+            // Skip if it's just the function name or something else
+            if (profession == "function" || profession == "return") continue;
+
+            var points = new List<SpawnPoint>();
+            // Match: { worldX = ..., worldY = ..., posX = ..., posY = ... }
+            var pointRegex = new Regex(@"\{\s*worldX\s*=\s*(\d+),\s*worldY\s*=\s*(\d+),\s*posX\s*=\s*(\d+),\s*posY\s*=\s*(\d+)(?:,\s*posZ\s*=\s*(\d+))?\s*\}");
+            var pointMatches = pointRegex.Matches(pointsContent);
+
+            foreach (Match pMatch in pointMatches)
+            {
+                points.Add(new SpawnPoint
+                {
+                    WorldX = int.Parse(pMatch.Groups[1].Value),
+                    WorldY = int.Parse(pMatch.Groups[2].Value),
+                    PosX = int.Parse(pMatch.Groups[3].Value),
+                    PosY = int.Parse(pMatch.Groups[4].Value),
+                    PosZ = pMatch.Groups[5].Success ? int.Parse(pMatch.Groups[5].Value) : 0
+                });
+            }
+
+            if (points.Count > 0)
+            {
+                config.ProfessionPoints[profession] = points;
+            }
+        }
+
+        return config;
+    }
+
+    public async Task SaveSpawnPointsAsync(SpawnPointsConfig config)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("function SpawnPoints()");
+        sb.AppendLine("        return {");
+        foreach (var prof in config.ProfessionPoints)
+        {
+            sb.AppendLine($"                {prof.Key} = {{");
+            foreach (var point in prof.Value)
+            {
+                sb.AppendLine($"                        {{ worldX = {point.WorldX}, worldY = {point.WorldY}, posX = {point.PosX}, posY = {point.PosY}, posZ = {point.PosZ} }},");
+            }
+            sb.AppendLine("                },");
+        }
+        sb.AppendLine("        }");
+        sb.AppendLine("end");
+        await File.WriteAllTextAsync(config.FilePath, sb.ToString());
+    }
+
     private string DetectType(string value)
     {
         if (bool.TryParse(value, out _)) return "Boolean";

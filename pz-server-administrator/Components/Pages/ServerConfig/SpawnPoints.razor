@@ -1,43 +1,213 @@
 @page "/server-config/spawn-points"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@inject IConfigurationService ConfigurationService
+@inject IPzServerService PzServerService
+@inject IToastService ToastService
 
-
-<PageTitle>Spawn Points - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>Puntos de Spawn - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-            <FluentLabel Typo="Typography.H3">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Circle())" />
-                Puntos de Spawn
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Configura los puntos específicos donde los jugadores aparecen en el servidor.
-            </FluentLabel>
-        </FluentStack>
-    </FluentCard>
+    <!-- Header Premium con Acciones -->
+    <div
+        style="background: var(--neutral-fill-layer-rest); padding: 24px; border-radius: 12px; border-left: 6px solid var(--accent-fill-rest); box-shadow: var(--elevation-shadow-card-rest);">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch"
+            VerticalAlignment="VerticalAlignment.Center" Wrap="true" Style="gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div
+                    style="background: var(--accent-fill-rest); padding: 12px; border-radius: 12px; color: white; display: flex; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <FluentIcon Value="@(new Icons.Filled.Size24.Circle())" />
+                </div>
+                <div style="display: flex; flex-direction: column;">
+                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Puntos de Spawn por Profesión
+                    </FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Configura las coordenadas de aparición
+                        según el rol del jugador.</FluentLabel>
+                </div>
+            </div>
 
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-            <FluentLabel Typo="Typography.H5">
-                <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" />
-                Módulo en Desarrollo
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Esta funcionalidad será implementada en el Módulo 4.4 según el plan de desarrollo.
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Características planificadas:
-            </FluentLabel>
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                <FluentLabel Typo="Typography.Body">• Edición de archivo SpawnPoints.lua</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Gestión de puntos de spawn individuales</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Configuración de coordenadas exactas</FluentLabel>
-                <FluentLabel Typo="Typography.Body">• Ayuda contextual desde spawnpoints-help.json</FluentLabel>
+            <FluentSpacer />
+
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10"
+                VerticalAlignment="VerticalAlignment.Center">
+                <div
+                    style="display: flex; background: var(--neutral-fill-secondary-rest); padding: 4px; border-radius: 8px; border: 1px solid var(--neutral-stroke-rest);">
+                    <FluentButton Appearance="@(_editMode == "simple" ? Appearance.Accent : Appearance.Stealth)"
+                        OnClick="@(() => _editMode = "simple")"
+                        IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
+                        Visual
+                    </FluentButton>
+                    <FluentButton Appearance="@(_editMode == "advanced" ? Appearance.Accent : Appearance.Stealth)"
+                        OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
+                        Código LUA
+                    </FluentButton>
+                </div>
+
+                <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical"
+                    Style="height: 20px; margin: 0 10px;" />
+
+                @if (_editMode == "simple")
+                {
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="Appearance.Accent"
+                        OnClick="AddProfession">Nueva Profesión</FluentButton>
+                }
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Outline"
+                    OnClick="SaveAsync">Guardar</FluentButton>
             </FluentStack>
         </FluentStack>
-    </FluentCard>
+    </div>
+
+    @if (_config == null)
+    {
+        <div style="display: flex; justify-content: center; padding: 50px;">
+            <FluentProgressRing />
+        </div>
+    }
+    else
+    {
+        @if (_editMode == "simple")
+        {
+            @if (_config.ProfessionPoints.Count == 0)
+            {
+                <FluentMessageBar Intent="MessageIntent.Info">No hay puntos definidos. Usa "Nueva Profesión" para empezar.
+                </FluentMessageBar>
+            }
+            else
+            {
+                <FluentTabs
+                    Style="width: 100%; border: 1px solid var(--neutral-stroke-rest); border-radius: 12px; padding: 10px; background: white;">
+                    @foreach (var prof in _config.ProfessionPoints)
+                    {
+                        <FluentTab Label="@prof.Key" IconStart="@(new Icons.Regular.Size16.Person())">
+                            <div style="padding: 20px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                    <FluentLabel Typo="Typography.H5">Pestaña: @prof.Key</FluentLabel>
+                                    <FluentSpacer />
+                                    <FluentButton IconStart="@(new Icons.Regular.Size16.Add())" OnClick="@(() => AddPoint(prof.Key))"
+                                        Style="margin-right: 10px;">Añadir Punto</FluentButton>
+                                    <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth"
+                                        Color="Color.Error" OnClick="@(() => RemoveProfession(prof.Key))">Eliminar Rol</FluentButton>
+                                </div>
+
+                                <FluentGrid Spacing="3">
+                                    @foreach (var point in prof.Value)
+                                    {
+                                        <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                                            <FluentCard
+                                                Style="padding: 15px; border-left: 4px solid var(--accent-fill-rest); border-radius: 8px;">
+                                                <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+                                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                        <FluentLabel Typo="Typography.Body">Coordenadas</FluentLabel>
+                                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                                                            Appearance="Appearance.Stealth" OnClick="@(() => prof.Value.Remove(point))" />
+                                                    </div>
+                                                    <FluentDivider />
+                                                    <FluentNumberField @bind-Value="point.WorldX" Label="World X" FullWidth="true" />
+                                                    <FluentNumberField @bind-Value="point.WorldY" Label="World Y" FullWidth="true" />
+                                                    <FluentNumberField @bind-Value="point.PosX" Label="Pos X" FullWidth="true" />
+                                                    <FluentNumberField @bind-Value="point.PosY" Label="Pos Y" FullWidth="true" />
+                                                    <FluentNumberField @bind-Value="point.PosZ" Label="Pos Z (Piso)" FullWidth="true" />
+                                                </FluentStack>
+                                            </FluentCard>
+                                        </FluentGridItem>
+                                    }
+                                </FluentGrid>
+                            </div>
+                        </FluentTab>
+                    }
+                </FluentTabs>
+            }
+        }
+        else
+        {
+            <FluentCard Style="padding: 0; overflow: hidden; border-radius: 12px;">
+                <div
+                    style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest);">
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Editor de Texto Plano (Avanzado)
+                    </FluentLabel>
+                </div>
+                <FluentTextArea @bind-Value="@_rawContent"
+                    Style="width: 100%; height: 500px; font-family: 'Consolas', monospace; border: none;"
+                    Resize="TextAreaResize.Vertical" />
+            </FluentCard>
+        }
+    }
 </FluentStack>
 
 @code {
-    // Implementation will be added in Module 4.4
+    private SpawnPointsConfig? _config;
+    private string _editMode = "simple";
+    private string _rawContent = string.Empty;
+    private string? _filePath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var appConfig = ConfigurationService.GetConfiguration();
+        var serverPath = appConfig.AppSettings.ServerDirectoryPath;
+        var activeServer = appConfig.AppSettings.ActiveServer;
+
+        if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+        {
+            _filePath = Path.Combine(serverPath, $"{activeServer}_spawnpoints.lua");
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        if (string.IsNullOrEmpty(_filePath)) return;
+        _config = await PzServerService.ParseSpawnPointsAsync(_filePath);
+        _rawContent = await PzServerService.ReadFileContentAsync(_filePath);
+    }
+
+    private void AddProfession()
+    {
+        if (_config == null) return;
+        string newName = "unemployed";
+        int i = 1;
+        while (_config.ProfessionPoints.ContainsKey(newName))
+        {
+            newName = $"profession_{i++}";
+        }
+        _config.ProfessionPoints[newName] = new List<SpawnPoint> { new SpawnPoint { WorldX = 40, WorldY = 22, PosX = 0, PosY = 0
+} };
+    }
+
+    private void RemoveProfession(string key)
+    {
+        _config?.ProfessionPoints.Remove(key);
+    }
+
+    private void AddPoint(string profession)
+    {
+        if (_config != null && _config.ProfessionPoints.TryGetValue(profession, out var list))
+        {
+            list.Add(new SpawnPoint { WorldX = 40, WorldY = 22, PosX = 0, PosY = 0 });
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrEmpty(_filePath)) return;
+
+        try
+        {
+            if (_editMode == "advanced")
+            {
+                await PzServerService.SaveFileContentAsync(_filePath, _rawContent);
+            }
+            else if (_config != null)
+            {
+                await PzServerService.SaveSpawnPointsAsync(_config);
+            }
+
+            await LoadDataAsync();
+            ToastService.ShowSuccess("Puntos de spawn guardados correctamente.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al guardar: {ex.Message}");
+        }
+    }
 }
