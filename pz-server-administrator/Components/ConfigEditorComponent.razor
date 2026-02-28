@@ -5,19 +5,32 @@
 @inject IToastService ToastService
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-    <FluentToolbar>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Options())"
-                      Appearance="@(_editMode == EditMode.Simple ? Appearance.Accent : Appearance.Stealth)"
-                      OnClick="@(() => _editMode = EditMode.Simple)">Simple</FluentButton>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Code())"
-                      Appearance="@(_editMode == EditMode.Advanced ? Appearance.Accent : Appearance.Stealth)"
-                      OnClick="@(() => _editMode = EditMode.Advanced)">Avanzado</FluentButton>
-        <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical" />
-        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent" OnClick="SaveAsync">
-            Guardar</FluentButton>
-        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowCounterclockwise())" OnClick="LoadAsync">Recargar
-        </FluentButton>
-    </FluentToolbar>
+    <FluentCard Style="padding: 10px; width: 100%;">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10"
+            VerticalAlignment="VerticalAlignment.Center">
+            <FluentToolbar Style="flex-grow: 1;">
+                <FluentButton IconStart="@(new Icons.Regular.Size16.Options())"
+                    Appearance="@(_editMode == EditMode.Simple ? Appearance.Accent : Appearance.Stealth)"
+                    OnClick="@(() => _editMode = EditMode.Simple)">Simple</FluentButton>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.Code())"
+                    Appearance="@(_editMode == EditMode.Advanced ? Appearance.Accent : Appearance.Stealth)"
+                    OnClick="@(() => _editMode = EditMode.Advanced)">Avanzado</FluentButton>
+                <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical" />
+                <FluentButton IconStart="@(new Icons.Regular.Size16.Save())" Appearance="Appearance.Accent"
+                    OnClick="SaveAsync">
+                    Guardar</FluentButton>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowCounterclockwise())" OnClick="LoadAsync">
+                    Recargar
+                </FluentButton>
+            </FluentToolbar>
+
+            @if (_editMode == EditMode.Simple)
+            {
+                <FluentSearch @bind-Value="_searchText" Placeholder="Buscar configuración..." Style="width: 300px;"
+                    Immediate="true" />
+            }
+        </FluentStack>
+    </FluentCard>
 
     @if (_isBusy)
     {
@@ -27,38 +40,68 @@
     {
         @if (_editMode == EditMode.Simple)
         {
-            <FluentGrid>
-                @foreach (var entry in _config.Entries)
+            <FluentTabs Style="width: 100%; border: 1px solid var(--neutral-stroke-rest); border-radius: 8px; padding: 10px;">
+                @foreach (var categoryGroup in GroupedEntries)
                 {
-                    <FluentGridItem xs="12" sm="6">
-                        <FluentCard Style="padding: 10px;">
-                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                                <FluentLabel Typo="Typography.Body" Color="Color.Neutral">@entry.Key</FluentLabel>
+                    <FluentTab Label="@categoryGroup.Key" IconStart="@GetCategoryIcon(categoryGroup.Key)">
+                        <div style="max-height: calc(100vh - 350px); overflow-y: auto; padding: 15px; margin-top: 10px;">
+                            <FluentGrid Spacing="3">
+                                @foreach (var entry in categoryGroup.Value)
+                                {
+                                    <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                                        <FluentCard
+                                            Style="padding: 12px; height: 100%; display: flex; flex-direction: column; border-top: 3px solid var(--accent-fill-rest); transition: transform 0.2s;"
+                                            class="config-card">
+                                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                                                <FluentLabel Typo="Typography.Body"
+                                                    Style="font-weight: bold; color: var(--neutral-foreground-hint); text-transform: uppercase; font-size: 0.8em;">
+                                                    @entry.Key
+                                                </FluentLabel>
 
-                                @if (entry.Type == "Boolean")
-                                {
-                                    <FluentCheckbox Value="@GetBoolValue(entry)" ValueChanged="@(v => SetBoolValue(entry, v))"
-                                        Label="@entry.Description" />
+                                                <div style="padding: 5px 0;">
+                                                    @if (entry.Type == "Boolean")
+                                                    {
+                                                        <FluentCheckbox Value="@GetBoolValue(entry)"
+                                                            ValueChanged="@(v => SetBoolValue(entry, v))"
+                                                            Label="@(string.IsNullOrEmpty(entry.Description) ? "Activar" : entry.Description)" />
+                                                    }
+                                                    else if (entry.Type == "Integer" || entry.Type == "Float")
+                                                    {
+                                                        <FluentNumberField TValue="double" Value="@GetDoubleValue(entry)"
+                                                            ValueChanged="@(v => SetDoubleValue(entry, v))" Placeholder="@entry.Key"
+                                                            FullWidth="true" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <FluentTextField @bind-Value="@entry.Value" Placeholder="@entry.Key"
+                                                            FullWidth="true" />
+                                                    }
+                                                </div>
+
+                                                @if (!string.IsNullOrEmpty(entry.Description) && entry.Type != "Boolean")
+                                                {
+                                                    <FluentLabel Typo="Typography.Body"
+                                                        Style="font-style: italic; opacity: 0.8; font-size: 0.85em;">
+                                                        @entry.Description
+                                                    </FluentLabel>
+                                                }
+                                            </FluentStack>
+                                        </FluentCard>
+                                    </FluentGridItem>
                                 }
-                                else if (entry.Type == "Integer" || entry.Type == "Float")
-                                {
-                                    <FluentNumberField TValue="int" Value="@GetNumberValue(entry)"
-                                        ValueChanged="@(v => SetNumberValue(entry, v))" Label="@entry.Description" FullWidth="true" />
-                                }
-                                else
-                                {
-                                    <FluentTextField @bind-Value="@entry.Value" Label="@entry.Description" FullWidth="true" />
-                                }
-                            </FluentStack>
-                        </FluentCard>
-                    </FluentGridItem>
+                            </FluentGrid>
+                        </div>
+                    </FluentTab>
                 }
-            </FluentGrid>
+            </FluentTabs>
         }
         else
         {
-            <FluentTextArea @bind-Value="@_rawContent" Style="width: 100%; min-height: 500px; font-family: monospace;"
-                Resize="TextAreaResize.Vertical" />
+            <FluentCard Style="padding: 0;">
+                <FluentTextArea @bind-Value="@_rawContent"
+                    Style="width: 100%; min-height: calc(100vh - 300px); font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 14px; border: none;"
+                    Resize="TextAreaResize.Vertical" />
+            </FluentCard>
         }
     }
 </FluentStack>
@@ -68,8 +111,47 @@
 
     private PzConfig? _config;
     private string _rawContent = string.Empty;
+    private string _searchText = string.Empty;
     private EditMode _editMode = EditMode.Simple;
     private bool _isBusy = false;
+
+    private IEnumerable<PzConfigEntry> FilteredEntries => _config?.Entries
+    .Where(e => string.IsNullOrEmpty(_searchText) ||
+    e.Key.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+    e.Description.Contains(_searchText, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<PzConfigEntry>();
+
+    private Dictionary<string, List<PzConfigEntry>> GroupedEntries => FilteredEntries
+    .GroupBy(e => GetCategory(e.Key))
+    .ToDictionary(g => g.Key, g => g.ToList());
+
+    private string GetCategory(string key)
+    {
+        if (key.Contains("PVP") || key.Contains("Safehouse")) return "PVP & Combat";
+        if (key.Contains("RCON") || key.Contains("Host") || key.Contains("Port") || key.Contains("UPnP")) return "Network";
+        if (key.Contains("Chat") || key.Contains("Message") || key.Contains("Voice")) return "Social";
+        if (key.Contains("Map") || key.Contains("Spawn") || key.Contains("Region")) return "World";
+        if (key.Contains("Mod") || key.Contains("Workshop")) return "Mods";
+        if (key.Contains("Database") || key.Contains("Log") || key.Contains("Backup")) return "System";
+        if (key.Contains("Zombie") || key.Contains("Loot")) return "Gameplay";
+
+        // Use prefix as category if none of the above matches
+        var parts = key.Split('_', 2);
+        if (parts.Length > 1 && parts[0].Length > 2) return parts[0];
+
+        return "General";
+    }
+
+    private Icon GetCategoryIcon(string category) => category switch
+    {
+        "PVP & Combat" => new Icons.Regular.Size16.Shield(),
+        "Network" => new Icons.Regular.Size16.Globe(),
+        "Social" => new Icons.Regular.Size16.Chat(),
+        "World" => new Icons.Regular.Size16.Map(),
+        "Mods" => new Icons.Regular.Size16.PuzzlePiece(),
+        "System" => new Icons.Regular.Size16.Settings(),
+        "Gameplay" => new Icons.Regular.Size16.VehicleBicycle(), // Closest to gameplay/movement icon
+        _ => new Icons.Regular.Size16.Window()
+    };
 
     protected override async Task OnParametersSetAsync()
     {
@@ -134,12 +216,12 @@
         entry.Value = val.ToString().ToLower();
     }
 
-    private int GetNumberValue(PzConfigEntry entry)
+    private double GetDoubleValue(PzConfigEntry entry)
     {
-        return int.TryParse(entry.Value, out var val) ? val : 0;
+        return double.TryParse(entry.Value, out var val) ? val : 0;
     }
 
-    private void SetNumberValue(PzConfigEntry entry, int val)
+    private void SetDoubleValue(PzConfigEntry entry, double val)
     {
         entry.Value = val.ToString();
     }

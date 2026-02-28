@@ -6,33 +6,35 @@
 
 <PageTitle>INI Configuration - Project Zomboid Server Administrator</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-            <FluentLabel Typo="Typography.H3">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Document())" />
-                Configuración INI del Servidor
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Edita los archivos de configuración INI del servidor Project Zomboid.
-            </FluentLabel>
+<div
+    style="background: var(--neutral-fill-layer-rest); padding: 20px; border-radius: 8px; border-left: 6px solid var(--accent-fill-rest); margin-bottom: 20px;">
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="15" VerticalAlignment="VerticalAlignment.Center">
+        <div
+            style="background: var(--accent-fill-rest); padding: 12px; border-radius: 50%; color: white; display: flex;">
+            <FluentIcon Value="@(new Icons.Filled.Size24.Settings())" />
+        </div>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
+            <FluentLabel Typo="Typography.H3" Style="margin: 0;">Configuración del Servidor (INI)</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gestiona las reglas técnicas y de red del servidor
+                Project Zomboid.</FluentLabel>
         </FluentStack>
-    </FluentCard>
+    </FluentStack>
+</div>
 
-    @if (!string.IsNullOrEmpty(_iniPath))
+@if (!string.IsNullOrEmpty(_iniPath))
 
-    {
-        <ConfigEditorComponent FilePath="@_iniPath" />
-    }
+{
+    <ConfigEditorComponent FilePath="@_iniPath" />
+}
 
-    else
+else
 
-    {
-        <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
-            No se ha configurado la ruta del servidor o el archivo no existe.
-        </FluentMessageBar>
-    }
-</FluentStack>
+{
+    <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
+        No se ha configurado la ruta del servidor o el archivo no existe.
+    </FluentMessageBar>
+}
+
 
 @code {
     private string? _iniPath;

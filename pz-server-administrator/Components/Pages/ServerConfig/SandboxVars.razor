@@ -6,39 +6,41 @@
 
 <PageTitle>Sandbox Variables - Project Zomboid Server Administrator</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-            <FluentLabel Typo="Typography.H3">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Box())" />
-                Variables de Sandbox
-            </FluentLabel>
-            <FluentLabel Typo="Typography.Body">
-                Configura las variables de sandbox que definen las reglas del juego en el servidor.
-            </FluentLabel>
+<div
+    style="background: var(--neutral-fill-layer-rest); padding: 20px; border-radius: 8px; border-left: 6px solid var(--accent-fill-rest); margin-bottom: 20px;">
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="15" VerticalAlignment="VerticalAlignment.Center">
+        <div
+            style="background: var(--accent-fill-rest); padding: 12px; border-radius: 50%; color: white; display: flex;">
+            <FluentIcon Value="@(new Icons.Filled.Size24.Box())" />
+        </div>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
+            <FluentLabel Typo="Typography.H3" Style="margin: 0;">Parámetros del Sandbox</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Define las reglas del mundo, población zombie y
+                mecánicas de juego.</FluentLabel>
         </FluentStack>
-    </FluentCard>
+    </FluentStack>
+</div>
 
-    @if (!string.IsNullOrEmpty(_sandboxPath))
-
-
-
-    {
-        <ConfigEditorComponent FilePath="@_sandboxPath" />
-    }
+@if (!string.IsNullOrEmpty(_sandboxPath))
 
 
 
-    else
+{
+    <ConfigEditorComponent FilePath="@_sandboxPath" />
+}
 
 
 
-    {
-        <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
-            No se ha configurado la ruta del servidor o el archivo no existe.
-        </FluentMessageBar>
-    }
-</FluentStack>
+else
+
+
+
+{
+    <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
+        No se ha configurado la ruta del servidor o el archivo no existe.
+    </FluentMessageBar>
+}
+
 
 @code {
     private string? _sandboxPath;

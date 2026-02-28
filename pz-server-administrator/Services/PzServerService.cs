@@ -106,10 +106,22 @@ public class PzServerService : IPzServerService
     private void ParseIni(string content, PzConfig config)
     {
         var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        string lastComment = string.Empty;
+
         foreach (var line in lines)
         {
             var trimmed = line.Trim();
-            if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#") || trimmed.StartsWith(";")) continue;
+            if (string.IsNullOrEmpty(trimmed))
+            {
+                lastComment = string.Empty;
+                continue;
+            }
+
+            if (trimmed.StartsWith("#") || trimmed.StartsWith(";"))
+            {
+                lastComment = trimmed.TrimStart('#', ';', ' ').Trim();
+                continue;
+            }
 
             var parts = trimmed.Split('=', 2);
             if (parts.Length == 2)
@@ -118,8 +130,10 @@ public class PzServerService : IPzServerService
                 {
                     Key = parts[0].Trim(),
                     Value = parts[1].Trim(),
+                    Description = lastComment,
                     Type = DetectType(parts[1].Trim())
                 });
+                lastComment = string.Empty;
             }
         }
     }
@@ -136,18 +150,35 @@ public class PzServerService : IPzServerService
 
     private void ParseLua(string content, PzConfig config)
     {
-        // Simple regex for SandboxVars style: Key = Value,
-        var regex = new Regex(@"(\w+)\s*=\s*([^,]+),", RegexOptions.Multiline);
-        var matches = regex.Matches(content);
+        var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        string lastComment = string.Empty;
 
-        foreach (Match match in matches)
+        foreach (var line in lines)
         {
-            config.Entries.Add(new PzConfigEntry
+            var trimmed = line.Trim();
+
+            // Skip grouping blocks like SandboxVars = {
+            if (trimmed.EndsWith("{") || trimmed.EndsWith("}")) continue;
+
+            if (trimmed.StartsWith("--"))
             {
-                Key = match.Groups[1].Value,
-                Value = match.Groups[2].Value.Trim().Trim('"').Trim('\''),
-                Type = DetectType(match.Groups[2].Value.Trim())
-            });
+                lastComment = trimmed.TrimStart('-', ' ').Trim();
+                continue;
+            }
+
+            // Match Key = Value,
+            var match = Regex.Match(trimmed, @"(\w+)\s*=\s*([^,]+),?");
+            if (match.Success)
+            {
+                config.Entries.Add(new PzConfigEntry
+                {
+                    Key = match.Groups[1].Value,
+                    Value = match.Groups[2].Value.Trim().Trim('"').Trim('\''),
+                    Description = lastComment,
+                    Type = DetectType(match.Groups[2].Value.Trim())
+                });
+                lastComment = string.Empty;
+            }
         }
     }
 
