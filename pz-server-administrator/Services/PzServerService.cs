@@ -217,6 +217,35 @@ public class PzServerService : IPzServerService
         return regions;
     }
 
+    public async Task<(int port, string password)> GetRconCredentialsAsync(string serverPath, string activeServer)
+    {
+        try
+        {
+            var filePath = Path.Combine(serverPath, $"{activeServer}.ini");
+            if (!File.Exists(filePath)) return (27015, string.Empty);
+
+            var config = await ParseConfigAsync(filePath);
+
+            var rconPortEntry = config.Entries.FirstOrDefault(e => e.Key.Equals("RCONPort", StringComparison.OrdinalIgnoreCase));
+            var rconPassEntry = config.Entries.FirstOrDefault(e => e.Key.Equals("RCONPassword", StringComparison.OrdinalIgnoreCase));
+
+            int port = 27015; // default PZ RCON port
+            if (rconPortEntry != null && int.TryParse(rconPortEntry.Value, out int parsedPort))
+            {
+                port = parsedPort;
+            }
+
+            string password = rconPassEntry?.Value ?? string.Empty;
+
+            return (port, password);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[PzServerService] Error getting RCON credentials: {ex.Message}");
+            return (27015, string.Empty);
+        }
+    }
+
     public async Task SaveSpawnRegionsAsync(string filePath, List<SpawnRegion> regions)
     {
         var sb = new StringBuilder();

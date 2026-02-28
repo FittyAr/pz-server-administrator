@@ -17,6 +17,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ILocalizationService, LocalizationService>();
 builder.Services.AddSingleton<IPzServerService, PzServerService>();
 builder.Services.AddSingleton<ISqliteService, SqliteService>();
+builder.Services.AddScoped<IRconService, RconService>();
 
 var app = builder.Build();
 

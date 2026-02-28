@@ -15,4 +15,7 @@ public interface IPzServerService
     Task SaveSpawnRegionsAsync(string filePath, List<SpawnRegion> regions);
     Task<SpawnPointsConfig> ParseSpawnPointsAsync(string filePath);
     Task SaveSpawnPointsAsync(SpawnPointsConfig config);
+
+    // RCON
+    Task<(int port, string password)> GetRconCredentialsAsync(string serverPath, string activeServer);
 }

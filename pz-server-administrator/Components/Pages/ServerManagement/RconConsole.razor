@@ -1,0 +1,243 @@
+@page "/rcon"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Services
+@inject IRconService RconService
+@inject IPzServerService PzServerService
+@inject IConfigurationService ConfigurationService
+@inject IToastService ToastService
+@implements IDisposable
+
+<PageTitle>Consola RCON - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20" Style="height: calc(100vh - 120px);">
+    <!-- Header -->
+    <div style="background: var(--neutral-fill-layer-rest); padding: 20px; border-radius: 8px; border-left: 6px solid @(_isConnected ? "var(--success)" : "var(--error)"); box-shadow: var(--elevation-shadow-card-rest);">
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Stretch" VerticalAlignment="VerticalAlignment.Center" Wrap="true" Style="gap: 15px;">
+            <div style="background: @(_isConnected ? "var(--success)" : "var(--error)"); padding: 12px; border-radius: 50%; color: white; display: flex;">
+                <FluentIcon Value="@(new Icons.Filled.Size24.Stream())" />
+            </div>
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
+                <FluentLabel Typo="Typography.H3" Style="margin: 0;">Consola RCON</FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Conexión directa al servidor de Project Zomboid</FluentLabel>
+            </FluentStack>
+            <FluentSpacer />
+            
+            @if (_isConnected)
+            {
+                <FluentBadge Appearance="Appearance.Accent" Fill="success" Color="white">Conectado a @_currentHost:@_currentPort</FluentBadge>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.PlugDisconnected())" OnClick="DisconnectRcon" Appearance="Appearance.Stealth">Desconectar</FluentButton>
+            }
+            else
+            {
+                <FluentBadge Appearance="Appearance.Neutral">Desconectado</FluentBadge>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="5">
+                    <FluentTextField @bind-Value="@_targetHost" Placeholder="127.0.0.1" Style="width: 140px;" Disabled="@_isConnecting" />
+                    <FluentButton IconStart="@(new Icons.Regular.Size16.PlugConnected())" 
+                                  OnClick="ConnectRcon" 
+                                  Appearance="Appearance.Accent" 
+                                  Loading="@_isConnecting"
+                                  Disabled="@_isConnecting">
+                        @(_isConnecting ? "Conectando..." : "Conectar")
+                    </FluentButton>
+                </FluentStack>
+            }
+        </FluentStack>
+    </div>
+
+    <!-- Console Output -->
+    <FluentCard Style="padding: 0; overflow: hidden; border-radius: 8px; flex-grow: 1; display: flex; flex-direction: column;">
+        <div style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest); display: flex; justify-content: space-between;">
+            <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Salida de la Consola</FluentLabel>
+            <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth" OnClick="ClearConsole">Limpiar</FluentButton>
+        </div>
+        <div style="flex-grow: 1; background: #1e1e1e; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; display: flex; flex-direction: column;" id="rcon-console-output">
+            @foreach (var log in _consoleLogs)
+            {
+                <span style="color: @(log.IsError ? "#ff5555" : (log.IsCommand ? "#55ff55" : "#cccccc")); margin-bottom: 4px; white-space: pre-wrap;">@log.Message</span>
+            }
+        </div>
+    </FluentCard>
+
+    <!-- Command Input -->
+    <div style="display: flex; gap: 10px; align-items: stretch;">
+        <FluentTextField @bind-Value="@_commandInput" Placeholder="Escribe un comando RCON (ej: help, players, servermsg Hola)" Style="flex-grow: 1;" Disabled="@(!_isConnected)" @onkeyup="HandleKeyUp" />
+        <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size16.Send())" Disabled="@(!_isConnected || string.IsNullOrWhiteSpace(_commandInput))" OnClick="SendCommand">Enviar</FluentButton>
+    </div>
+    
+    <!-- Quick Commands -->
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("help"))" Appearance="Appearance.Outline">Help</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("players"))" Appearance="Appearance.Outline">Players</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="Appearance.Outline">Save World</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="Appearance.Outline">Quit Server</FluentButton>
+    </FluentStack>
+</FluentStack>
+
+@code {
+    private struct RconLog
+    {
+        public string Message { get; set; }
+        public bool IsCommand { get; set; }
+        public bool IsError { get; set; }
+    }
+
+    private string _commandInput = string.Empty;
+    private bool _isConnected => RconService.IsConnected;
+    private List<RconLog> _consoleLogs = new();
+    
+    private string _targetHost = "host.containers.internal"; // Default useful for podman/docker to reach host
+    private string _currentHost = "";
+    private int _currentPort = 27015;
+    private bool _isConnecting = false;
+    
+    // Inject JS runtime to scroll down automatically
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        RconService.OnConnectionStateChanged += UpdateState;
+        RconService.OnMessageReceived += HandleIncomingMessage;
+        
+        // Removed auto-connect on load to prevent race conditions and duplicate messages
+        // User should connect manually the first time
+    }
+
+    private void UpdateState(bool state)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleIncomingMessage(string message)
+    {
+        _consoleLogs.Add(new RconLog { Message = message, IsCommand = false, IsError = false });
+        InvokeAsync(StateHasChanged);
+        _ = ScrollToBottom();
+    }
+
+    private async Task ConnectRcon()
+    {
+        try
+        {
+            var config = ConfigurationService.GetConfiguration();
+            var serverPath = config.AppSettings.ServerDirectoryPath;
+            var activeServer = config.AppSettings.ActiveServer;
+
+            if (string.IsNullOrEmpty(serverPath) || string.IsNullOrEmpty(activeServer))
+            {
+                _consoleLogs.Add(new RconLog { Message = "Error: Configuración de servidor no encontrada.", IsError = true });
+                return;
+            }
+
+            var credentials = await PzServerService.GetRconCredentialsAsync(serverPath, activeServer);
+            var port = credentials.port;
+            var password = credentials.password;
+            
+            _currentPort = port;
+            var host = string.IsNullOrWhiteSpace(_targetHost) ? "127.0.0.1" : _targetHost;
+            
+            if (string.IsNullOrEmpty(password))
+            {
+                _consoleLogs.Add(new RconLog { Message = "Error: No se ha configurado la contraseña RCON en el archivo .ini.", IsError = true });
+                return;
+            }
+
+            if (_isConnecting || _isConnected) return;
+            _isConnecting = true;
+            StateHasChanged();
+
+            _consoleLogs.Add(new RconLog { Message = $"Conectando a {host}:{port}...", IsCommand = false });
+            
+            bool connected = await RconService.ConnectAsync(host, port, password);
+            
+            if (connected)
+            {
+                _currentHost = host;
+                _consoleLogs.Add(new RconLog { Message = "Conectado exitosamente y autenticado.", IsCommand = true });
+                ToastService.ShowSuccess("Conexión RCON establecida.");
+            }
+            else
+            {
+                _consoleLogs.Add(new RconLog { Message = "Fallo al conectar o autenticar con el servidor RCON.", IsError = true });
+                ToastService.ShowError("Error conectando a RCON.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _consoleLogs.Add(new RconLog { Message = $"Excepción al conectar: {ex.Message}", IsError = true });
+        }
+        finally
+        {
+            _isConnecting = false;
+            await InvokeAsync(StateHasChanged);
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task DisconnectRcon()
+    {
+        await RconService.DisconnectAsync();
+        _consoleLogs.Add(new RconLog { Message = "Desconectado.", IsCommand = false });
+        await ScrollToBottom();
+    }
+
+    private async Task SendCommand()
+    {
+        if (string.IsNullOrWhiteSpace(_commandInput) || !_isConnected) return;
+
+        string command = _commandInput;
+        _commandInput = string.Empty; // Clear input UI immediately
+        _consoleLogs.Add(new RconLog { Message = $"> {command}", IsCommand = true });
+        await InvokeAsync(StateHasChanged);
+
+        string response = await RconService.SendCommandAsync(command);
+        
+        if (!string.IsNullOrEmpty(response))
+        {
+            _consoleLogs.Add(new RconLog { Message = response, IsCommand = false });
+        }
+        else
+        {
+            _consoleLogs.Add(new RconLog { Message = "(sin respuesta)", IsCommand = false, IsError = true });
+        }
+
+        await InvokeAsync(StateHasChanged);
+        await ScrollToBottom();
+    }
+    
+    private void SendQuickCommand(string cmd)
+    {
+        _commandInput = cmd;
+        _ = SendCommand();
+    }
+
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendCommand();
+        }
+    }
+
+    private void ClearConsole()
+    {
+        _consoleLogs.Clear();
+        StateHasChanged();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "var el = document.getElementById('rcon-console-output'); if (el) { el.scrollTop = el.scrollHeight; }");
+        }
+        catch { /* Ignore JS errors during prerendering */ }
+    }
+
+    public void Dispose()
+    {
+        RconService.OnConnectionStateChanged -= UpdateState;
+        RconService.OnMessageReceived -= HandleIncomingMessage;
+        // Don't disconnect automatically on dispose if we want background connection, 
+        // but since DI is scoped, it bounds to the circuit. It's safe to keep it, but it might disconnect on GC.
+    }
+}
