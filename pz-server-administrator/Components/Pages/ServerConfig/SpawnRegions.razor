@@ -115,15 +115,16 @@
         }
         else
         {
-            <FluentCard Style="padding: 0; overflow: hidden; border-radius: 8px;">
+            <FluentCard
+                Style="padding: 0; overflow: hidden; border-radius: 8px; height: calc(100vh - 350px); min-height: 500px;">
                 <div
                     style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest);">
                     <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Editor de Texto Plano
                         (Precaución: La edición incorrecta puede romper el archivo LUA)</FluentLabel>
                 </div>
                 <FluentTextArea @bind-Value="@_rawContent"
-                    Style="width: 100%; height: 500px; font-family: 'Consolas', monospace; border: none;"
-                    Resize="TextAreaResize.Vertical" />
+                    Style="width: 100%; height: 100%; font-family: 'Consolas', monospace; border: none; padding: 15px; resize: none;"
+                    Rows="40" />
             </FluentCard>
         }
     }

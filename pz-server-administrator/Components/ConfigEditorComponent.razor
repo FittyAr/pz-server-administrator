@@ -97,10 +97,10 @@
         }
         else
         {
-            <FluentCard Style="padding: 0;">
+            <FluentCard Style="padding: 0; overflow: hidden; height: calc(100vh - 300px); min-height: 500px;">
                 <FluentTextArea @bind-Value="@_rawContent"
-                    Style="width: 100%; min-height: calc(100vh - 300px); font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 14px; border: none;"
-                    Resize="TextAreaResize.Vertical" />
+                    Style="width: 100%; height: 100%; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 14px; border: none; padding: 15px; resize: none;"
+                    Rows="40" />
             </FluentCard>
         }
     }
