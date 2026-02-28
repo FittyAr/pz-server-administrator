@@ -36,4 +36,14 @@ public interface IModDiscoveryService
     /// Escribe el orden de carga y activación actual en el archivo .ini del servidor.
     /// </summary>
     Task SaveModConfigurationAsync();
+
+    /// <summary>
+    /// Recupera el perfil de configuración en la nube (clave de API, sincronización enabled).
+    /// </summary>
+    Task<CloudProfile> GetCloudProfileAsync();
+
+    /// <summary>
+    /// Actualiza el perfil de configuración en la nube.
+    /// </summary>
+    Task UpdateCloudProfileAsync(CloudProfile profile);
 }

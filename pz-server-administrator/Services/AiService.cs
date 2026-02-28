@@ -26,25 +26,52 @@ public class AiService : IAiService
     /// </summary>
     public async Task<string> AnalyzeModConflictsAsync(IEnumerable<ModInstance> activeMods)
     {
-        _logger.LogInformation("[AI] Iniciando análisis de conflictos...");
-        await Task.Delay(1000); // Simulando procesamiento
+        _logger.LogInformation("[AI] Iniciando análisis exhaustivo de conflictos...");
+        await Task.Delay(1500); // Simulando procesamiento profundo
 
-        var conflicts = new List<string>();
-        var mods = activeMods.ToList();
+        var reports = new List<string>();
+        var mods = activeMods.OrderBy(m => m.Order).ToList();
 
-        // Heurística simple: Mapas solpados
+        if (!mods.Any()) return "No tienes mods activos que analizar.";
+
+        // 1. Validar jerarquía de carga
+        for (int i = 0; i < mods.Count; i++)
+        {
+            for (int j = i + 1; j < mods.Count; j++)
+            {
+                // Un mod cargando después que otro de una categoría superior (ej: Framework después de Map)
+                if ((int)mods[i].Category > (int)mods[j].Category)
+                {
+                    reports.Add($"- ⚠️ Orden potencial: '{mods[j].ModId}' ({mods[j].Category}) está cargando después de '{mods[i].ModId}' ({mods[i].Category}). Considera subir el tipo '{mods[j].Category}' arriba.");
+                }
+            }
+        }
+
+        // 2. Localización al final
+        var lastMod = mods.Last();
+        if (mods.Any(m => m.Category == ModCategory.Localization) && lastMod.Category != ModCategory.Localization)
+        {
+            reports.Add("- 💡 Recomendación: Los mods de traducción (Localization) suelen ir al final del orden para sobreescribir textos correctamente.");
+        }
+
+        // 3. Frameworks al inicio
+        var firstMod = mods.First();
+        if (mods.Any(m => m.Category == ModCategory.Framework) && firstMod.Category != ModCategory.Framework)
+        {
+            reports.Add("- 💡 Recomendación: Los Frameworks e IDs de librerías deben cargar lo más arriba posible.");
+        }
+
+        // 4. Mapas duplicados
         var maps = mods.Where(m => m.Category == ModCategory.Maps).ToList();
         if (maps.Count > 1)
         {
-            conflicts.Add($"- Alerta: Tienes {maps.Count} mapas activos. El orden de carga decidirá qué mapa sobreescribe las celdas coincidentes.");
+            reports.Add($"- 🗺️ Nota de Mapas: Tienes {maps.Count} mapas activos. Recuerda que el que esté más arriba será sobreescrito por los de abajo si comparten celdas.");
         }
 
-        // Heurística simple: Frameworks faltantes (futuro)
+        if (!reports.Any())
+            return "✅ El análisis no encontró problemas estructurales. Tu orden de carga sigue los estándares recomendados.";
 
-        if (!conflicts.Any())
-            return "No se detectaron conflictos críticos evidentes. ¡Tu lista parece estable!";
-
-        return "Diagnóstico de IA:\n" + string.Join("\n", conflicts);
+        return "🔍 Informe de Diagnóstico Estructural:\n\n" + string.Join("\n", reports) + "\n\n*Nota: Este análisis es heurístico. Los desarrolladores de mods podrían tener requisitos específicos.*";
     }
 
     public async Task<List<ModInstance>> SuggestOptimizedOrderAsync(IEnumerable<ModInstance> activeMods)

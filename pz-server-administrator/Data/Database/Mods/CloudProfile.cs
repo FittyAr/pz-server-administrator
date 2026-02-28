@@ -5,7 +5,7 @@ namespace pz_server_administrator.Data.Database.Mods;
 /// <summary>
 /// Configuración vinculada al usuario para telemetría y sincronización en la nube.
 /// </summary>
-public partial class CloudProfile
+public class CloudProfile
 {
     /// <summary>
     /// ID primaria (por defecto 1).

@@ -3,6 +3,7 @@
 @using pz_server_administrator.Data.Database.Mods
 @using pz_server_administrator.Components.Layout
 @inject IModDiscoveryService ModDiscovery
+@inject IAiService AiService
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
 @inject IToastService ToastService
@@ -12,7 +13,7 @@
 
 @*
     Componente para la gestión avanzada de mods.
-    Permite el descubrimiento, activación, ordenamiento y actualización de metadatos.
+    Permite el descubrimiento, activación, ordenamiento y diagnóstico inteligente.
 *@
 
 <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
@@ -36,6 +37,7 @@
 <FluentDivider Style="margin: 1rem 0;" />
 
 <FluentTabs ActiveTabId="tab-explorer" OnTabSelect="OnTabHandle">
+    @* --- TAB: EXPLORADOR --- *@
     <FluentTab Id="tab-explorer" Label="@LocService.Get("Mods.TabExplorer")">
         <div style="margin-top: 1rem;">
             <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
@@ -111,6 +113,7 @@
         </div>
     </FluentTab>
 
+    @* --- TAB: ORDEN DE CARGA --- *@
     <FluentTab Id="tab-order" Label="@LocService.Get("Mods.TabOrder")">
         <div style="margin-top: 1rem;">
             <FluentMessageBar Title="Information" Intent="@MessageIntent.Info" AllowDismiss="false">
@@ -149,13 +152,96 @@
             </div>
         </div>
     </FluentTab>
+
+    @* --- TAB: DIAGNÓSTICO IA --- *@
+    <FluentTab Id="tab-ai" Label="@LocService.Get("Mods.TabAi")">
+        <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <FluentStack Orientation="Orientation.Vertical" Spacing="4">
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                        <FluentLabel Typo="Typography.Header">AI Health Desk</FluentLabel>
+                        <FluentButton IconStart="@(new Icons.Regular.Size20.Wand())"
+                                      Appearance="Appearance.Accent"
+                                      OnClick="RunAiDiagnosis"
+                                      Loading="@_isAiLoading">
+                            @LocService.Get("Mods.ScanAi")
+                        </FluentButton>
+                    </FluentStack>
+                    
+                    <FluentDivider Style="margin: 1rem 0;" />
+
+                    @if (_isAiLoading)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                            <FluentProgressRing />
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiLoading")</FluentLabel>
+                        </FluentStack>
+                    }
+                    else if (!string.IsNullOrEmpty(_aiReport))
+                    {
+                        <div style="background: var(--neutral-layer-2); padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">
+                            @_aiReport
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="opacity: 0.6; text-align: center; padding: 2rem;">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Handshake())" Style="width: 100px; height: 100px;" />
+                            <FluentLabel Typo="Typography.Body">Inicia el análisis para detectar incompatibilidades o errores en tu orden de carga.</FluentLabel>
+                        </div>
+                    }
+                </FluentCard>
+            </FluentStack>
+        </div>
+    </FluentTab>
+
+    @* --- TAB: CONFIGURACIÓN & CLOUD --- *@
+    <FluentTab Id="tab-cloud" Label="@LocService.Get("Mods.TabCloud")">
+        <div style="margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <FluentCard Style="padding: 1.5rem;">
+                <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.CloudTitle")</FluentLabel>
+                <p style="opacity: 0.8; font-size: 0.9rem;">Configura tu conexión con el ecosistema de la comunidad para sincronizar perfiles.</p>
+                
+                <FluentDivider Style="margin: 1rem 0;" />
+
+                @if (_cloudProfile != null)
+                {
+                    <FluentStack Orientation="Orientation.Vertical" Spacing="4">
+                        <FluentTextField @bind-Value="_cloudProfile.ApiKey" 
+                                         Label="@LocService.Get("Mods.ApiKey")" 
+                                         Placeholder="pk_live_..."
+                                         Type="TextFieldType.Password"
+                                         Style="width: 100%;" />
+
+                        <FluentCheckbox @bind-Value="_cloudProfile.AutoReport" 
+                                        Label="@LocService.Get("Mods.AutoReport")" />
+
+                        <FluentCheckbox @bind-Value="_cloudProfile.CloudSyncEnabled" 
+                                        Label="@LocService.Get("Mods.CloudSync")" />
+
+                        @if (_cloudProfile.LastSync != null)
+                        {
+                            <FluentLabel Typo="Typography.Body">Última sincronía: @_cloudProfile.LastSync.Value.ToLocalTime()</FluentLabel>
+                        }
+
+                        <FluentButton Appearance="Appearance.Accent" OnClick="SaveCloudProfile" Style="margin-top: 1rem;">
+                            Guardar Ajustes
+                        </FluentButton>
+                    </FluentStack>
+                }
+            </FluentCard>
+        </div>
+    </FluentTab>
 </FluentTabs>
 
 @code {
     private List<WorkshopItem>? _items;
+    private CloudProfile? _cloudProfile;
     private string _filterText = "";
     private bool _isScanning;
     private bool _isSaving;
+    private bool _isAiLoading;
+    private string? _aiReport;
     private ModInstance? _selectedForMove;
 
     private IEnumerable<WorkshopItem>? FilteredItems => _items?
@@ -169,42 +255,25 @@
         .OrderBy(i => i.Order)
         .ToList() ?? new List<ModInstance>();
 
-    /// <summary>
-    /// Inicializa el componente cargando los datos de la base de datos local.
-    /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
+        _cloudProfile = await ModDiscovery.GetCloudProfileAsync();
     }
 
-    /// <summary>
-    /// Manejador para el cambio de pestañas.
-    /// </summary>
-    private void OnTabHandle(FluentTab tab)
-    {
-        StateHasChanged();
-    }
+    private void OnTabHandle(FluentTab tab) => StateHasChanged();
 
-    /// <summary>
-    /// Carga los items del workshop y sus instancias.
-    /// </summary>
     private async Task LoadDataAsync()
     {
         _items = await ModDiscovery.GetWorkshopItemsAsync();
     }
 
-    /// <summary>
-    /// Activa o desactiva un mod de forma atómica.
-    /// </summary>
     private async Task ToggleActive(string workshopId, ModInstance instance)
     {
         instance.IsActive = !instance.IsActive;
         await ModDiscovery.ToggleModActiveAsync(workshopId, instance.ModId, instance.IsActive);
     }
 
-    /// <summary>
-    /// Persiste el orden y activación actual en el archivo de configuración del servidor.
-    /// </summary>
     private async Task SaveConfigAsync()
     {
         _isSaving = true;
@@ -223,9 +292,6 @@
         }
     }
 
-    /// <summary>
-    /// Mueve el orden de carga de un mod.
-    /// </summary>
     private void MoveOrder(ModInstance instance, int direction)
     {
         var list = ActiveModsOrdered;
@@ -234,20 +300,41 @@
 
         if (newIndex >= 0 && newIndex < list.Count)
         {
-            // Intercambiar orden con el elemento en la nueva posición
             var other = list[newIndex];
             var tempOrder = other.Order;
             other.Order = instance.Order;
             instance.Order = tempOrder;
-            
-            // Forzar actualización de la lista ordenada para la UI
             StateHasChanged();
         }
     }
 
-    /// <summary>
-    /// Escanea las carpetas locales para descubrir nuevos mods.
-    /// </summary>
+    private async Task RunAiDiagnosis()
+    {
+        _isAiLoading = true;
+        _aiReport = null;
+        try
+        {
+            _aiReport = await AiService.AnalyzeModConflictsAsync(ActiveModsOrdered);
+        }
+        catch (Exception ex)
+        {
+            _aiReport = $"Error en el servicio de IA: {ex.Message}";
+        }
+        finally
+        {
+            _isAiLoading = false;
+        }
+    }
+
+    private async Task SaveCloudProfile()
+    {
+        if (_cloudProfile != null)
+        {
+            await ModDiscovery.UpdateCloudProfileAsync(_cloudProfile);
+            ToastService.ShowSuccess("Configuración de nube guardada.");
+        }
+    }
+
     private async Task ScanModsAsync()
     {
         _isScanning = true;
@@ -290,9 +377,6 @@
         }
     }
 
-    /// <summary>
-    /// Descarga metadatos desde Steam Workshop.
-    /// </summary>
     private async Task FetchMetadata(string workshopId)
     {
         var result = await ModDiscovery.FetchSteamMetadataAsync(workshopId);

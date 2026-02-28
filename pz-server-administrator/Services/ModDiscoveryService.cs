@@ -319,6 +319,42 @@ public class ModDiscoveryService : IModDiscoveryService
         }
     }
 
+    public async Task<CloudProfile> GetCloudProfileAsync()
+    {
+        using var context = _contextFactory.CreateModsContext();
+        if (context == null) return new CloudProfile();
+
+        var profile = await context.CloudProfiles.FirstOrDefaultAsync(p => p.Id == 1);
+        if (profile == null)
+        {
+            profile = new CloudProfile { Id = 1, ApiKey = "" };
+            context.CloudProfiles.Add(profile);
+            await context.SaveChangesAsync();
+        }
+        return profile;
+    }
+
+    public async Task UpdateCloudProfileAsync(CloudProfile profile)
+    {
+        using var context = _contextFactory.CreateModsContext();
+        if (context == null) return;
+
+        var existing = await context.CloudProfiles.FirstOrDefaultAsync(p => p.Id == 1);
+        if (existing == null)
+        {
+            context.CloudProfiles.Add(profile);
+        }
+        else
+        {
+            existing.ApiKey = profile.ApiKey;
+            existing.AutoReport = profile.AutoReport;
+            existing.CloudSyncEnabled = profile.CloudSyncEnabled;
+            existing.LastSync = profile.LastSync;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     /// <summary>
     /// Intenta categorizar el mod basado en su ID, nombre y contenido de mod.info.
     /// </summary>

@@ -97,12 +97,17 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Gestión de Categorías**: Implementación del motor de categorización automática (Enum `ModCategory`) basado en heurísticas.
 - [x] **Búsqueda y Filtrado**: Filtro en tiempo real por título o ID para gestionar grandes listas de mods.
 
-### ⏳ En Progreso (Sprint 3: IA e Integración Inteligente)
-- [ ] **IA Conflict Resolver**: Servicio para analizar incompatibilidades y sugerir órdenes óptimos mediante LLMs (Gemini/OpenAI).
-- [ ] **Cloud Metadata**: Identificación por API Key para recuperar configuraciones compartidas.
-- [ ] **Version Control**: Sistema de hashes para detectar cambios en los archivos de mods locales vs versiones de Steam.
+### ✅ Finalizado (Sprint 3: IA e Integración Inteligente)
+- [x] **IA Conflict Resolver**: Implementación del servicio `IAiService` con diagnóstico estructural heurístico (jerarquías, mapas, frameworks).
+- [x] **IA Diagnostics UI**: Pestaña dedicada para solicitar informes de salud de la lista de mods.
+- [x] **Cloud Management**: Interfaz para gestionar API Key y preferencias de sincronización (`CloudProfile`).
+- [x] **Refinamiento de UI**: Sistema de pestañas completo (Explorador, Orden, IA, Ajustes).
 
-### 🚀 Pendiente (Sprint 4: Telemetría y Ecosistema)
-- [ ] **Community API**: Reporte anónimo y estadísticas de uso de mods.
-- [ ] **Cloud Presets**: Guardado de perfiles enteros de mods en la nube.
-- [ ] **Sync Automático**: Sincronización de configuraciones entre múltiples nodos de servidor.
+### ⏳ En Progreso (Sprint 4: Telemetría y Ecosistema)
+- [ ] **Community API**: Conector real para reportar configuraciones funcionales y obtener presets globales.
+- [ ] **Version Control**: Sistema de hashes (MD5) para detectar cambios en archivos locales y alertar sobre desactualizaciones.
+- [ ] **Optimización IA**: Integración con LLM real (Gemini API) para explicaciones de errores detalladas basadas en logs.
+
+### 🚀 Pendiente (Sprint 5: Automatización)
+- [ ] **Auto-Download**: Sistema para descargar actualizaciones de Steam Workshop automáticamente al detectar cambios.
+- [ ] **Mod Presets**: Guardado y carga de perfiles (ej: "Hardcore", "Vanilla+", "Roleplay").
