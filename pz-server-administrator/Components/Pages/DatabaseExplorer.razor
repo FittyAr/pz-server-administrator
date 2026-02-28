@@ -3,7 +3,6 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Data
 @using pz_server_administrator.Services
-@using pz_server_administrator.Models
 @using pz_server_administrator.Data.Database.Players
 @using pz_server_administrator.Data.Database.Vehicles
 @using pz_server_administrator.Data.Database.ServerTest
@@ -21,9 +20,21 @@
                 Explorador de Base de Datos (EF Core)
             </FluentLabel>
             <FluentLabel Typo="Typography.Body">
-                Explora y controla directamente las bases de datos SQlite del servidor Project Zomboid (Players,
-                Vehicles, ServerTest).
+                Explora y edita directamente las bases de datos SQlite del servidor (Players, Vehicles, ServerTest).
             </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center"
+            HorizontalGap="10">
+            <FluentIcon Value="@(new Icons.Regular.Size20.Filter())" />
+            <FluentTextField Value="@_filterText" @oninput="HandleFilterInput"
+                Placeholder="Buscar en todos los campos..." Style="width: 100%;" Immediate="true">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
+            </FluentTextField>
+            <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="LoadTabData"
+                Title="Refrescar" />
         </FluentStack>
     </FluentCard>
 
@@ -36,7 +47,6 @@
         <FluentCard>
             <FluentMessageBar Intent="MessageIntent.Warning">
                 El directorio del servidor no está configurado correctamente o no se encontraron los archivos `.db`.
-                Asegúrate de configurar la ruta del servidor en "Ajustes de Servidor".
             </FluentMessageBar>
         </FluentCard>
     }
@@ -60,6 +70,10 @@
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -74,6 +88,10 @@
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -95,6 +113,10 @@
                                 <PropertyColumn Property="@(v => v.Wx)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Wy)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Worldversion)" Sortable="true" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -115,9 +137,12 @@
                                 <PropertyColumn Property="@(w => w.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Username)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Steamid)" Sortable="true" />
-                                <PropertyColumn Property="@(w => w.AuthType)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Role)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.LastConnection)" Sortable="true" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -133,6 +158,10 @@
                                 <PropertyColumn Property="@(u => u.Amount)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.Text)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.IssuedBy)" Sortable="true" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -147,6 +176,10 @@
                                 <PropertyColumn Property="@(t => t.Message)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.Viewed)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.AnsweredId)" Sortable="true" />
+                                <TemplateColumn Title="Acciones" Align="Align.Center">
+                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(() => ShowEditDialog(context))" />
+                                </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
                         </div>
@@ -157,10 +190,91 @@
     }
 </FluentStack>
 
+<FluentDialog @bind-Hidden="@_isDialogHidden" Modal="true" TrapFocus="true" Width="500px">
+    <FluentDialogHeader>
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center"
+            HorizontalGap="10">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+            <FluentLabel Typo="Typography.H4">Editar Registro</FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        @if (_editingRecord != null)
+        {
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+                @if (_editingRecord is NetworkPlayer np)
+                {
+                    <FluentTextField Value="@np.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="np.Username" Label="Username" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="np.Name" Label="Nombre" Style="width: 100%" />
+                    <FluentTextField @bind-Value="np.Steamid" Label="Steam ID" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="np.X" Label="Posición X" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="np.Y" Label="Posición Y" Style="width: 100%" />
+                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                }
+                else if (_editingRecord is LocalPlayer lp)
+                {
+                    <FluentTextField Value="@lp.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="lp.Name" Label="Nombre" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="lp.X" Label="Posición X" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="lp.Y" Label="Posición Y" Style="width: 100%" />
+                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                }
+                else if (_editingRecord is Vehicle ve)
+                {
+                    <FluentTextField Value="@ve.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentNumberField @bind-Value="ve.X" Label="Posición X" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="ve.Y" Label="Posición Y" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="ve.Wx" Label="World X" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="ve.Wy" Label="World Y" Style="width: 100%" />
+                }
+                else if (_editingRecord is Whitelist w)
+                {
+                    <FluentTextField Value="@w.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="w.Username" Label="Username" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="w.DisplayName" Label="Nombre Visible" Style="width: 100%" />
+                    <FluentTextField @bind-Value="w.Steamid" Label="Steam ID" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="w.Role" Label="Rol (Int)" Style="width: 100%" />
+                    <FluentTextField @bind-Value="w.Password" Label="Contraseña (Hashed)" Style="width: 100%" />
+                }
+                else if (_editingRecord is Userlog u)
+                {
+                    <FluentTextField Value="@u.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="u.Username" Label="Username" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="u.Type" Label="Tipo" Style="width: 100%" />
+                    <FluentNumberField @bind-Value="u.Amount" Label="Cantidad" Style="width: 100%" />
+                    <FluentTextArea @bind-Value="u.Text" Label="Texto / Razón" Rows="3" Style="width: 100%" />
+                }
+                else if (_editingRecord is Ticket t)
+                {
+                    <FluentTextField Value="@t.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                    <FluentTextField @bind-Value="t.Author" Label="Autor" ReadOnly Style="width: 100%" />
+                    <FluentTextArea @bind-Value="t.Message" Label="Mensaje" Rows="4" Style="width: 100%" />
+                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="Visto" />
+                    <FluentNumberField @bind-Value="t.AnsweredId" Label="ID Respuesta" Style="width: 100%" />
+                }
+            </FluentStack>
+        }
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="SaveRecord" Loading="_isSaving">
+            Guardar Cambios
+        </FluentButton>
+        <FluentButton OnClick="@(() => _isDialogHidden = true)">
+            Cancelar
+        </FluentButton>
+    </FluentDialogFooter>
+</FluentDialog>
+
 @code {
     private bool _isBusy = true;
     private bool _isConfigured = false;
     private string activeTabId = "tab-players";
+    private string _filterText = "";
+    private bool _isDialogHidden = true;
+    private object? _editingRecord;
+    private bool _isSaving = false;
+    private bool _boolWrapper = false;
 
     private PlayersContext? _playersContext;
     private VehiclesContext? _vehiclesContext;
@@ -200,7 +314,7 @@
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error loading databases: {ex.Message}");
+            ToastService.ShowError($"Error al cargar bases de datos: {ex.Message}");
         }
         finally
         {
@@ -213,22 +327,102 @@
         LoadTabData();
     }
 
+    private void HandleFilterInput(ChangeEventArgs e)
+    {
+        _filterText = e.Value?.ToString() ?? "";
+        LoadTabData();
+    }
+
+    private void UpdateBoolStatus(bool value)
+    {
+        _boolWrapper = value;
+        if (_editingRecord is NetworkPlayer np) np.IsDead = value;
+        else if (_editingRecord is LocalPlayer lp) lp.IsDead = value;
+        else if (_editingRecord is Ticket t) t.Viewed = value;
+    }
+
     private void LoadTabData()
     {
+        var filter = _filterText?.ToLower() ?? "";
+
         if (activeTabId == "tab-players" && _playersContext != null)
         {
-            _netPlayers = _playersContext.NetworkPlayers.AsQueryable();
-            _locPlayers = _playersContext.LocalPlayers.AsQueryable();
+            _netPlayers = _playersContext.NetworkPlayers
+            .Where(p => string.IsNullOrEmpty(filter) ||
+            (p.Username != null && p.Username.ToLower().Contains(filter)) ||
+            (p.Name != null && p.Name.ToLower().Contains(filter)) ||
+            (p.Steamid != null && p.Steamid.ToLower().Contains(filter)))
+            .AsQueryable();
+            _locPlayers = _playersContext.LocalPlayers
+            .Where(p => string.IsNullOrEmpty(filter) ||
+            (p.Name != null && p.Name.ToLower().Contains(filter)))
+            .AsQueryable();
         }
         else if (activeTabId == "tab-vehicles" && _vehiclesContext != null)
         {
-            _vehicles = _vehiclesContext.Vehicles.AsQueryable();
+            _vehicles = _vehiclesContext.Vehicles
+            .Where(v => string.IsNullOrEmpty(filter) || v.Id.ToString().Contains(filter))
+            .AsQueryable();
         }
         else if (activeTabId == "tab-server" && _serverContext != null)
         {
-            _whitelists = _serverContext.Whitelists.AsQueryable();
-            _userlogs = _serverContext.Userlogs.AsQueryable();
-            _tickets = _serverContext.Tickets.AsQueryable();
+            _whitelists = _serverContext.Whitelists
+            .Where(w => string.IsNullOrEmpty(filter) ||
+            (w.Username != null && w.Username.ToLower().Contains(filter)) ||
+            (w.Steamid != null && w.Steamid.ToLower().Contains(filter)) ||
+            (w.DisplayName != null && w.DisplayName.ToLower().Contains(filter)))
+            .AsQueryable();
+            _userlogs = _serverContext.Userlogs
+            .Where(u => string.IsNullOrEmpty(filter) ||
+            (u.Username != null && u.Username.ToLower().Contains(filter)) ||
+            (u.Text != null && u.Text.ToLower().Contains(filter)))
+            .AsQueryable();
+            _tickets = _serverContext.Tickets
+            .Where(t => string.IsNullOrEmpty(filter) ||
+            (t.Author != null && t.Author.ToLower().Contains(filter)) ||
+            (t.Message != null && t.Message.ToLower().Contains(filter)))
+            .AsQueryable();
+        }
+    }
+
+    private void ShowEditDialog(object record)
+    {
+        _editingRecord = record;
+
+        // Reset and set wrapper
+        _boolWrapper = false;
+        if (record is NetworkPlayer np) _boolWrapper = np.IsDead ?? false;
+        else if (record is LocalPlayer lp) _boolWrapper = lp.IsDead ?? false;
+        else if (record is Ticket t) _boolWrapper = t.Viewed ?? false;
+
+        _isDialogHidden = false;
+    }
+
+    private async Task SaveRecord()
+    {
+        if (_editingRecord == null) return;
+        _isSaving = true;
+        try
+        {
+            int changes = 0;
+            if (_editingRecord is NetworkPlayer || _editingRecord is LocalPlayer)
+                changes = await _playersContext!.SaveChangesAsync();
+            else if (_editingRecord is Vehicle)
+                changes = await _vehiclesContext!.SaveChangesAsync();
+            else if (_editingRecord is Whitelist || _editingRecord is Userlog || _editingRecord is Ticket)
+                changes = await _serverContext!.SaveChangesAsync();
+
+            ToastService.ShowSuccess($"Éxito: {changes} cambios guardados.");
+            _isDialogHidden = true;
+            LoadTabData();
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al guardar: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
         }
     }
 
