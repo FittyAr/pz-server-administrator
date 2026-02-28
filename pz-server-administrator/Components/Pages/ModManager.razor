@@ -8,6 +8,8 @@
 @inject ILocalizationService LocService
 @inject IToastService ToastService
 @inject ICommunityService CommunityService
+@inject IModPresetService PresetService
+@inject IServerLoggerService LoggerService
 @rendermode InteractiveServer
 
 <PageTitle>@LocService.Get("Mods.Title")</PageTitle>
@@ -171,6 +173,12 @@
                                       Loading="@_isAiLoading">
                             @LocService.Get("Mods.ScanAi")
                         </FluentButton>
+                        <FluentButton IconStart="@(new Icons.Regular.Size20.Eye())"
+                                      Appearance="Appearance.Neutral"
+                                      OnClick="AnalyzeServerLog"
+                                      Loading="@_isAiLoading">
+                            Analizar Log Servidor
+                        </FluentButton>
                     </FluentStack>
                     
                     <FluentDivider Style="margin: 1rem 0;" />
@@ -197,6 +205,71 @@
                     }
                 </FluentCard>
             </FluentStack>
+        </div>
+    </FluentTab>
+
+    @* --- TAB: PERFILES & PRESETS --- *@
+    <FluentTab Id="tab-presets" Label="@LocService.Get("Mods.TabPresets")">
+        <div style="margin-top: 1rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <FluentGrid Spacing="3">
+                <FluentGridItem xs="12" md="4">
+                    <FluentCard>
+                        <FluentLabel Typo="Typography.Header">Nuevo Perfil</FluentLabel>
+                        <FluentDivider Style="margin: 0.5rem 0;" />
+                        <FluentStack Orientation="Orientation.Vertical" Spacing="4">
+                            <FluentTextField @bind-Value="_newPresetName" 
+                                             Label="@LocService.Get("Mods.PresetName")" 
+                                             Style="width: 100%;" />
+                            <FluentTextArea @bind-Value="_newPresetDesc" 
+                                            Label="@LocService.Get("Mods.PresetDesc")" 
+                                            Rows="3" 
+                                            Style="width: 100%;" />
+                            <FluentButton Appearance="Appearance.Accent" 
+                                          OnClick="CreatePreset" 
+                                          IconStart="@(new Icons.Regular.Size20.Add())">
+                                @LocService.Get("Mods.SavePreset")
+                            </FluentButton>
+                        </FluentStack>
+                    </FluentCard>
+                </FluentGridItem>
+
+                <FluentGridItem xs="12" md="8">
+                    @if (_presets == null || !_presets.Any())
+                    {
+                        <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.Archive())" />
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.NoPresets")</FluentLabel>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var p in _presets)
+                        {
+                            <FluentCard Style="margin-bottom: 1rem; padding: 1rem;">
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentStack Orientation="Orientation.Vertical" Spacing="0">
+                                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
+                                        <FluentLabel Typo="Typography.Caption">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Caption" Style="opacity: 0.6;">
+                                            @p.Mods.Count mods | @p.CreatedAt.ToLocalTime().ToString("g")
+                                        </FluentLabel>
+                                    </FluentStack>
+                                    <FluentStack Orientation="Orientation.Horizontal">
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Play())" 
+                                                      Appearance="Appearance.Accent"
+                                                      OnClick="@(() => ApplyPreset(p))">
+                                            @LocService.Get("Mods.ApplyPreset")
+                                        </FluentButton>
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" 
+                                                      Appearance="Appearance.Neutral"
+                                                      OnClick="@(() => DeletePreset(p))" />
+                                    </FluentStack>
+                                </FluentStack>
+                            </FluentCard>
+                        }
+                    }
+                </FluentGridItem>
+            </FluentGrid>
         </div>
     </FluentTab>
 
@@ -249,6 +322,9 @@
     private string? _aiReport;
     private string? _recommendation;
     private ModInstance? _selectedForMove;
+    private List<ModPreset>? _presets;
+    private string _newPresetName = "";
+    private string _newPresetDesc = "";
 
     private IEnumerable<WorkshopItem>? FilteredItems => _items?
         .Where(i => string.IsNullOrEmpty(_filterText) ||
@@ -266,6 +342,7 @@
         await LoadDataAsync();
         _cloudProfile = await ModDiscovery.GetCloudProfileAsync();
         _recommendation = await CommunityService.GetGlobalRecommendationsAsync();
+        _presets = await PresetService.GetAllPresetsAsync();
     }
 
     private void OnTabHandle(FluentTab tab) => StateHasChanged();
@@ -331,6 +408,70 @@
         {
             _isAiLoading = false;
         }
+    }
+
+    private async Task AnalyzeServerLog()
+    {
+        _isAiLoading = true;
+        _aiReport = null;
+        StateHasChanged();
+
+        try
+        {
+            var log = await LoggerService.ReadLogFileAsync("server-console.txt", 1500);
+            if (string.IsNullOrEmpty(log))
+            {
+                ToastService.ShowError("No se encontró el archivo server-console.txt o está vacío.");
+                return;
+            }
+
+            _aiReport = await AiService.AnalyzeLogAsync(log);
+            ToastService.ShowSuccess("Análisis de log completado.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Fallo del análisis: {ex.Message}");
+        }
+        finally
+        {
+            _isAiLoading = false;
+        }
+    }
+
+    private async Task CreatePreset()
+    {
+        if (string.IsNullOrWhiteSpace(_newPresetName)) 
+        {
+            ToastService.ShowWarning("El nombre del perfil es obligatorio.");
+            return;
+        }
+
+        await PresetService.SavePresetAsync(_newPresetName, _newPresetDesc, ActiveModsOrdered);
+        ToastService.ShowSuccess("Perfil de mods guardado.");
+        _presets = await PresetService.GetAllPresetsAsync();
+        _newPresetName = "";
+        _newPresetDesc = "";
+    }
+
+    private async Task ApplyPreset(ModPreset p)
+    {
+        try
+        {
+            await PresetService.ApplyPresetAsync(p.Name);
+            await LoadDataAsync();
+            ToastService.ShowSuccess($"Perfil '{p.Name}' aplicado correctamente.");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al aplicar: {ex.Message}");
+        }
+    }
+
+    private async Task DeletePreset(ModPreset p)
+    {
+        await PresetService.DeletePresetAsync(p.Name);
+        _presets = await PresetService.GetAllPresetsAsync();
     }
 
     private async Task SaveCloudProfile()

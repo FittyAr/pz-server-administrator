@@ -30,4 +30,9 @@ public interface IAiService
     /// <param name="errorLog">El fragmento del log de error.</param>
     /// <returns>Una explicación legible y posibles soluciones.</returns>
     Task<string> ExplainErrorAsync(string errorLog);
+
+    /// <summary>
+    /// Analiza un log de error (server-console.txt) para encontrar la causa de un crash o error de mods.
+    /// </summary>
+    Task<string> AnalyzeLogAsync(string logContent);
 }

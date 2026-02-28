@@ -99,7 +99,7 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 
 ### ✅ Finalizado (Sprint 3: IA e Integración Inteligente)
 - [x] **IA Conflict Resolver**: Implementación del servicio `IAiService` con diagnóstico estructural heurístico (jerarquías, mapas, frameworks).
-- [x] **IA Diagnostics UI**: Pestaña dedicada para solicitar informes de salud de la lista de mods.
+- [x] **IA Diagnostics UI**: Pestaña dedicada para solicitar informes de salud y **análisis de logs de servidor** (`server-console.txt`).
 - [x] **Cloud Management**: Interfaz para gestionar API Key y preferencias de sincronización (`CloudProfile`).
 - [x] **Refinamiento de UI**: Sistema de pestañas completo (Explorador, Orden, IA, Ajustes).
 
@@ -108,11 +108,11 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Version Control**: Sistema de hashing SHA-256 en `ModDiscoveryService` para detectar cambios en archivos locales.
 - [x] **Infraestructura Cloud**: Persistencia de perfiles de usuario y sincronización de metadatos Steam mejorada.
 
-### ⏳ En Progreso (Sprint 5: Automatización y IA Avanzada)
-- [ ] **Optimización IA**: Integración con Google Gemini Pro para análisis de compatibilidad semántica.
-- [ ] **Mod Presets**: Guardado y carga de perfiles (ej: "Hardcore", "Vanilla+", "Roleplay").
-- [ ] **Auto-Download**: Sistema para invocar actualizaciones de Steam Workshop desde el panel.
+### ✅ Finalizado (Sprint 5: Automatización y IA Avanzada)
+- [x] **Mod Presets**: Sistema de perfiles (`ModPresetService`) para guardar y cargar configuraciones de mods en archivos JSON.
+- [x] **Gestión de Perfiles UI**: Interfaz para crear, aplicar y eliminar perfiles de mods.
+- [x] **Optimización IA**: Integración real con Google Gemini Pro para análisis semántico.
 
-### 🚀 Pendiente (Sprint 5: Automatización)
-- [ ] **Auto-Download**: Sistema para descargar actualizaciones de Steam Workshop automáticamente al detectar cambios.
-- [ ] **Mod Presets**: Guardado y carga de perfiles (ej: "Hardcore", "Vanilla+", "Roleplay").
+### ⏳ En Progreso (Sprint 6: Automatización de Infraestructura)
+- [ ] **Auto-Updater**: Integración con SteamCMD para actualizaciones automáticas de mods desactualizados.
+- [ ] **Sincronización Cloud Avanzada**: Compartir perfiles con la comunidad directamente desde la UI.

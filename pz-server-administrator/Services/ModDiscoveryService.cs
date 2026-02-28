@@ -174,6 +174,9 @@ public class ModDiscoveryService : IModDiscoveryService
         {
             await context.SaveChangesAsync();
             _logger.LogInformation("[ModDiscovery] Sincronización local completada.");
+
+            // Fase 3: Sincronizar metadatos desde la Web (Scraping)
+            await SyncWorkshopMetadataAsync(context);
         }
         catch (Exception ex)
         {
@@ -406,6 +409,56 @@ public class ModDiscoveryService : IModDiscoveryService
         {
             _logger.LogError(ex, "[ModDiscovery] Error calculando hash para {Path}", modInfoPath);
             return "ERROR";
+        }
+    }
+
+    private async Task SyncWorkshopMetadataAsync(ModsContext context)
+    {
+        _logger.LogInformation("[ModDiscovery] Iniciando sincronización de metadatos desde Steam Workshop...");
+        var client = _httpClientFactory.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(10);
+
+        var itemsToSync = await context.WorkshopItems
+            .Where(i => string.IsNullOrEmpty(i.ThumbnailPath) || i.Title.StartsWith("Mod ") || i.Description == null)
+            .ToListAsync();
+
+        foreach (var item in itemsToSync)
+        {
+            try
+            {
+                var id = item.Id;
+                if (!long.TryParse(id, out _)) continue; // No es un ID de Steam real
+
+                var steamUrl = $"https://steamcommunity.com/sharedfiles/filedetails/?id={id}";
+                var html = await client.GetStringAsync(steamUrl);
+
+                // Extracción de título
+                var titleMatch = Regex.Match(html, @"<div class=""workshopItemTitle"">(.+?)</div>", RegexOptions.IgnoreCase);
+                if (titleMatch.Success)
+                    item.Title = System.Net.WebUtility.HtmlDecode(titleMatch.Groups[1].Value);
+
+                // Extracción de thumbnail
+                var thumbMatch = Regex.Match(html, @"id=""previewImageMain"".*?src=""(.+?)""", RegexOptions.IgnoreCase);
+                if (thumbMatch.Success)
+                    item.ThumbnailPath = thumbMatch.Groups[1].Value;
+
+                // Extracción de descripción
+                var descMatch = Regex.Match(html, @"<div id=""workshopItemDescription"" class=""workshopItemDescription"">(.+?)</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                if (descMatch.Success)
+                {
+                    var cleanDesc = Regex.Replace(descMatch.Groups[1].Value, "<.*?>", string.Empty);
+                    item.Description = System.Net.WebUtility.HtmlDecode(cleanDesc).Trim();
+                    if (item.Description.Length > 800) item.Description = item.Description.Substring(0, 797) + "...";
+                }
+
+                await context.SaveChangesAsync();
+                _logger.LogInformation("[ModDiscovery] Metadatos actualizados para {Id}.", id);
+                await Task.Delay(300); // Pequeño retraso para cortesía
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[ModDiscovery] Fallo parcial de metadatos para {Id}: {Msg}", item.Id, ex.Message);
+            }
         }
     }
 }

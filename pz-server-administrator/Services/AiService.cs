@@ -149,4 +149,49 @@ public class AiService : IAiService
             return "❌ Excepción contactando al servicio de IA externo.";
         }
     }
+
+    public async Task<string> AnalyzeLogAsync(string logContent)
+    {
+        if (string.IsNullOrEmpty(logContent)) return "El log está vacío.";
+
+        var profile = await _modDiscovery.GetCloudProfileAsync();
+        if (string.IsNullOrEmpty(profile?.ApiKey) || !profile.ApiKey.StartsWith("AI-"))
+        {
+            return "⚠️ Se requiere una Gemini API Key (con prefijo AI-) en los ajustes para realizar análisis de logs profundos.";
+        }
+
+        try
+        {
+            var apiKey = profile.ApiKey.Replace("AI-", "");
+            var client = _httpClientFactory.CreateClient();
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+
+            var prompt = new
+            {
+                contents = new[]
+                {
+                    new {
+                        parts = new[]
+                        {
+                            new { text = $"Analiza el siguiente fragmento de log de un servidor de Project Zomboid. Identifica errores fatales, excepciones de Lua o problemas de mods. Explica la causa y qué mod podría estar fallando. Responde en español.\n\nLOG:\n{logContent}" }
+                        }
+                    }
+                }
+            };
+
+            var response = await client.PostAsJsonAsync(url, prompt);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<dynamic>();
+                string? text = result?.candidates[0].content.parts[0].text;
+                return "🤖 Diagnóstico de Log (Gemini Pro):\n\n" + (text ?? "No se pudo interpretar el log.");
+            }
+            return "❌ Error conectando con el servicio de IA.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AI] Error analizando log.");
+            return "❌ Excepción durante el análisis del log.";
+        }
+    }
 }
