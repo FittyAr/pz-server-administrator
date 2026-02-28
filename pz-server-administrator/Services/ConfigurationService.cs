@@ -13,6 +13,7 @@ public interface IConfigurationService
     Task SaveConfigurationAsync(ZsmConfiguration configuration);
     void SaveConfiguration(ZsmConfiguration configuration);
     Task ReloadConfigurationAsync();
+    bool RunDeepScan(string rootPath);
 }
 
 public class ConfigurationService : IConfigurationService
@@ -76,11 +77,10 @@ public class ConfigurationService : IConfigurationService
             "/project-zomboid-config/Server",
             "/project-zomboid-config",
             "/data/Server",
-            "/home/steam/Zomboid/Server",
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Zomboid", "Server")
+            "/home/steam/Zomboid",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Zomboid")
         };
 
-        // If in container, scan root mounts
         if (IsRunningInContainer())
         {
             _logger.LogInformation("[AutoDetect] Container environment detected.");
@@ -89,57 +89,80 @@ public class ConfigurationService : IConfigurationService
         foreach (var path in potentialPaths)
         {
             _logger.LogDebug("[AutoDetect] Checking path: {Path}", path);
-            if (ScanDirectoryForServer(path)) return;
-
-            // Try one level deeper if it's a common root
-            if (Directory.Exists(path))
-            {
-                try
-                {
-                    foreach (var subDir in Directory.GetDirectories(path))
-                    {
-                        if (ScanDirectoryForServer(subDir)) return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug("[AutoDetect] Could not scan subdirectories of {Path}: {Message}", path, ex.Message);
-                }
-            }
+            if (RunDeepScan(path)) return; // If successful deep scan finds something, stop
         }
 
-        _logger.LogWarning("[AutoDetect] Could not find any Project Zomboid server configuration (*.ini).");
+        _logger.LogWarning("[AutoDetect] Could not find any Project Zomboid server configuration.");
     }
 
-    private bool ScanDirectoryForServer(string path)
+    public bool RunDeepScan(string rootPath)
     {
-        if (!Directory.Exists(path)) return false;
+        if (!Directory.Exists(rootPath)) return false;
+
+        _logger.LogInformation("[DeepScan] Starting deep scan at {Path}", rootPath);
+
+        string iniPath = "";
+        string luaPath = "";
+        string playersDb = "";
+        string vehiclesDb = "";
+        string serverTestDb = "";
+
+        SafeDeepScan(rootPath, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, 0);
+
+        bool foundAnything = false;
+
+        lock (_lock)
+        {
+            if (!string.IsNullOrEmpty(iniPath))
+            {
+                _configuration.AppSettings.ServerDirectoryPath = Path.GetDirectoryName(iniPath) ?? "";
+                _configuration.AppSettings.IniFilePath = iniPath;
+                _configuration.AppSettings.ActiveServer = "servertest";
+                foundAnything = true;
+            }
+
+            if (!string.IsNullOrEmpty(luaPath)) { _configuration.AppSettings.LuaFilePath = luaPath; foundAnything = true; }
+            if (!string.IsNullOrEmpty(playersDb)) { _configuration.AppSettings.PlayersDatabasePath = playersDb; foundAnything = true; }
+            if (!string.IsNullOrEmpty(vehiclesDb)) { _configuration.AppSettings.VehiclesDatabasePath = vehiclesDb; foundAnything = true; }
+            if (!string.IsNullOrEmpty(serverTestDb)) { _configuration.AppSettings.ServerTestDatabasePath = serverTestDb; foundAnything = true; }
+        }
+
+        if (foundAnything)
+        {
+            SaveConfiguration(_configuration);
+            _logger.LogInformation("[DeepScan] Scan complete. Found INI: {HasIni}, DBs: {HasDbs}", !string.IsNullOrEmpty(iniPath), !string.IsNullOrEmpty(playersDb));
+        }
+
+        return foundAnything;
+    }
+
+    private void SafeDeepScan(string rootPath, ref string iniPath, ref string luaPath, ref string playersDb, ref string vehiclesDb, ref string serverTestDb, int depth)
+    {
+        if (depth > 5) return; // limit depth to avoid excessive nesting
 
         try
         {
-            var iniFiles = Directory.GetFiles(path, "*.ini");
-            if (iniFiles.Length > 0)
+            foreach (var file in Directory.GetFiles(rootPath))
             {
-                var iniFile = iniFiles.FirstOrDefault(f => Path.GetFileName(f).Equals("servertest.ini", StringComparison.OrdinalIgnoreCase)) ?? iniFiles[0];
-                var serverName = Path.GetFileNameWithoutExtension(iniFile);
+                var fileName = Path.GetFileName(file);
+                if (string.Equals(fileName, "servertest.ini", StringComparison.OrdinalIgnoreCase)) iniPath = file;
+                else if (string.Equals(fileName, "servertest_SandboxVars.lua", StringComparison.OrdinalIgnoreCase)) luaPath = file;
+                else if (string.Equals(fileName, "players.db", StringComparison.OrdinalIgnoreCase)) playersDb = file;
+                else if (string.Equals(fileName, "vehicles.db", StringComparison.OrdinalIgnoreCase)) vehiclesDb = file;
+                else if (string.Equals(fileName, "servertest.db", StringComparison.OrdinalIgnoreCase)) serverTestDb = file;
+            }
 
-                _logger.LogInformation("[AutoDetect] SUCCESS! Found PZ server at {Path}. Server name identified as: {ServerName}", path, serverName);
-
-                lock (_lock)
-                {
-                    _configuration.AppSettings.ServerDirectoryPath = path;
-                    _configuration.AppSettings.ActiveServer = serverName;
-                }
-
-                SaveConfiguration(_configuration);
-                return true;
+            foreach (var dir in Directory.GetDirectories(rootPath))
+            {
+                SafeDeepScan(dir, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, depth + 1);
             }
         }
+        catch (UnauthorizedAccessException) { }
+        catch (DirectoryNotFoundException) { }
         catch (Exception ex)
         {
-            _logger.LogDebug("[AutoDetect] Error scanning {Path}: {Message}", path, ex.Message);
+            _logger.LogTrace("[DeepScan] Minor error at {Path}: {Msg}", rootPath, ex.Message);
         }
-        return false;
     }
 
     private bool IsRunningInContainer()

@@ -25,11 +25,8 @@ public class DatabaseContextFactory : IDatabaseContextFactory
 
     public PlayersContext? CreatePlayersContext()
     {
-        var dir = GetServerDirectory();
-        if (string.IsNullOrEmpty(dir)) return null;
-
-        var path = Path.Combine(dir, "Saves", "Multiplayer", "servertest", "players.db");
-        if (!File.Exists(path)) return null;
+        var path = _configurationService.GetConfiguration()?.AppSettings?.PlayersDatabasePath;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
 
         var options = new DbContextOptionsBuilder<PlayersContext>()
             .UseSqlite($"Data Source={path}")
@@ -40,11 +37,8 @@ public class DatabaseContextFactory : IDatabaseContextFactory
 
     public VehiclesContext? CreateVehiclesContext()
     {
-        var dir = GetServerDirectory();
-        if (string.IsNullOrEmpty(dir)) return null;
-
-        var path = Path.Combine(dir, "Saves", "Multiplayer", "servertest", "vehicles.db");
-        if (!File.Exists(path)) return null;
+        var path = _configurationService.GetConfiguration()?.AppSettings?.VehiclesDatabasePath;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
 
         var options = new DbContextOptionsBuilder<VehiclesContext>()
             .UseSqlite($"Data Source={path}")
@@ -55,11 +49,8 @@ public class DatabaseContextFactory : IDatabaseContextFactory
 
     public ServerTestContext? CreateServerTestContext()
     {
-        var dir = GetServerDirectory();
-        if (string.IsNullOrEmpty(dir)) return null;
-
-        var path = Path.Combine(dir, "db", "servertest.db");
-        if (!File.Exists(path)) return null;
+        var path = _configurationService.GetConfiguration()?.AppSettings?.ServerTestDatabasePath;
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return null;
 
         var options = new DbContextOptionsBuilder<ServerTestContext>()
             .UseSqlite($"Data Source={path}")

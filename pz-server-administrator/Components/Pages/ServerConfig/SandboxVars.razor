@@ -22,74 +22,35 @@
 </div>
 
 @if (!string.IsNullOrEmpty(_sandboxPath))
-
-
-
 {
     <ConfigEditorComponent FilePath="@_sandboxPath" />
 }
-
-
-
 else
-
-
-
 {
     <FluentMessageBar Title="Error" Intent="@MessageIntent.Error">
         No se ha configurado la ruta del servidor o el archivo no existe.
     </FluentMessageBar>
 }
 
-
 @code {
     private string? _sandboxPath;
-
-
-
-
-
-
-
     protected override void OnInitialized()
-
-
-
     {
-
-
-
         var config = ConfigurationService.GetConfiguration();
-
-
-
-        var serverPath = config.AppSettings.ServerDirectoryPath;
-
-
-
-        var activeServer = config.AppSettings.ActiveServer;
-
-
-
-
-
-
-
-        if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
-
-
-
+        
+        if (!string.IsNullOrEmpty(config.AppSettings.LuaFilePath) && File.Exists(config.AppSettings.LuaFilePath))
         {
-
-
-
-            _sandboxPath = Path.Combine(serverPath, $"{activeServer}_SandboxVars.lua");
-
-
-
+            _sandboxPath = config.AppSettings.LuaFilePath;
         }
+        else
+        {
+            var serverPath = config.AppSettings.ServerDirectoryPath;
+            var activeServer = config.AppSettings.ActiveServer;
 
-
-
+            if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+            {
+                _sandboxPath = Path.Combine(serverPath, $"{activeServer}_SandboxVars.lua");
+            }
+        }
     }
 }

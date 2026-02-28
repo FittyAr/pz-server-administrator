@@ -42,24 +42,22 @@ else
 
 
     protected override void OnInitialized()
-
     {
-
         var config = ConfigurationService.GetConfiguration();
 
-        var serverPath = config.AppSettings.ServerDirectoryPath;
-
-        var activeServer = config.AppSettings.ActiveServer;
-
-
-
-        if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
-
+        if (!string.IsNullOrEmpty(config.AppSettings.IniFilePath) && File.Exists(config.AppSettings.IniFilePath))
         {
-
-            _iniPath = Path.Combine(serverPath, $"{activeServer}.ini");
-
+            _iniPath = config.AppSettings.IniFilePath;
         }
+        else
+        {
+            var serverPath = config.AppSettings.ServerDirectoryPath;
+            var activeServer = config.AppSettings.ActiveServer;
 
+            if (!string.IsNullOrEmpty(serverPath) && !string.IsNullOrEmpty(activeServer))
+            {
+                _iniPath = Path.Combine(serverPath, $"{activeServer}.ini");
+            }
+        }
     }
 }
