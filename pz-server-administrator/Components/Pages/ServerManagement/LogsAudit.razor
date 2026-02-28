@@ -1,0 +1,139 @@
+@page "/logs"
+@using Microsoft.FluentUI.AspNetCore.Components
+@using pz_server_administrator.Services
+@inject IServerLoggerService LoggerService
+@inject IToastService ToastService
+@inject ILocalizationService LocService
+@implements IDisposable
+
+<PageTitle>@LocService.Get("NavMenu.LogsAudit") - Project Zomboid Server Administrator</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20" Width="100%">
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+            <FluentLabel Typo="Typography.H3">
+                <FluentIcon Value="@(new Icons.Regular.Size24.DocumentText())" />
+                @LocService.Get("LogsAudit.Title")
+            </FluentLabel>
+            <FluentLabel Typo="Typography.Body">
+                @LocService.Get("LogsAudit.Description")
+            </FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+    <div style="display: flex; gap: 20px; width: 100%; height: calc(100vh - 250px); min-height: 500px;">
+        <!-- File list on the left -->
+        <FluentCard
+            Style="width: 350px; height: 100%; padding: 10px; overflow-y: hidden; display: flex; flex-direction: column;">
+            <FluentLabel Typo="Typography.H6" Style="margin-bottom: 15px;">@LocService.Get("LogsAudit.LogFiles")
+            </FluentLabel>
+            <div style="flex-grow: 1; overflow-y: auto;">
+                @if (LogFiles.Any())
+                {
+                    <FluentDataGrid Items="@LogFiles.AsQueryable()" TGridItem="LogFileInfo"
+                        GenerateHeader="GenerateHeaderOption.Default">
+                        <PropertyColumn Property="@(p => p.Name)" Sortable="true"
+                            Title="@LocService.Get("LogsAudit.File")" />
+                        <PropertyColumn Property="@(p => p.FormattedSize)" Sortable="true"
+                            Title="@LocService.Get("LogsAudit.Size")" />
+                        <TemplateColumn Title="@LocService.Get("LogsAudit.Action")" Align="Align.Center">
+                            <FluentButton Appearance="Appearance.Lightweight" IconStart="@(new Icons.Regular.Size16.Eye())"
+                                OnClick="@(() => LoadLogContent(context.RelativePath))" />
+                        </TemplateColumn>
+                    </FluentDataGrid>
+                }
+                else
+                {
+                    <FluentMessageBar Intent="MessageIntent.Warning">@LocService.Get("LogsAudit.NoLogsFound")
+                    </FluentMessageBar>
+                }
+            </div>
+        </FluentCard>
+
+        <!-- Log Content on the right -->
+        <FluentCard
+            Style="flex-grow: 1; height: 100%; display: flex; flex-direction: column; padding: 10px; overflow: hidden; max-width: calc(100% - 370px);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <FluentLabel Typo="Typography.H6"
+                    Style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 80%;">
+                    @LocService.Get("LogsAudit.Viewer"): @_selectedFile</FluentLabel>
+                <div style="display: flex; gap: 10px;">
+                    <FluentButton Appearance="Appearance.Stealth"
+                        IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="ReloadLog"
+                        Disabled="@string.IsNullOrEmpty(_selectedFile)">
+                        @LocService.Get("LogsAudit.Reload")
+                    </FluentButton>
+                </div>
+            </div>
+
+            <div
+                style="flex-grow: 1; background-color: #1e1e1e; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden;">
+                @if (_isLoading)
+                {
+                    <FluentProgressRing Style="margin: auto;" />
+                }
+                else if (string.IsNullOrEmpty(_logContent) && string.IsNullOrEmpty(_selectedFile))
+                {
+                    <FluentLabel Style="margin: auto; color: var(--neutral-foreground-hint);">
+                        @LocService.Get("LogsAudit.SelectFilePrompt")</FluentLabel>
+                }
+                else
+                {
+                    <textarea readonly
+                        style="width: 100%; height: 100%; background-color: transparent; color: #d4d4d4; font-family: Consolas, monospace; border: none; resize: none; font-size: 13px; white-space: pre;">@_logContent</textarea>
+                }
+            </div>
+        </FluentCard>
+    </div>
+</FluentStack>
+
+@code {
+    private List<LogFileInfo> LogFiles = new();
+    private string _selectedFile = "";
+    private string _logContent = "";
+    private bool _isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        LocService.OnLanguageChanged += StateHasChanged;
+        RefreshFileList();
+    }
+
+    private void RefreshFileList()
+    {
+        LogFiles = LoggerService.GetAvailableLogFiles();
+        if (string.IsNullOrEmpty(_selectedFile) && LogFiles.Any(f => f.Name == "server-console.txt"))
+        {
+            var defaultFile = LogFiles.First(f => f.Name == "server-console.txt").RelativePath;
+            _ = LoadLogContent(defaultFile);
+        }
+    }
+
+    private async Task LoadLogContent(string file)
+    {
+        if (string.IsNullOrEmpty(file)) return;
+
+        _selectedFile = file;
+        _isLoading = true;
+        StateHasChanged();
+
+        _logContent = await LoggerService.ReadLogFileAsync(file, 20000); // Read last 20k rows
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ReloadLog()
+    {
+        RefreshFileList(); // Just in case sizes changed
+        if (!string.IsNullOrEmpty(_selectedFile))
+        {
+            await LoadLogContent(_selectedFile);
+        }
+    }
+
+    public void Dispose()
+    {
+        LocService.OnLanguageChanged -= StateHasChanged;
+    }
+}

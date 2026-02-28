@@ -95,5 +95,16 @@
   "Home.RconHost": "Host RCON:",
   "Home.RegisteredUsers": "Usuarios Registrados:",
   "Home.NotConfigured": "No configurado",
-  "Home.UsersCount": "{0} usuario(s)"
+  "Home.UsersCount": "{0} usuario(s)",
+  "NavMenu.LogsAudit": "Auditoría de Logs",
+  "LogsAudit.Title": "Auditoría de Logs",
+  "LogsAudit.Description": "Explora el archivo de consola y los registros del servidor. Selecciona un archivo para inspeccionarlo.",
+  "LogsAudit.LogFiles": "Archivos de Log",
+  "LogsAudit.File": "Archivo",
+  "LogsAudit.Size": "Tamaño",
+  "LogsAudit.Action": "Abrir",
+  "LogsAudit.NoLogsFound": "No se encontraron logs.",
+  "LogsAudit.Viewer": "Visor de Logs",
+  "LogsAudit.Reload": "Recargar",
+  "LogsAudit.SelectFilePrompt": "Selecciona un archivo de la lista para leer su contenido. Los archivos muy grandes se truncarán para prevenir problemas de rendimiento."
 }
