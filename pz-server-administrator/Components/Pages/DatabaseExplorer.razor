@@ -13,7 +13,7 @@
 
 <PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
 
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="20" Width="100%">
     <FluentCard>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H3">
@@ -42,7 +42,7 @@
     }
     else
     {
-        <FluentTabs @bind-ActiveTabId="activeTabId" OnTabChange="HandleTabChange">
+        <FluentTabs @bind-ActiveTabId="activeTabId" OnTabChange="HandleTabChange" Width="100%">
             <FluentTab Id="tab-players" Label="Players DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
                     <FluentSelect TValue="string" Items="@_playersTables" @bind-Value="@_selectedPlayerTable"

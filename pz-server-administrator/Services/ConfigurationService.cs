@@ -27,16 +27,45 @@ public class ConfigurationService : IConfigurationService
     {
         _logger = logger;
 
-        _configFilePath = Path.Combine(env.ContentRootPath, "appsettings.json");
+        var baseConfigPath = Path.Combine(env.ContentRootPath, "appsettings.json");
+
+        if (IsRunningInContainer())
+        {
+            var persistentDir = Path.Combine(env.ContentRootPath, "config");
+            if (!Directory.Exists(persistentDir))
+            {
+                Directory.CreateDirectory(persistentDir);
+            }
+
+            _configFilePath = Path.Combine(persistentDir, "appsettings.json");
+
+            // Si el archivo persistente no existe pero el base sí, lo copiamos para inicializarlo
+            if (!File.Exists(_configFilePath) && File.Exists(baseConfigPath))
+            {
+                File.Copy(baseConfigPath, _configFilePath);
+                _logger.LogInformation("[Configuration] Copied default appsettings.json to persistent volume at {Path}", _configFilePath);
+            }
+        }
+        else
+        {
+            _configFilePath = baseConfigPath;
+        }
         _configuration = new ZsmConfiguration();
 
         _logger.LogInformation("[Configuration] Initializing with config file: {FilePath}", _configFilePath);
 
         LoadConfiguration();
 
-        if (string.IsNullOrEmpty(_configuration.AppSettings.ServerDirectoryPath))
+        if (string.IsNullOrEmpty(_configuration.AppSettings.ServerDirectoryPath) || !Directory.Exists(_configuration.AppSettings.ServerDirectoryPath))
         {
             AutoDetectPzServer();
+        }
+        else if (string.IsNullOrEmpty(_configuration.AppSettings.PlayersDatabasePath) || !File.Exists(_configuration.AppSettings.PlayersDatabasePath))
+        {
+            // Si la ruta base está configurada pero no encuentra DBs, escanee de forma local
+            _logger.LogInformation("[Configuration] Valid ServerDirectoryPath found but missing DB Paths. Running Deep Scan automatically.");
+            var rootDir = new DirectoryInfo(_configuration.AppSettings.ServerDirectoryPath).Parent?.FullName ?? _configuration.AppSettings.ServerDirectoryPath;
+            RunDeepScan(rootDir);
         }
     }
 
@@ -48,9 +77,8 @@ public class ConfigurationService : IConfigurationService
 
         var potentialPaths = new List<string>
         {
-            "/project-zomboid-config/Server",
             "/project-zomboid-config",
-            "/data/Server",
+            "/data",
             "/home/steam/Zomboid",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Zomboid")
         };
@@ -80,8 +108,10 @@ public class ConfigurationService : IConfigurationService
         string playersDb = "";
         string vehiclesDb = "";
         string serverTestDb = "";
+        string expectedPrefix = _configuration.AppSettings.ActiveServer;
+        if (string.IsNullOrEmpty(expectedPrefix)) expectedPrefix = "servertest";
 
-        SafeDeepScan(rootPath, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, 0);
+        SafeDeepScan(rootPath, expectedPrefix, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, 0);
 
         bool foundAnything = false;
 
@@ -91,7 +121,7 @@ public class ConfigurationService : IConfigurationService
             {
                 _configuration.AppSettings.ServerDirectoryPath = Path.GetDirectoryName(iniPath) ?? "";
                 _configuration.AppSettings.IniFilePath = iniPath;
-                _configuration.AppSettings.ActiveServer = "servertest";
+                _configuration.AppSettings.ActiveServer = Path.GetFileNameWithoutExtension(iniPath);
                 foundAnything = true;
             }
 
@@ -110,7 +140,7 @@ public class ConfigurationService : IConfigurationService
         return foundAnything;
     }
 
-    private void SafeDeepScan(string rootPath, ref string iniPath, ref string luaPath, ref string playersDb, ref string vehiclesDb, ref string serverTestDb, int depth)
+    private void SafeDeepScan(string rootPath, string expectedPrefix, ref string iniPath, ref string luaPath, ref string playersDb, ref string vehiclesDb, ref string serverTestDb, int depth)
     {
         if (depth > 5) return; // limit depth to avoid excessive nesting
 
@@ -119,16 +149,24 @@ public class ConfigurationService : IConfigurationService
             foreach (var file in Directory.GetFiles(rootPath))
             {
                 var fileName = Path.GetFileName(file);
-                if (string.Equals(fileName, "servertest.ini", StringComparison.OrdinalIgnoreCase)) iniPath = file;
-                else if (string.Equals(fileName, "servertest_SandboxVars.lua", StringComparison.OrdinalIgnoreCase)) luaPath = file;
+
+                // Si aún no tenemos iniPath y encontramos uno .ini, lo capturamos. Idealmente buscamos el expectedPrefix
+                if (string.Equals(fileName, $"{expectedPrefix}.ini", StringComparison.OrdinalIgnoreCase)) iniPath = file;
+                else if (string.IsNullOrEmpty(iniPath) && fileName.EndsWith(".ini", StringComparison.OrdinalIgnoreCase)) iniPath = file;
+
+                else if (string.Equals(fileName, $"{expectedPrefix}_SandboxVars.lua", StringComparison.OrdinalIgnoreCase)) luaPath = file;
+                else if (string.IsNullOrEmpty(luaPath) && fileName.EndsWith("_SandboxVars.lua", StringComparison.OrdinalIgnoreCase)) luaPath = file;
+
                 else if (string.Equals(fileName, "players.db", StringComparison.OrdinalIgnoreCase)) playersDb = file;
                 else if (string.Equals(fileName, "vehicles.db", StringComparison.OrdinalIgnoreCase)) vehiclesDb = file;
-                else if (string.Equals(fileName, "servertest.db", StringComparison.OrdinalIgnoreCase)) serverTestDb = file;
+
+                else if (string.Equals(fileName, $"{expectedPrefix}.db", StringComparison.OrdinalIgnoreCase)) serverTestDb = file;
+                else if (string.IsNullOrEmpty(serverTestDb) && fileName.EndsWith(".db", StringComparison.OrdinalIgnoreCase) && !string.Equals(fileName, "players.db", StringComparison.OrdinalIgnoreCase) && !string.Equals(fileName, "vehicles.db", StringComparison.OrdinalIgnoreCase)) serverTestDb = file;
             }
 
             foreach (var dir in Directory.GetDirectories(rootPath))
             {
-                SafeDeepScan(dir, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, depth + 1);
+                SafeDeepScan(dir, expectedPrefix, ref iniPath, ref luaPath, ref playersDb, ref vehiclesDb, ref serverTestDb, depth + 1);
             }
         }
         catch (UnauthorizedAccessException) { }
