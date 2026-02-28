@@ -138,6 +138,9 @@ public class ModDiscoveryService : IModDiscoveryService
                 item.Order = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999;
             }
 
+            // Calculamos hash para detectar cambios (Hacemos un hash básico del contenido de mod.info y la fecha)
+            item.VersionHash = CalculateLocalHash(modInfoPath);
+
             var modData = ParseModInfo(modInfoPath);
             if (modData == null) continue;
 
@@ -384,5 +387,25 @@ public class ModDiscoveryService : IModDiscoveryService
             return ModCategory.ClothingInterface;
 
         return ModCategory.Other;
+    }
+
+    private string CalculateLocalHash(string modInfoPath)
+    {
+        try
+        {
+            var fileInfo = new FileInfo(modInfoPath);
+            var content = File.ReadAllText(modInfoPath);
+            // Hash simple combinando contenido y fecha de modificación
+            var rawData = $"{content}|{fileInfo.LastWriteTimeUtc.Ticks}|{fileInfo.Length}";
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            var bytes = System.Text.Encoding.UTF8.GetBytes(rawData);
+            var hashBytes = sha.ComputeHash(bytes);
+            return Convert.ToHexString(hashBytes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ModDiscovery] Error calculando hash para {Path}", modInfoPath);
+            return "ERROR";
+        }
     }
 }

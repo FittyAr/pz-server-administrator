@@ -7,6 +7,7 @@
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
 @inject IToastService ToastService
+@inject ICommunityService CommunityService
 @rendermode InteractiveServer
 
 <PageTitle>@LocService.Get("Mods.Title")</PageTitle>
@@ -160,6 +161,10 @@
                 <FluentCard Style="padding: 1.5rem;">
                     <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
                         <FluentLabel Typo="Typography.Header">AI Health Desk</FluentLabel>
+                        @if (!string.IsNullOrEmpty(_recommendation))
+                        {
+                            <FluentBadge Appearance="Appearance.Accent">@_recommendation</FluentBadge>
+                        }
                         <FluentButton IconStart="@(new Icons.Regular.Size20.Wand())"
                                       Appearance="Appearance.Accent"
                                       OnClick="RunAiDiagnosis"
@@ -242,6 +247,7 @@
     private bool _isSaving;
     private bool _isAiLoading;
     private string? _aiReport;
+    private string? _recommendation;
     private ModInstance? _selectedForMove;
 
     private IEnumerable<WorkshopItem>? FilteredItems => _items?
@@ -259,6 +265,7 @@
     {
         await LoadDataAsync();
         _cloudProfile = await ModDiscovery.GetCloudProfileAsync();
+        _recommendation = await CommunityService.GetGlobalRecommendationsAsync();
     }
 
     private void OnTabHandle(FluentTab tab) => StateHasChanged();
@@ -331,6 +338,12 @@
         if (_cloudProfile != null)
         {
             await ModDiscovery.UpdateCloudProfileAsync(_cloudProfile);
+            
+            if (_cloudProfile.AutoReport && !string.IsNullOrEmpty(_cloudProfile.ApiKey))
+            {
+                await CommunityService.ReportConfigurationAsync(_cloudProfile.ApiKey, ActiveModsOrdered);
+            }
+            
             ToastService.ShowSuccess("Configuración de nube guardada.");
         }
     }

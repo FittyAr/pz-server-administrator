@@ -23,6 +23,7 @@ builder.Services.AddScoped<IServerLoggerService, ServerLoggerService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IModDiscoveryService, ModDiscoveryService>();
 builder.Services.AddScoped<IAiService, AiService>();
+builder.Services.AddScoped<ICommunityService, CommunityService>();
 
 var app = builder.Build();
 

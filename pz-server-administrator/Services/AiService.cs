@@ -14,11 +14,19 @@ public class AiService : IAiService
 {
     private readonly ILogger<AiService> _logger;
     private readonly IConfigurationService _configService;
+    private readonly IModDiscoveryService _modDiscovery;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public AiService(ILogger<AiService> logger, IConfigurationService configService)
+    public AiService(
+        ILogger<AiService> logger,
+        IConfigurationService configService,
+        IModDiscoveryService modDiscovery,
+        IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _configService = configService;
+        _modDiscovery = modDiscovery;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <summary>
@@ -27,6 +35,13 @@ public class AiService : IAiService
     public async Task<string> AnalyzeModConflictsAsync(IEnumerable<ModInstance> activeMods)
     {
         _logger.LogInformation("[AI] Iniciando análisis exhaustivo de conflictos...");
+
+        var profile = await _modDiscovery.GetCloudProfileAsync();
+        if (!string.IsNullOrEmpty(profile?.ApiKey) && profile.ApiKey.StartsWith("AI-")) // Prefijo para identificar API Keys de IA
+        {
+            return await AnalyzeWithGeminiAsync(activeMods, profile.ApiKey.Replace("AI-", ""));
+        }
+
         await Task.Delay(1500); // Simulando procesamiento profundo
 
         var reports = new List<string>();
@@ -93,5 +108,45 @@ public class AiService : IAiService
 
         // Aquí iría la llamada al LLM
         return "Análisis preliminar: El error parece estar relacionado con un archivo Lua inexistente o mal cargado. Revisa tus mods de lógica.";
+    }
+
+    private async Task<string> AnalyzeWithGeminiAsync(IEnumerable<ModInstance> mods, string apiKey)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+
+            var modData = string.Join("\n", mods.Select(m => $"- ID: {m.ModId}, Name: {m.Name}, Category: {m.Category}"));
+
+            var prompt = new
+            {
+                contents = new[]
+                {
+                    new {
+                        parts = new[]
+                        {
+                            new { text = $"Eres un experto en el juego Project Zomboid y su arquitectura de mods. Analiza el siguiente orden de carga y detecta conflictos potenciales de carga (ej: frameworks o localizaciones mal posicionados, mapas encimados). Responde de forma técnica y breve en español.\n\nMODS ACTIVOS:\n{modData}" }
+                        }
+                    }
+                }
+            };
+
+            var response = await client.PostAsJsonAsync(url, prompt);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<dynamic>();
+                // Navegar por el JSON de Gemini para extraer el texto (v1beta)
+                string? text = result?.candidates[0].content.parts[0].text;
+                return "🤖 Informe de Inteligencia Artificial (Gemini Pro):\n\n" + (text ?? "No se recibió respuesta legible de la IA.");
+            }
+
+            return "❌ Error al conectar con Gemini API. Revisa tu API Key o conexión.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AI] Error llamando a Gemini.");
+            return "❌ Excepción contactando al servicio de IA externo.";
+        }
     }
 }
