@@ -10,6 +10,8 @@
 @inject ICommunityService CommunityService
 @inject IModPresetService PresetService
 @inject IServerLoggerService LoggerService
+@inject IRconService RconService
+@inject IPzServerService PzServer
 @rendermode InteractiveServer
 
 <PageTitle>@LocService.Get("Mods.Title")</PageTitle>
@@ -33,6 +35,13 @@
                       OnClick="ScanModsAsync" 
                       Loading="@_isScanning">
             @LocService.Get("Mods.ScanButton")
+        </FluentButton>
+        <FluentDivider Role="DividerRole.Presentation" Orientation="Orientation.Vertical" />
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Power())" 
+                      Appearance="Appearance.Neutral"
+                      OnClick="RestartViaRcon"
+                      Title="@LocService.Get("Mods.RestartServer")">
+            @LocService.Get("Mods.RestartServer")
         </FluentButton>
     </FluentStack>
 </FluentStack>
@@ -80,7 +89,13 @@
                                 }
 
                                 <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
-                                    <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
+                                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
+                                        @if (item.IsUpdateAvailable)
+                                        {
+                                            <FluentBadge Appearance="Appearance.Warning" Circular="true" Style="font-size: 0.7rem;">@LocService.Get("Mods.UpdateAvailable")</FluentBadge>
+                                        }
+                                    </FluentStack>
                                     <FluentLabel Typo="Typography.Body" Color="Color.Neutral" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
 
                                     <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
@@ -100,12 +115,22 @@
                                     </div>
 
                                     <div style="margin-top: auto; padding-top: 1rem;">
-                                        <FluentButton IconStart="@(new Icons.Regular.Size20.Info())" 
-                                                      Appearance="Appearance.Stealth"
-                                                      Style="width: 100%;" 
-                                                      OnClick="@(() => FetchMetadata(item.Id))">
-                                            @LocService.Get("Mods.UpdateInfo")
-                                        </FluentButton>
+                                        <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
+                                            <FluentButton IconStart="@(new Icons.Regular.Size16.Info())" 
+                                                          Appearance="Appearance.Stealth"
+                                                          Style="flex-grow: 1;" 
+                                                          OnClick="@(() => FetchMetadata(item.Id))">
+                                                @LocService.Get("Mods.UpdateInfo")
+                                            </FluentButton>
+                                            @if (item.IsUpdateAvailable)
+                                            {
+                                                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                              Appearance="Appearance.Accent"
+                                                              OnClick="@(() => TriggerUpdate(item.Id))">
+                                                    @LocService.Get("Mods.ForceUpdate")
+                                                </FluentButton>
+                                            }
+                                        </FluentStack>
                                     </div>
                                 </div>
                             </FluentCard>
@@ -586,6 +611,48 @@
         else
         {
             ToastService.ShowError("Error al subir el perfil.");
+        }
+    }
+
+    private async Task TriggerUpdate(string workshopId)
+    {
+        await ModDiscovery.TriggerModUpdateAsync(workshopId);
+        ToastService.ShowInfo($"Se ha solicitado la actualización de {workshopId}. Reinicia el servidor para aplicar.");
+    }
+
+    private async Task RestartViaRcon()
+    {
+        var config = ConfigService.GetConfiguration();
+        var serverDir = config.AppSettings.ServerDirectoryPath;
+        var activeServer = config.AppSettings.ActiveServerProfile ?? "servertest";
+        
+        var (port, password) = await PzServer.GetRconCredentialsAsync(serverDir, activeServer);
+        
+        if (string.IsNullOrEmpty(password))
+        {
+            ToastService.ShowWarning("RCON no configurado o sin contraseña en el archivo .ini.");
+            return;
+        }
+
+        try
+        {
+            var success = await RconService.ConnectAsync("localhost", port, password);
+            if (success)
+            {
+                await RconService.SendCommandAsync("servermsg \"Reiniciando servidor para actualizar mods...\"");
+                await Task.Delay(1000);
+                await RconService.SendCommandAsync("quit");
+                ToastService.ShowSuccess("Comando de reinicio enviado.");
+                await RconService.DisconnectAsync();
+            }
+            else
+            {
+                ToastService.ShowError("No se pudo conectar vía RCON.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error RCON: {ex.Message}");
         }
     }
 

@@ -34,9 +34,19 @@ public partial class WorkshopItem
     public DateTime? LastUpdated { get; set; }
 
     /// <summary>
+    /// Fecha de última modificación local detectada.
+    /// </summary>
+    public DateTime? LocalUpdatedAt { get; set; }
+
+    /// <summary>
     /// Hash de contenido para detectar actualizaciones del servidor.
     /// </summary>
     public string? VersionHash { get; set; }
+
+    /// <summary>
+    /// Indica si hay una versión más reciente en Steam que la local.
+    /// </summary>
+    public bool IsUpdateAvailable { get; set; } = false;
 
     /// <summary>
     /// Orden de descarga o carga del WorkshopItem.

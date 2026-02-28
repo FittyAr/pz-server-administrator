@@ -140,6 +140,7 @@ public class ModDiscoveryService : IModDiscoveryService
 
             // Calculamos hash para detectar cambios (Hacemos un hash básico del contenido de mod.info y la fecha)
             item.VersionHash = CalculateLocalHash(modInfoPath);
+            item.LocalUpdatedAt = File.GetLastWriteTimeUtc(modInfoPath);
 
             var modData = ParseModInfo(modInfoPath);
             if (modData == null) continue;
@@ -462,6 +463,16 @@ public class ModDiscoveryService : IModDiscoveryService
                     if (DateTime.TryParse(dateText, out var parsedDate))
                     {
                         item.LastUpdated = parsedDate;
+
+                        // Si la fecha de Steam es posterior a la local, marcamos como desactualizado
+                        if (item.LocalUpdatedAt.HasValue && item.LastUpdated.Value > item.LocalUpdatedAt.Value.AddMinutes(5))
+                        {
+                            item.IsUpdateAvailable = true;
+                        }
+                        else
+                        {
+                            item.IsUpdateAvailable = false;
+                        }
                     }
                 }
 

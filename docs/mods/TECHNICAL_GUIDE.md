@@ -118,6 +118,7 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Explorador Comunitario**: UI integrada para descubrir presets recomendados.
 - [x] **Auto-Updater Engine**: Lógica de disparo de actualizaciones vía SteamCMD integrada en el servicio de descubrimiento.
 
-### ⏳ En Progreso (Sprint 7: Estabilidad y UX Final)
-- [ ] **Notificaciones de Actualización**: Alerta visual cuando un hash local difiere del metadato de Steam.
-- [ ] **Optimización RCON**: Comandos automáticos de reinicio tras actualización de mods. No quiero que se re inicie automaticamente pero se puede dejar un atajo para hacerlo manualmente.
+### ✅ Finalizado (Sprint 7: Estabilidad y UX Final)
+- [x] **Notificaciones de Actualización**: Alerta visual ("Sincronización Disponible") cuando Steam tiene una versión más reciente que la local (basado en fechas).
+- [x] **Acciones de Update**: Botón "Forzar Update" para disparar la descarga vía SteamCMD.
+- [x] **Atajo de Reinicio RCON**: Botón manual para enviar el comando `quit` al servidor tras actualizaciones, evitando reinicios automáticos no deseados.
