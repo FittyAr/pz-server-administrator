@@ -31,8 +31,11 @@ public class RconService : IRconService, IDisposable
             }
 
             _client = new TcpClient();
-            await _client.ConnectAsync(host, port);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await _client.ConnectAsync(host, port, cts.Token);
             _stream = _client.GetStream();
+            _stream.ReadTimeout = 5000;
+            _stream.WriteTimeout = 5000;
 
             // Send Authentication Packet
             int authId = ++_requestId;
@@ -54,14 +57,28 @@ public class RconService : IRconService, IDisposable
                 return true;
             }
 
+            if (authResponse.Id == -1)
+            {
+                throw new UnauthorizedAccessException("Contraseña RCON incorrecta.");
+            }
+
+            throw new Exception($"Respuesta de autenticación inesperada (Tipo: {authResponse.Type})");
+        }
+        catch (OperationCanceledException)
+        {
             await DisconnectAsync();
-            return false;
+            throw new Exception("Tiempo de espera agotado (Timeout). El servidor no respondió.");
+        }
+        catch (SocketException ex)
+        {
+            await DisconnectAsync();
+            throw new Exception($"Error de red ({ex.SocketErrorCode}): {ex.Message}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[RconService] Error connecting: {ex.Message}");
             await DisconnectAsync();
-            return false;
+            throw;
         }
     }
 

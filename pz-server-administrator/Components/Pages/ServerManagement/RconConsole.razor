@@ -31,7 +31,21 @@
             {
                 <FluentBadge Appearance="Appearance.Neutral">Desconectado</FluentBadge>
                 <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="5">
-                    <FluentTextField @bind-Value="@_targetHost" Placeholder="127.0.0.1" Style="width: 140px;" Disabled="@_isConnecting" />
+                    <FluentSelect TOption="string" @bind-Value="@_selectedHostOption" Style="width: 220px;" Disabled="@_isConnecting">
+                        @if (!string.IsNullOrEmpty(_detectedIp))
+                        {
+                            <FluentOption TOption="string" Value="@("auto")">Red Local: @_detectedIp</FluentOption>
+                        }
+                        <FluentOption TOption="string" Value="@("docker")">Podman: host.containers.internal</FluentOption>
+                        <FluentOption TOption="string" Value="@("local")">Nativo: 127.0.0.1</FluentOption>
+                        <FluentOption TOption="string" Value="@("custom")">Otra IP o Hostname...</FluentOption>
+                    </FluentSelect>
+
+                    @if (_selectedHostOption == "custom")
+                    {
+                        <FluentTextField @bind-Value="@_customHostInput" Placeholder="Ej: 192.168.1.5" Style="width: 140px;" Disabled="@_isConnecting" />
+                    }
+
                     <FluentButton IconStart="@(new Icons.Regular.Size16.PlugConnected())" 
                                   OnClick="ConnectRcon" 
                                   Appearance="Appearance.Accent" 
@@ -71,6 +85,32 @@
         <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="Appearance.Outline">Save World</FluentButton>
         <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="Appearance.Outline">Quit Server</FluentButton>
     </FluentStack>
+
+    <!-- Troubleshooting Documentation -->
+    <FluentAccordion Style="margin-top: 10px;">
+        <FluentAccordionItem Heading="¿Problemas de Conexión? Guía de Solución (Docker / Podman / Windows / Linux)">
+            <div style="padding: 10px; font-size: 0.9em; line-height: 1.5;">
+                <p><strong>Configuración Básica de Project Zomboid</strong></p>
+                <ul>
+                    <li>Asegúrate de que en el archivo <code>servertest.ini</code> tengas configurado un puerto (ej: <code>RCONPort=27015</code>) y una contraseña (ej: <code>RCONPassword=tu_pass</code>). El servidor debe ser reiniciado si haces cambios aquí.</li>
+                </ul>
+                
+                <p><strong>Si usas la app nativa (Linux o Windows sin contenedor)</strong></p>
+                <ul>
+                    <li>Usa la IP <code>127.0.0.1</code> si el servidor PZ está en la misma máquina.</li>
+                    <li>Si el servidor PZ está en otra red, usa su IP pública o local y asegúrate de abrir el puerto en el router/firewall.</li>
+                </ul>
+
+                <p><strong>Si usas la app en Docker o Podman sobre Windows (El problema más común)</strong></p>
+                <ul>
+                    <li>El servidor de Project Zomboid suele restringir conexiones RCON solo a <code>localhost</code>. Al ejecutar esta app desde un contenedor, la conexión viene desde una red virtual (ej: 10.89.x.x), por lo que PZ o el Firewall de Windows la rechazan indicando <strong>Timeout</strong> o <strong>Connection Refused</strong>.</li>
+                    <li><strong>Solución 1:</strong> Usa la <strong>IP Local IPv4</strong> de tu máquina (ej: <code>192.168.0.x</code>) en lugar de <code>127.0.0.1</code> o <code>host.containers.internal</code>. Para conocerla, abre una consola (cmd) y escribe <code>ipconfig</code>.</li>
+                    <li><strong>Solución 2:</strong> Permite el tráfico de la red del contenedor en PowerShell como Administrador: <br/><code>New-NetFirewallRule -DisplayName "Docker/Podman Subnet" -Direction Inbound -Action Allow -Protocol TCP -RemoteAddress 10.89.0.0/16</code></li>
+                    <li><strong>Solución 3:</strong> Crea un puente de puertos en Windows desde PowerShell como Administrador: <br/><code>netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=27015 connectaddress=127.0.0.1 connectport=27015</code></li>
+                </ul>
+            </div>
+        </FluentAccordionItem>
+    </FluentAccordion>
 </FluentStack>
 
 @code {
@@ -85,10 +125,13 @@
     private bool _isConnected => RconService.IsConnected;
     private List<RconLog> _consoleLogs = new();
     
-    private string _targetHost = "host.containers.internal"; // Default useful for podman/docker to reach host
+    private string _selectedHostOption = "auto";
+    private string _customHostInput = "";
+    
     private string _currentHost = "";
     private int _currentPort = 27015;
     private bool _isConnecting = false;
+    private string _detectedIp = "";
     
     // Inject JS runtime to scroll down automatically
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
@@ -98,8 +141,44 @@
         RconService.OnConnectionStateChanged += UpdateState;
         RconService.OnMessageReceived += HandleIncomingMessage;
         
-        // Removed auto-connect on load to prevent race conditions and duplicate messages
-        // User should connect manually the first time
+        _detectedIp = DetectLocalIp();
+        if (string.IsNullOrEmpty(_detectedIp))
+        {
+            _selectedHostOption = "docker";
+        }
+    }
+
+    private string DetectLocalIp()
+    {
+        try
+        {
+            // Dummy UDP connection to determine the preferred local IPv4 interface
+            using (var socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Dgram, 0))
+            {
+                socket.Connect("8.8.8.8", 65530);
+                if (socket.LocalEndPoint is System.Net.IPEndPoint endPoint)
+                {
+                    return endPoint.Address.ToString();
+                }
+            }
+        }
+        catch
+        {
+            // Fallback: look through all network interfaces
+            try
+            {
+                var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !System.Net.IPAddress.IsLoopback(ip))
+                    {
+                        return ip.ToString();
+                    }
+                }
+            }
+            catch { }
+        }
+        return "";
     }
 
     private void UpdateState(bool state)
@@ -133,7 +212,17 @@
             var password = credentials.password;
             
             _currentPort = port;
-            var host = string.IsNullOrWhiteSpace(_targetHost) ? "127.0.0.1" : _targetHost;
+            
+            string targetRaw = _selectedHostOption switch
+            {
+                "auto" => _detectedIp,
+                "docker" => "host.containers.internal",
+                "local" => "127.0.0.1",
+                "custom" => _customHostInput,
+                _ => "127.0.0.1"
+            };
+            
+            var host = string.IsNullOrWhiteSpace(targetRaw) ? "127.0.0.1" : targetRaw;
             
             if (string.IsNullOrEmpty(password))
             {
@@ -154,11 +243,6 @@
                 _currentHost = host;
                 _consoleLogs.Add(new RconLog { Message = "Conectado exitosamente y autenticado.", IsCommand = true });
                 ToastService.ShowSuccess("Conexión RCON establecida.");
-            }
-            else
-            {
-                _consoleLogs.Add(new RconLog { Message = "Fallo al conectar o autenticar con el servidor RCON.", IsError = true });
-                ToastService.ShowError("Error conectando a RCON.");
             }
         }
         catch (Exception ex)
