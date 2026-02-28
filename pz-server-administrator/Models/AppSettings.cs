@@ -26,6 +26,7 @@ public class AppSettings
     public string PlayersDatabasePath { get; set; } = string.Empty;
     public string VehiclesDatabasePath { get; set; } = string.Empty;
     public string ServerTestDatabasePath { get; set; } = string.Empty;
+    public string ModsDatabasePath { get; set; } = string.Empty;
 }
 
 /// <summary>

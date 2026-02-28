@@ -46,9 +46,9 @@
             <FluentNavLink Href="/database" Icon="@(new Icons.Regular.Size20.Database())" IconColor="Color.Accent"
                 Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.DatabaseExplorer")</FluentNavLink>
 
-            @* Mods Section (Future) *@
+            @* Mods Section *@
             <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent"
-                Disabled="true">@LocService.Get("NavMenu.Mods")</FluentNavLink>
+                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.Mods")</FluentNavLink>
 
             @* System Administration *@
             @if (AuthService.HasPermission(p => p.AllowUserManagement) || AuthService.HasPermission(p =>

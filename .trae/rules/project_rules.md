@@ -4,6 +4,6 @@
 - Estructura **modular** con separación por funcionalidad.
 - Servicios inyectados vía constructor.
 - Lógica de UI separada de la lógica de negocio (por `Services`, `Models`, `ViewModels`).
-- Persistencia de configuración con `appsettings.zsm.json` bajo la carpeta `config/`.
+- Persistencia de configuración con `appsettings.json` bajo la carpeta `Resources/`.
 - **NO** utilices javascript.
 - Si llegas a necesitar javascript informalo y dare la confirmacion si lo permito o no.

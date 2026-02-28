@@ -1,0 +1,143 @@
+@page "/mods"
+@using pz_server_administrator.Services
+@using pz_server_administrator.Data.Database.Mods
+@inject IModDiscoveryService ModDiscovery
+@inject IConfigurationService ConfigService
+@inject ILocalizationService LocService
+@inject IToastService ToastService
+@rendermode InteractiveServer
+
+<PageTitle>@LocService.Get("Mods.Title")</PageTitle>
+
+<FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+    <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.Title")</FluentLabel>
+    <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
+        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" Appearance="Appearance.Accent"
+            OnClick="ScanModsAsync" Loading="@_isScanning">
+            @LocService.Get("Mods.ScanButton")
+        </FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Cloud())" Appearance="Appearance.Neutral" Disabled="true">
+            @LocService.Get("Mods.SyncCloud")
+        </FluentButton>
+    </FluentStack>
+</FluentStack>
+
+<FluentDivider Style="margin: 1rem 0;" />
+
+@if (_items == null)
+{
+    <FluentProgressRing Style="margin: 2rem auto;" />
+}
+else if (!_items.Any())
+{
+    <div
+        style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
+        <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Neutral" />
+        <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoModsFound")</FluentLabel>
+    </div>
+}
+else
+{
+    <FluentGrid Spacing="3" AdaptiveRendering="true">
+        @foreach (var item in _items)
+        {
+            <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+                    @if (!string.IsNullOrEmpty(item.ThumbnailPath))
+                    {
+                        <img src="@item.ThumbnailPath" style="width: 100%; height: 150px; object-fit: cover;" alt="@item.Title" />
+                    }
+                    else
+                    {
+                        <div
+                            style="width: 100%; height: 150px; background: var(--neutral-layer-2); display: flex; align-items: center; justify-content: center;">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Apps())" Color="Color.Neutral" />
+                        </div>
+                    }
+
+                    <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
+                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
+                        <FluentLabel Typo="Typography.Body" Color="Color.Neutral">ID: @item.Id</FluentLabel>
+
+                        <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            @foreach (var instance in item.Instances)
+                            {
+                                <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)">
+                                    @instance.ModId
+                                </FluentBadge>
+                            }
+                        </div>
+
+                        <div style="margin-top: auto; padding-top: 1rem;">
+                            <FluentButton IconStart="@(new Icons.Regular.Size20.Info())" Appearance="Appearance.Stealth"
+                                Style="width: 100%;" OnClick="@(() => FetchMetadata(item.Id))">
+                                @LocService.Get("Mods.UpdateInfo")
+                            </FluentButton>
+                        </div>
+                    </div>
+                </FluentCard>
+            </FluentGridItem>
+        }
+    </FluentGrid>
+}
+
+@code {
+    private List<WorkshopItem>? _items;
+    private bool _isScanning;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _items = await ModDiscovery.GetWorkshopItemsAsync();
+    }
+
+    private async Task ScanModsAsync()
+    {
+        _isScanning = true;
+        try
+        {
+            var serverDir = ConfigService.GetConfiguration().AppSettings.ServerDirectoryPath;
+            if (string.IsNullOrEmpty(serverDir) || !Directory.Exists(serverDir))
+            {
+                ToastService.ShowError(LocService.Get("Mods.ScanError.NoServerDir"));
+                return;
+            }
+
+            // Heurística: la carpeta Workshop suele ser hermana de Server en la raíz de Zomboid
+            var zomboidRoot = Directory.GetParent(serverDir)?.FullName;
+            if (zomboidRoot != null)
+            {
+                var workshopPath = Path.Combine(zomboidRoot, "Workshop");
+                await ModDiscovery.DiscoverLocalModsAsync(workshopPath);
+                await LoadDataAsync();
+                ToastService.ShowSuccess(LocService.Get("Mods.ScanSuccess"));
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"{LocService.Get("Mods.ScanError")}: {ex.Message}");
+        }
+        finally
+        {
+            _isScanning = false;
+        }
+    }
+
+    private async Task FetchMetadata(string workshopId)
+    {
+        var result = await ModDiscovery.FetchSteamMetadataAsync(workshopId);
+        if (result)
+        {
+            await LoadDataAsync();
+            ToastService.ShowSuccess(LocService.Get("Mods.MetadataSuccess"));
+        }
+        else
+        {
+            ToastService.ShowWarning(LocService.Get("Mods.MetadataError"));
+        }
+    }
+}

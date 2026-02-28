@@ -20,6 +20,8 @@ builder.Services.AddSingleton<ISqliteService, SqliteService>();
 builder.Services.AddScoped<IRconService, RconService>();
 builder.Services.AddScoped<IDatabaseContextFactory, DatabaseContextFactory>();
 builder.Services.AddScoped<IServerLoggerService, ServerLoggerService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IModDiscoveryService, ModDiscoveryService>();
 
 var app = builder.Build();
 
