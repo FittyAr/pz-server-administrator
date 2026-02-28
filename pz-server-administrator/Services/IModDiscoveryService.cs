@@ -26,4 +26,14 @@ public interface IModDiscoveryService
     /// <param name="workshopId">ID de Steam.</param>
     /// <returns>Falso si no se pudo obtener información.</returns>
     Task<bool> FetchSteamMetadataAsync(string workshopId);
+
+    /// <summary>
+    /// Cambia el estado de activación de un mod específico.
+    /// </summary>
+    Task ToggleModActiveAsync(string workshopId, string modId, bool active);
+
+    /// <summary>
+    /// Escribe el orden de carga y activación actual en el archivo .ini del servidor.
+    /// </summary>
+    Task SaveModConfigurationAsync();
 }

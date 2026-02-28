@@ -29,6 +29,11 @@ public partial class ModInstance
     public bool IsActive { get; set; }
 
     /// <summary>
+    /// Orden de carga relativo.
+    /// </summary>
+    public int Order { get; set; }
+
+    /// <summary>
     /// ID del Workshop Item de Steam al cual pertenece (FK).
     /// </summary>
     public string WorkshopItemId { get; set; } = null!;

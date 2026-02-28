@@ -12,7 +12,11 @@
 <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
     <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.Title")</FluentLabel>
     <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
-        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" Appearance="Appearance.Accent"
+        <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Accent"
+            OnClick="SaveConfigAsync" Loading="@_isSaving">
+            @LocService.Get("Mods.SaveConfig")
+        </FluentButton>
+        <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" Appearance="Appearance.Neutral"
             OnClick="ScanModsAsync" Loading="@_isScanning">
             @LocService.Get("Mods.ScanButton")
         </FluentButton>
@@ -24,11 +28,16 @@
 
 <FluentDivider Style="margin: 1rem 0;" />
 
+<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+    <FluentSearch @bind-Value="_filterText" @bind-Value:after="StateHasChanged"
+        Placeholder="@LocService.Get("Mods.SearchPlaceholder")" Style="width: 300px;" />
+</div>
+
 @if (_items == null)
 {
     <FluentProgressRing Style="margin: 2rem auto;" />
 }
-else if (!_items.Any())
+else if (!FilteredItems?.Any() ?? true)
 {
     <div
         style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
@@ -39,7 +48,7 @@ else if (!_items.Any())
 else
 {
     <FluentGrid Spacing="3" AdaptiveRendering="true">
-        @foreach (var item in _items)
+        @foreach (var item in FilteredItems!)
         {
             <FluentGridItem xs="12" sm="6" md="4" lg="3">
                 <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
@@ -62,8 +71,9 @@ else
                         <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             @foreach (var instance in item.Instances)
                             {
-                                <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)">
-                                    @instance.ModId
+                                <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)"
+                                    Style="cursor: pointer;" @onclick="@(() => ToggleActive(item.Id, instance))">
+                                    @(instance.IsActive ? "✅ " : "❌ ") @instance.ModId
                                 </FluentBadge>
                             }
                         </div>
@@ -83,7 +93,14 @@ else
 
 @code {
     private List<WorkshopItem>? _items;
+    private string _filterText = "";
     private bool _isScanning;
+    private bool _isSaving;
+
+    private IEnumerable<WorkshopItem>? FilteredItems => _items?
+    .Where(i => string.IsNullOrEmpty(_filterText) ||
+    i.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ||
+    i.Id.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,8 +112,34 @@ else
         _items = await ModDiscovery.GetWorkshopItemsAsync();
     }
 
+    private async Task ToggleActive(string workshopId, ModInstance instance)
+    {
+        instance.IsActive = !instance.IsActive;
+        await ModDiscovery.ToggleModActiveAsync(workshopId, instance.ModId, instance.IsActive);
+        // No recargamos todo para mantener fluidez, el objeto ya está actualizado por referencia.
+    }
+
+    private async Task SaveConfigAsync()
+    {
+        _isSaving = true;
+        try
+        {
+            await ModDiscovery.SaveModConfigurationAsync();
+            ToastService.ShowSuccess(LocService.Get("Mods.SaveSuccess"));
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"{LocService.Get("Mods.SaveError")}: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
     private async Task ScanModsAsync()
     {
+        // ... (mismo contenido que antes para ScanModsAsync)
         _isScanning = true;
         try
         {
@@ -125,6 +168,7 @@ else
         {
             _isScanning = false;
         }
+        // ...
     }
 
     private async Task FetchMetadata(string workshopId)

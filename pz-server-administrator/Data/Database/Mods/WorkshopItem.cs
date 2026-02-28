@@ -39,6 +39,11 @@ public partial class WorkshopItem
     public string? VersionHash { get; set; }
 
     /// <summary>
+    /// Orden de descarga o carga del WorkshopItem.
+    /// </summary>
+    public int Order { get; set; }
+
+    /// <summary>
     /// Componentes activables individualmente dentro de este Workshop Item.
     /// </summary>
     public virtual ICollection<ModInstance> Instances { get; set; } = new List<ModInstance>();

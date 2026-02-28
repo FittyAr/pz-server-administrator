@@ -72,7 +72,31 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 
 ## 🎨 6. Interfaz de Usuario (UI/UX)
 
-1. **Explorador de Mods (Vista Gird)**: Tarjetas con imágenes de Steam y badges de estado.
+1. **Explorador de Mods (Vista Grid)**: Tarjetas con imágenes de Steam y badges de estado.
 2. **Gestión de Carga (Vista Lista)**: Interfaz de arrastrar y soltar (Drag & Drop) para definir el orden final.
 3. **Centro de IA**: Panel lateral para solicitar "Diagnóstico de Conflictos" y ver explicaciones detalladas de la IA.
 4. **Filtros Avanzados**: Por categoría, por estado (activo/inactivo) y por "Requiere Actualización".
+
+---
+
+## 🚀 7. Estado de la Implementación (Roadmap)
+
+### ✅ Finalizado (Sprint 1: Cimientos y Descubrimiento)
+- [x] **Infraestructura de Datos**: Creación de `Mods.db`, `ModsContext` y modelos relacionales (`WorkshopItem`, `ModInstance`, `CloudProfile`).
+- [x] **Motor de Descubrimiento (`ModDiscoveryService`)**: 
+  - Escaneo recursivo y robusto de carpetas de Workshop.
+  - Sincronización automática de IDs y nombres desde archivos `mod.info`.
+  - Detección de estado **Activo/Inactivo** leyendo el archivo `.ini` del servidor.
+- [x] **Web Scraping**: Extracción de títulos de Steam y miniaturas mediante `IHttpClientFactory`.
+- [x] **Interfaz Base**: Página `ModManager.razor` funcional con grid responsivo y sistema de notificaciones.
+- [x] **Localización**: Soporte completo para inglés y español en el módulo de gestión.
+
+### ⏳ En Progreso (Sprint 2: Ordenamiento y Persistencia)
+- [ ] **Mod List Ordering**: Interfaz de arrastrar y soltar para definir el orden de carga técnico.
+- [ ] **Escritura en `.ini`**: Lógica para actualizar las claves `Mods=` y `WorkshopItems=` preservando el orden manual del usuario.
+- [ ] **Gestión de Categorías**: Implementar el motor de categorización automática (Enum `ModCategory`).
+
+### 🚀 Pendiente (Sprint 3: IA e Integración Cloud)
+- [ ] **IA Conflict Resolver**: Servicio para analizar incompatibilidades y sugerir órdenes óptimos mediante LLMs.
+- [ ] **Cloud Presets**: Telemetría y carga/descarga de configuraciones de mods vía API Key.
+- [ ] **Version Control**: Sistema de hashes para detectar cambios en los archivos de mods y notificar actualizaciones.

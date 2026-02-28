@@ -43,19 +43,41 @@ public class ModDiscoveryService : IModDiscoveryService
 
         // Obtener mods activos desde la configuración del servidor
         var activeModIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var config = _contextFactory.CreateServerTestContext(); // Solo para ejemplo, en realidad usamos IPzServerService para el .ini
-                                                                // Pero IPzServerService.ParseConfigAsync es mejor.
+        var workshopOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var modOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         var appConfig = _configurationService.GetConfiguration();
         var iniPath = appConfig.AppSettings.IniFilePath;
         if (File.Exists(iniPath))
         {
             var content = File.ReadAllText(iniPath);
-            var match = Regex.Match(content, @"^Mods=([^#\r\n]*)", RegexOptions.Multiline);
-            if (match.Success)
+
+            // Extraer Workshops y su orden
+            var wsMatch = Regex.Match(content, @"^WorkshopItems=([^\r\n]*)", RegexOptions.Multiline);
+            if (wsMatch.Success)
             {
-                var mods = match.Groups[1].Value.Split(';');
-                foreach (var m in mods) if (!string.IsNullOrWhiteSpace(m)) activeModIds.Add(m.Trim());
+                var ids = wsMatch.Groups[1].Value.Split(';');
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    var id = ids[i].Trim();
+                    if (!string.IsNullOrEmpty(id)) workshopOrder[id] = i;
+                }
+            }
+
+            // Extraer Mods activos y su orden
+            var mMatch = Regex.Match(content, @"^Mods=([^\r\n]*)", RegexOptions.Multiline);
+            if (mMatch.Success)
+            {
+                var mods = mMatch.Groups[1].Value.Split(';');
+                for (int i = 0; i < mods.Length; i++)
+                {
+                    var m = mods[i].Trim();
+                    if (!string.IsNullOrEmpty(m))
+                    {
+                        activeModIds.Add(m);
+                        modOrder[m] = i;
+                    }
+                }
             }
         }
 
@@ -102,9 +124,14 @@ public class ModDiscoveryService : IModDiscoveryService
                 {
                     Id = workshopId,
                     Title = $"Mod {workshopId}",
-                    Instances = new List<ModInstance>()
+                    Instances = new List<ModInstance>(),
+                    Order = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999
                 };
                 context.WorkshopItems.Add(item);
+            }
+            else
+            {
+                item.Order = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999;
             }
 
             var modData = ParseModInfo(modInfoPath);
@@ -121,7 +148,8 @@ public class ModDiscoveryService : IModDiscoveryService
                     ModId = modId,
                     Name = modName,
                     WorkshopItemId = workshopId,
-                    IsActive = activeModIds.Contains(modId)
+                    IsActive = activeModIds.Contains(modId),
+                    Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999
                 };
                 item.Instances.Add(instance);
             }
@@ -129,6 +157,7 @@ public class ModDiscoveryService : IModDiscoveryService
             {
                 instance.Name = modName;
                 instance.IsActive = activeModIds.Contains(modId);
+                instance.Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999;
             }
         }
 
@@ -150,7 +179,8 @@ public class ModDiscoveryService : IModDiscoveryService
 
         return await context.WorkshopItems
             .Include(i => i.Instances)
-            .OrderBy(i => i.Title)
+            .OrderBy(i => i.Order)
+            .ThenBy(i => i.Title)
             .ToListAsync();
     }
 
@@ -192,6 +222,56 @@ public class ModDiscoveryService : IModDiscoveryService
             _logger.LogError(ex, "[ModDiscovery] Error al obtener metadatos de Steam para {Id}", workshopId);
         }
         return false;
+    }
+
+    public async Task ToggleModActiveAsync(string workshopId, string modId, bool active)
+    {
+        using var context = _contextFactory.CreateModsContext();
+        if (context == null) return;
+
+        var instance = await context.ModInstances
+            .FirstOrDefaultAsync(i => i.WorkshopItemId == workshopId && i.ModId == modId);
+
+        if (instance != null)
+        {
+            instance.IsActive = active;
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task SaveModConfigurationAsync()
+    {
+        var appConfig = _configurationService.GetConfiguration();
+        var iniPath = appConfig.AppSettings.IniFilePath;
+        if (!File.Exists(iniPath)) return;
+
+        using var context = _contextFactory.CreateModsContext();
+        if (context == null) return;
+
+        // Recuperar items ordenados. Los que estén activos deben aparecer primero en su respectivo bloque si lo deseamos, 
+        // pero PZ requiere que TODOS los WorkshopItems estén en la lista si se van a descargar.
+        var workshopIds = await context.WorkshopItems
+            .OrderBy(i => i.Order)
+            .Select(i => i.Id)
+            .ToListAsync();
+
+        // Recuperar IDs de mods activos ordenados
+        var activeModIds = await context.ModInstances
+            .Where(i => i.IsActive)
+            .OrderBy(i => i.Order)
+            .Select(i => i.ModId)
+            .ToListAsync();
+
+        var content = await File.ReadAllTextAsync(iniPath);
+
+        // Regx para WorkshopItems=
+        content = Regex.Replace(content, @"^WorkshopItems=[^\r\n]*", $"WorkshopItems={string.Join(";", workshopIds)}", RegexOptions.Multiline);
+
+        // Regex para Mods=
+        content = Regex.Replace(content, @"^Mods=[^\r\n]*", $"Mods={string.Join(";", activeModIds)}", RegexOptions.Multiline);
+
+        await File.WriteAllTextAsync(iniPath, content);
+        _logger.LogInformation("[ModDiscovery] Configuración guardada en .ini: {WorkshopCount} workshops, {ModCount} mods activos.", workshopIds.Count, activeModIds.Count);
     }
 
     private Dictionary<string, string>? ParseModInfo(string path)
