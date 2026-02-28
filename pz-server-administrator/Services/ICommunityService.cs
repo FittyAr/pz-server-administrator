@@ -23,4 +23,14 @@ public interface ICommunityService
     /// Sincroniza la lista negra de incompatibilidades desde la nube.
     /// </summary>
     Task SyncIncompatibilitiesAsync(string apiKey);
+
+    /// <summary>
+    /// Sube un preset local a la nube de la comunidad.
+    /// </summary>
+    Task<bool> UploadPresetAsync(string apiKey, ModPreset preset);
+
+    /// <summary>
+    /// Baja presets públicos o compartidos de la nube.
+    /// </summary>
+    Task<List<ModPreset>> GetCommunityPresetsAsync();
 }

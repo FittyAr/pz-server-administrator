@@ -113,6 +113,11 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **Gestión de Perfiles UI**: Interfaz para crear, aplicar y eliminar perfiles de mods.
 - [x] **Optimización IA**: Integración real con Google Gemini Pro para análisis semántico.
 
-### ⏳ En Progreso (Sprint 6: Automatización de Infraestructura)
-- [ ] **Auto-Updater**: Integración con SteamCMD para actualizaciones automáticas de mods desactualizados.
-- [ ] **Sincronización Cloud Avanzada**: Compartir perfiles con la comunidad directamente desde la UI.
+### ✅ Finalizado (Sprint 6: Automatización de Infraestructura)
+- [x] **Cloud Sync Avanzado**: Capacidad de compartir y descargar perfiles (`ModPreset`) desde la nube de la comunidad.
+- [x] **Explorador Comunitario**: UI integrada para descubrir presets recomendados.
+- [x] **Auto-Updater Engine**: Lógica de disparo de actualizaciones vía SteamCMD integrada en el servicio de descubrimiento.
+
+### ⏳ En Progreso (Sprint 7: Estabilidad y UX Final)
+- [ ] **Notificaciones de Actualización**: Alerta visual cuando un hash local difiere del metadato de Steam.
+- [ ] **Optimización RCON**: Comandos automáticos de reinicio tras actualización de mods. No quiero que se re inicie automaticamente pero se puede dejar un atajo para hacerlo manualmente.

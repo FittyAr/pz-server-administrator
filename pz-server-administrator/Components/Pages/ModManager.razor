@@ -255,6 +255,11 @@
                                         </FluentLabel>
                                     </FluentStack>
                                     <FluentStack Orientation="Orientation.Horizontal">
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.CloudArrowUp())" 
+                                                      Appearance="Appearance.Stealth"
+                                                      OnClick="@(() => SharePreset(p))">
+                                            @LocService.Get("Mods.SharePreset")
+                                        </FluentButton>
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.Play())" 
                                                       Appearance="Appearance.Accent"
                                                       OnClick="@(() => ApplyPreset(p))">
@@ -264,6 +269,39 @@
                                                       Appearance="Appearance.Neutral"
                                                       OnClick="@(() => DeletePreset(p))" />
                                     </FluentStack>
+                                </FluentStack>
+                            </FluentCard>
+                        }
+                    }
+
+                    <FluentDivider Style="margin: 2rem 0;" />
+                    <FluentLabel Typo="Typography.Header">🌍 Descubrir en la Comunidad</FluentLabel>
+                    <p style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 1rem;">Perfiles recomendados y compartidos por otros administradores (Powered by Community Cloud).</p>
+
+                    @if (_communityPresets == null)
+                    {
+                        <FluentButton OnClick="LoadCommunityPresets" IconStart="@(new Icons.Regular.Size20.Search())">
+                            Buscar perfiles públicos
+                        </FluentButton>
+                    }
+                    else
+                    {
+                        @foreach (var p in _communityPresets)
+                        {
+                            <FluentCard Style="margin-bottom: 1rem; padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentStack Orientation="Orientation.Vertical" Spacing="0">
+                                        <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
+                                        <FluentLabel Typo="Typography.Caption">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Caption" Style="opacity: 0.6;">
+                                            Autor: @p.Author | @p.Mods.Count mods | @LocService.Get("Mods.CommunityVerified")
+                                        </FluentLabel>
+                                    </FluentStack>
+                                    <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())" 
+                                                  Appearance="Appearance.Accent"
+                                                  OnClick="@(() => DownloadCommunityPreset(p))">
+                                        Importar
+                                    </FluentButton>
                                 </FluentStack>
                             </FluentCard>
                         }
@@ -323,6 +361,7 @@
     private string? _recommendation;
     private ModInstance? _selectedForMove;
     private List<ModPreset>? _presets;
+    private List<ModPreset>? _communityPresets;
     private string _newPresetName = "";
     private string _newPresetDesc = "";
 
@@ -529,6 +568,39 @@
         {
             _isScanning = false;
         }
+    }
+
+    private async Task SharePreset(ModPreset p)
+    {
+        if (string.IsNullOrEmpty(_cloudProfile?.ApiKey))
+        {
+            ToastService.ShowWarning("Inicia sesión o configura tu API Key en la pestaña 'Cuentas' para compartir perfiles.");
+            return;
+        }
+
+        var success = await CommunityService.UploadPresetAsync(_cloudProfile.ApiKey, p);
+        if (success)
+        {
+            ToastService.ShowSuccess($"Perfil '{p.Name}' compartido con éxito.");
+        }
+        else
+        {
+            ToastService.ShowError("Error al subir el perfil.");
+        }
+    }
+
+    private async Task LoadCommunityPresets()
+    {
+        _communityPresets = await CommunityService.GetCommunityPresetsAsync();
+        StateHasChanged();
+    }
+
+    private async Task DownloadCommunityPreset(ModPreset p)
+    {
+        // Guardar localmente
+        await PresetService.SavePresetAsync(p);
+        _presets = await PresetService.GetAllPresetsAsync();
+        ToastService.ShowSuccess($"Perfil '{p.Name}' importado correctamente.");
     }
 
     private async Task FetchMetadata(string workshopId)

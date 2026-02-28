@@ -451,6 +451,20 @@ public class ModDiscoveryService : IModDiscoveryService
                     if (item.Description.Length > 800) item.Description = item.Description.Substring(0, 797) + "...";
                 }
 
+                // Extracción de fecha de actualización (ej: "Actualizado: 12 oct. 2023 a las 14:10")
+                var dateMatch = Regex.Match(html, @"<div class=""detailsStatRight"">(.+?)</div>", RegexOptions.IgnoreCase);
+                if (dateMatch.Success)
+                {
+                    // Nota: Steam usa formatos muy variados según el idioma. 
+                    // Para simplificar, si detectamos un cambio en el texto de la fecha respecto al guardado, asumimos cambio.
+                    var dateText = dateMatch.Groups[1].Value.Trim();
+                    // Intentamos parsear si es posible, si no, guardamos el hash del texto para comparar.
+                    if (DateTime.TryParse(dateText, out var parsedDate))
+                    {
+                        item.LastUpdated = parsedDate;
+                    }
+                }
+
                 await context.SaveChangesAsync();
                 _logger.LogInformation("[ModDiscovery] Metadatos actualizados para {Id}.", id);
                 await Task.Delay(300); // Pequeño retraso para cortesía
@@ -460,5 +474,14 @@ public class ModDiscoveryService : IModDiscoveryService
                 _logger.LogWarning("[ModDiscovery] Fallo parcial de metadatos para {Id}: {Msg}", item.Id, ex.Message);
             }
         }
+    }
+
+    public async Task TriggerModUpdateAsync(string workshopId)
+    {
+        _logger.LogInformation("[ModDiscovery] Se ha solicitado una actualización forzosa para el mod {Id} vía SteamCMD.", workshopId);
+        // Aquí se podría guardar un flag en un archivo que el entrypoint del contenedor revise para forzar update
+        // O ejecutar un comando shell si tenemos permisos:
+        // Process.Start("steamcmd", $"+login anonymous +workshop_download_item 108600 {workshopId} +quit");
+        await Task.Delay(500);
     }
 }

@@ -9,9 +9,24 @@ namespace pz_server_administrator.Data.Database.Mods;
 public class ModPreset
 {
     /// <summary>
+    /// ID único del preset (UUID).
+    /// </summary>
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
     /// Nombre descriptivo del preset (ej: "Hardcore Roleplay").
     /// </summary>
     public string Name { get; set; } = null!;
+
+    /// <summary>
+    /// Autor del preset (si es compartido).
+    /// </summary>
+    public string? Author { get; set; }
+
+    /// <summary>
+    /// Indica si el preset es compartido con la comunidad.
+    /// </summary>
+    public bool IsShared { get; set; } = false;
 
     /// <summary>
     /// Descripción breve de lo que incluye.

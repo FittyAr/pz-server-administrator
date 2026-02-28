@@ -46,4 +46,9 @@ public interface IModDiscoveryService
     /// Actualiza el perfil de configuración en la nube.
     /// </summary>
     Task UpdateCloudProfileAsync(CloudProfile profile);
+
+    /// <summary>
+    /// Marca un mod para ser actualizado forzosamente en el siguiente reinicio o vía SteamCMD.
+    /// </summary>
+    Task TriggerModUpdateAsync(string workshopId);
 }

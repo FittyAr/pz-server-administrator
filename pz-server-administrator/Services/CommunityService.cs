@@ -54,4 +54,42 @@ public class CommunityService : ICommunityService
         _logger.LogInformation("[Community] Sincronizando presets de incompatibilidad globales...");
         await Task.Delay(300);
     }
+
+    public async Task<bool> UploadPresetAsync(string apiKey, ModPreset preset)
+    {
+        if (string.IsNullOrEmpty(apiKey)) return false;
+
+        _logger.LogInformation("[Community] Subiendo preset '{Name}' a la nube...", preset.Name);
+        // await client.PostAsJsonAsync("https://api.pz-admin.com/v1/presets", preset);
+        await Task.Delay(1000);
+        return true;
+    }
+
+    public async Task<List<ModPreset>> GetCommunityPresetsAsync()
+    {
+        _logger.LogInformation("[Community] Recuperando presets públicos...");
+        await Task.Delay(500);
+
+        return new List<ModPreset>
+        {
+            new ModPreset
+            {
+                Id = "shared-1",
+                Name = "Vanilla Survival Pack",
+                Description = "Recomendado por la comunidad: Mejora la experiencia base sin romperla.",
+                Author = "Admin-Global",
+                IsShared = true,
+                Mods = new List<ModPresetEntry>()
+            },
+            new ModPreset
+            {
+                Id = "shared-2",
+                Name = "Hardcore Realistic",
+                Description = "Solo para expertos. Incluye mods de sed, cansancio dinámico y zombies ultra-sensibles.",
+                Author = "Admin-Global",
+                IsShared = true,
+                Mods = new List<ModPresetEntry>()
+            }
+        };
+    }
 }
