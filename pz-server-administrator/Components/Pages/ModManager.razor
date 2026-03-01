@@ -203,23 +203,23 @@
                                       Appearance="Appearance.Accent"
                                       OnClick="RunAiDiagnosis"
                                       Loading="@_isAiLoading"
-                                      Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))">
+                                      Disabled="@(!_config.Ai.IsApiKeyValid)">
                             @LocService.Get("Mods.ScanAi")
                         </FluentButton>
                         <FluentButton IconStart="@(new Icons.Regular.Size20.Eye())"
                                       Appearance="Appearance.Neutral"
                                       OnClick="AnalyzeServerLog"
                                       Loading="@_isAiLoading"
-                                      Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))">
-                            Analizar Log Servidor
+                                      Disabled="@(!_config.Ai.IsApiKeyValid)">
+                            @LocService.Get("Mods.AnalyzeLog")
                         </FluentButton>
                     </FluentStack>
 
                     <FluentStack VerticalAlignment="VerticalAlignment.Center" Style="margin-top: 1rem;">
-                        <FluentCheckbox @bind-Value="@(_cloudProfile.AiAutoFixEnabled)" 
-                                        Label="Modo Automático (Permitir que la IA aplique cambios sin confirmar)" 
-                                        Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))"
-                                        @bind-Value:after="SaveCloudProfile" />
+                        <FluentCheckbox @bind-Value="@(_config.Ai.AiAutoFixEnabled)" 
+                                        Label="@LocService.Get("Mods.AiAutoFixLabel")" 
+                                        Disabled="@(!_config.Ai.IsApiKeyValid)"
+                                        @bind-Value:after="SaveConfigAsync" />
                     </FluentStack>
                     
                     <FluentDivider Style="margin: 1rem 0;" />
@@ -243,7 +243,7 @@
                     else if (_aiActions.Any())
                     {
                         <FluentStack Orientation="Orientation.Vertical" Spacing="3">
-                            <FluentLabel Typo="Typography.Subject">Plan de Acción Recomendado</FluentLabel>
+                            <FluentLabel Typo="Typography.Subject">@LocService.Get("Mods.AiActionPlan")</FluentLabel>
                             @foreach (var action in _aiActions)
                             {
                                 <FluentCard Style="padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
@@ -266,7 +266,7 @@
                             <FluentButton Appearance="Appearance.Accent" 
                                           IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())"
                                           OnClick="ApplyAiActions">
-                                Aplicar Armonización Automática
+                                @LocService.Get("Mods.AiApplyHarmonization")
                             </FluentButton>
                         </FluentStack>
                     }
@@ -280,7 +280,7 @@
                     {
                         <div style="opacity: 0.6; text-align: center; padding: 2rem;">
                             <FluentIcon Value="@(new Icons.Regular.Size24.Handshake())" Style="width: 100px; height: 100px;" />
-                            <FluentLabel Typo="Typography.Body">Inicia el análisis para detectar incompatibilidades o errores en tu orden de carga.</FluentLabel>
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiStartPrompt")</FluentLabel>
                         </div>
                     }
                 </FluentCard>
@@ -294,7 +294,7 @@
             <FluentGrid Spacing="3">
                 <FluentGridItem xs="12" md="4">
                     <FluentCard>
-                        <FluentLabel Typo="Typography.Header">Nuevo Perfil</FluentLabel>
+                        <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.NewPreset")</FluentLabel>
                         <FluentDivider Style="margin: 0.5rem 0;" />
                         <FluentStack Orientation="Orientation.Vertical" Spacing="4">
                             <FluentTextField @bind-Value="_newPresetName" 
@@ -338,7 +338,7 @@
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.CloudArrowUp())" 
                                                       Appearance="Appearance.Stealth"
                                                       OnClick="@(() => SharePreset(p))"
-                                                      Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))">
+                                                      Disabled="@(!_config.Cloud.IsApiKeyValid)">
                                             @LocService.Get("Mods.SharePreset")
                                         </FluentButton>
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.Play())" 
@@ -359,11 +359,11 @@
                     <FluentLabel Typo="Typography.Header">🌍 Descubrir en la Comunidad</FluentLabel>
                     <p style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 1rem;">Perfiles recomendados y compartidos por otros administradores (Powered by Community Cloud).</p>
 
-                    @if (_communityPresets == null)
+                     @if (_communityPresets == null)
                     {
                         <FluentButton OnClick="LoadCommunityPresets" 
                                       IconStart="@(new Icons.Regular.Size20.Search())"
-                                      Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))">
+                                      Disabled="@(!_config.Cloud.IsApiKeyValid)">
                             Buscar perfiles públicos
                         </FluentButton>
                     }
@@ -393,64 +393,11 @@
             </FluentGrid>
         </div>
     </FluentTab>
-
-    @* --- TAB: CONFIGURACIÓN & CLOUD --- *@
-    <FluentTab Id="tab-cloud" Label="@LocService.Get("Mods.TabCloud")">
-        <div style="margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-            <FluentCard Style="padding: 1.5rem;">
-                <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.CloudTitle")</FluentLabel>
-                <p style="opacity: 0.8; font-size: 0.9rem;">Configura tu conexión con el ecosistema de la comunidad para sincronizar perfiles.</p>
-                
-                <FluentDivider Style="margin: 1rem 0;" />
-
-                @if (_cloudProfile != null)
-                {
-                    <FluentStack Orientation="Orientation.Vertical" Spacing="4">
-                        <div style="display: flex; gap: 1rem; align-items: flex-end;">
-                            <FluentTextField @bind-Value="_cloudProfile.ApiKey" 
-                                             @bind-Value:after="OnApiKeyChanged"
-                                             Label="@LocService.Get("Mods.ApiKey")" 
-                                             Placeholder="pk_live_..."
-                                             Type="TextFieldType.Password"
-                                             Style="flex-grow: 1;" />
-                            <FluentButton OnClick="TestApiKey" Loading="_isValidatingKey">Probar Key</FluentButton>
-                        </div>
-
-                        @if (_cloudProfile?.IsApiKeyValid == true)
-                        {
-                            <p style="color: #008a00; font-size: 0.8rem; margin-top: -0.5rem;">✅ API Key válida y conectada</p>
-                        }
-                        else if (!string.IsNullOrEmpty(_cloudProfile?.ApiKey))
-                        {
-                            <p style="color: #d83b01; font-size: 0.8rem; margin-top: -0.5rem;">⚠️ La API Key no ha sido validada</p>
-                        }
-
-                        <FluentCheckbox @bind-Value="_cloudProfile.AutoReport" 
-                                        Label="@LocService.Get("Mods.AutoReport")" 
-                                        Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))" />
-
-                        <FluentCheckbox @bind-Value="_cloudProfile.CloudSyncEnabled" 
-                                        Label="@LocService.Get("Mods.CloudSync")" 
-                                        Disabled="@(!(_cloudProfile?.IsApiKeyValid ?? false))" />
-
-                        @if (_cloudProfile.LastSync != null)
-                        {
-                            <FluentLabel Typo="Typography.Body">Última sincronía: @_cloudProfile.LastSync.Value.ToLocalTime()</FluentLabel>
-                        }
-
-                        <FluentButton Appearance="Appearance.Accent" OnClick="SaveCloudProfile" Style="margin-top: 1rem;">
-                            Guardar Ajustes
-                        </FluentButton>
-                    </FluentStack>
-                }
-            </FluentCard>
-        </div>
-    </FluentTab>
 </FluentTabs>
 
 @code {
     private List<WorkshopItem>? _items;
-    private CloudProfile? _cloudProfile;
+    private ZsmConfiguration _config = new();
     private string _filterText = "";
     private bool _isScanning;
     private bool _isSaving;
@@ -479,8 +426,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _config = ConfigService.GetConfiguration();
         await LoadDataAsync();
-        _cloudProfile = await ModDiscovery.GetCloudProfileAsync();
         _recommendation = await CommunityService.GetGlobalRecommendationsAsync();
         _presets = await PresetService.GetAllPresetsAsync();
     }
@@ -558,7 +505,7 @@
             }
             else 
             {
-                if (_cloudProfile?.AiAutoFixEnabled == true)
+                if (_config.Ai.AiAutoFixEnabled == true)
                 {
                     ToastService.ShowInfo("Modo Automático: Aplicando armonización...");
                     await ApplyAiActions();
@@ -666,52 +613,6 @@
         _presets = await PresetService.GetAllPresetsAsync();
     }
 
-    private void OnApiKeyChanged()
-    {
-        if (_cloudProfile != null) _cloudProfile.IsApiKeyValid = false;
-    }
-
-    private async Task SaveCloudProfile()
-    {
-        if (_cloudProfile != null)
-        {
-            await ModDiscovery.UpdateCloudProfileAsync(_cloudProfile);
-            
-            if (_cloudProfile.AutoReport && _cloudProfile.IsApiKeyValid && !string.IsNullOrEmpty(_cloudProfile.ApiKey))
-            {
-                await CommunityService.ReportConfigurationAsync(_cloudProfile.ApiKey, ActiveModsOrdered);
-            }
-            
-            ToastService.ShowSuccess("Configuración de nube guardada.");
-        }
-    }
-
-    private async Task TestApiKey()
-    {
-        if (string.IsNullOrWhiteSpace(_cloudProfile?.ApiKey))
-        {
-            ToastService.ShowWarning("Ingresa una clave de API para probar.");
-            return;
-        }
-
-        _isValidatingKey = true;
-        try
-        {
-            bool isValid = await ModDiscovery.ValidateApiKeyAsync(_cloudProfile.ApiKey);
-            _cloudProfile.IsApiKeyValid = isValid;
-            
-            if (isValid)
-                ToastService.ShowSuccess("API Key validada con éxito. Funciones de nube habilitadas.");
-            else
-                ToastService.ShowError("La API Key no es válida o hubo un problema de conexión.");
-            
-            await ModDiscovery.UpdateCloudProfileAsync(_cloudProfile);
-        }
-        finally
-        {
-            _isValidatingKey = false;
-        }
-    }
 
     private async Task ScanModsAsync()
     {
@@ -757,13 +658,13 @@
 
     private async Task SharePreset(ModPreset p)
     {
-        if (string.IsNullOrEmpty(_cloudProfile?.ApiKey))
+        if (string.IsNullOrEmpty(_config.Cloud.ApiKey))
         {
-            ToastService.ShowWarning("Inicia sesión o configura tu API Key en la pestaña 'Cuentas' para compartir perfiles.");
+            ToastService.ShowWarning("Configura tu API Key en la página de Configuración Global para compartir perfiles.");
             return;
         }
 
-        var success = await CommunityService.UploadPresetAsync(_cloudProfile.ApiKey, p);
+        var success = await CommunityService.UploadPresetAsync(_config.Cloud.ApiKey, p);
         if (success)
         {
             ToastService.ShowSuccess($"Perfil '{p.Name}' compartido con éxito.");

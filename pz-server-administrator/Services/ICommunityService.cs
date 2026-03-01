@@ -33,4 +33,9 @@ public interface ICommunityService
     /// Baja presets públicos o compartidos de la nube.
     /// </summary>
     Task<List<ModPreset>> GetCommunityPresetsAsync();
+
+    /// <summary>
+    /// Valida si una API Key es auténtica contra el servidor central.
+    /// </summary>
+    Task<bool> ValidateApiKeyAsync(string apiKey);
 }

@@ -30,6 +30,16 @@
                         @LocService.Get("UserStatus.UserInfo")
                     </FluentButton>
 
+                    @if (AuthService.HasPermission(p => p.AllowConfigEdit))
+                    {
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="NavigateToSettings"
+                            Style="width: 100%; justify-content: flex-start;">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Settings())"
+                                Slot="start" />
+                            @LocService.Get("NavMenu.AppConfiguration")
+                        </FluentButton>
+                    }
+
                     <FluentButton Appearance="Appearance.Stealth" OnClick="HandleLogout"
                         Style="width: 100%; justify-content: flex-start;">
                         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowExit())"
@@ -72,9 +82,9 @@
                         <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Status"):</strong>
                             @(AuthService.CurrentState.CurrentUser.IsActive ? LocService.Get("UserStatus.Active") :
                                 LocService.Get("UserStatus.Inactive"))</FluentLabel>
-                        <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Created"):</strong>
-                            @AuthService.CurrentState.CurrentUser.CreatedAt.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
-                        @if (AuthService.CurrentState.CurrentUser.LastLoginAt.HasValue)
+                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Created"):</strong>
+                                @AuthService.CurrentState.CurrentUser.CreatedAt.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
+                            @if (AuthService.CurrentState.CurrentUser.LastLoginAt.HasValue)
                         {
                             <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.LastLogin"):</strong>
                                 @AuthService.CurrentState.CurrentUser.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")
@@ -129,6 +139,12 @@
     private void NavigateToLogin()
     {
         Navigation.NavigateTo("/login");
+    }
+
+    private void NavigateToSettings()
+    {
+        _isUserMenuOpen = false;
+        Navigation.NavigateTo("/settings");
     }
 
     private async Task HandleLogout()

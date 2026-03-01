@@ -61,6 +61,8 @@
     <span class="dismiss">🗙</span>
 </div>
 
+@inject NavigationManager NavManager
+
 @code {
     /// <summary>
     /// Gets the name of the currently active server
@@ -73,6 +75,20 @@
     protected override void OnInitialized()
     {
         LocService.OnLanguageChanged += () => InvokeAsync(StateHasChanged);
+        CheckSetupRequirement();
+    }
+
+    private void CheckSetupRequirement()
+    {
+        var config = ConfigService.GetConfiguration();
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+
+        // Si no hay usuarios y no estamos ya en /setup, redirigir
+        if ((config.Users == null || config.Users.Count == 0) && !uri.AbsolutePath.Equals("/setup",
+        StringComparison.OrdinalIgnoreCase))
+        {
+            NavManager.NavigateTo("/setup");
+        }
     }
 
     /// <summary>

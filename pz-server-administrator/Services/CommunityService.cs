@@ -92,4 +92,21 @@ public class CommunityService : ICommunityService
             }
         };
     }
+
+    public async Task<bool> ValidateApiKeyAsync(string apiKey)
+    {
+        if (string.IsNullOrEmpty(apiKey)) return false;
+
+        try
+        {
+            // Simulación de validación (v4: Realizaría un GET a /auth/verify)
+            await Task.Delay(800);
+            // Consideramos válida cualquier clave que empiece por zsm- o simplemente que tenga longitud
+            return apiKey.Length > 10;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

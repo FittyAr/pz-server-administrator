@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using pz_server_administrator.Data.Database.Mods;
+using pz_server_administrator.Models;
+using System.Net.Http.Json;
 
 namespace pz_server_administrator.Services;
 
@@ -346,68 +348,81 @@ public class ModDiscoveryService : IModDiscoveryService
 
     public async Task<CloudProfile> GetCloudProfileAsync()
     {
-        using var context = _contextFactory.CreateModsContext();
-        if (context == null) return new CloudProfile();
+        var config = _configurationService.GetConfiguration();
 
-        var profile = await context.CloudProfiles.FirstOrDefaultAsync(p => p.Id == 1);
-        if (profile == null)
+        // Si ya hay API Key en config.json, devolvemos eso mapeado a CloudProfile para compatibilidad UI temporal
+        if (!string.IsNullOrEmpty(config.Ai.ApiKey) || !string.IsNullOrEmpty(config.Cloud.ApiKey))
         {
-            profile = new CloudProfile { Id = 1, ApiKey = "" };
-            context.CloudProfiles.Add(profile);
-            await context.SaveChangesAsync();
+            return MapConfigToProfile(config);
         }
-        return profile;
+
+        // Intento de migración desde base de datos antigua
+        try
+        {
+            using var context = _contextFactory.CreateModsContext();
+            if (context != null)
+            {
+                var dbProfile = await context.CloudProfiles.FirstOrDefaultAsync(p => p.Id == 1);
+                if (dbProfile != null && !string.IsNullOrEmpty(dbProfile.ApiKey))
+                {
+                    _logger.LogInformation("[Migration] Migrating CloudProfile from DB to config.json");
+                    config.Ai.ApiKey = dbProfile.ApiKey;
+                    config.Ai.IsApiKeyValid = dbProfile.IsApiKeyValid;
+                    config.Ai.AiAutoFixEnabled = dbProfile.AiAutoFixEnabled;
+                    config.Ai.Provider = AiProviderType.Gemini; // Assume Gemini for legacy
+
+                    config.Cloud.ApiKey = dbProfile.ApiKey;
+                    config.Cloud.IsApiKeyValid = dbProfile.IsApiKeyValid;
+
+                    await _configurationService.SaveConfigurationAsync(config);
+                    return dbProfile;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("[Migration] Error migrating cloud profile: {Msg}", ex.Message);
+        }
+
+        return MapConfigToProfile(config);
+    }
+
+    private CloudProfile MapConfigToProfile(ZsmConfiguration config)
+    {
+        return new CloudProfile
+        {
+            Id = 1,
+            ApiKey = config.Ai.ApiKey,
+            IsApiKeyValid = config.Ai.IsApiKeyValid,
+            AiAutoFixEnabled = config.Ai.AiAutoFixEnabled
+        };
     }
 
     public async Task UpdateCloudProfileAsync(CloudProfile profile)
     {
-        using var context = _contextFactory.CreateModsContext();
-        if (context == null) return;
+        var config = _configurationService.GetConfiguration();
+        config.Ai.ApiKey = profile.ApiKey ?? "";
+        config.Ai.IsApiKeyValid = profile.IsApiKeyValid;
+        config.Ai.AiAutoFixEnabled = profile.AiAutoFixEnabled;
 
-        var existing = await context.CloudProfiles.FirstOrDefaultAsync(p => p.Id == 1);
-        if (existing == null)
-        {
-            context.CloudProfiles.Add(profile);
-        }
-        else
-        {
-            existing.ApiKey = profile.ApiKey;
-            existing.AutoReport = profile.AutoReport;
-            existing.CloudSyncEnabled = profile.CloudSyncEnabled;
-            existing.LastSync = profile.LastSync;
-            existing.AiAutoFixEnabled = profile.AiAutoFixEnabled;
-            existing.IsApiKeyValid = profile.IsApiKeyValid;
-        }
+        // Sincronizar con cloud settings también por ahora
+        config.Cloud.ApiKey = profile.ApiKey ?? "";
+        config.Cloud.IsApiKeyValid = profile.IsApiKeyValid;
 
-        await context.SaveChangesAsync();
+        await _configurationService.SaveConfigurationAsync(config);
     }
 
     public async Task<bool> ValidateApiKeyAsync(string apiKey)
     {
-        if (string.IsNullOrWhiteSpace(apiKey)) return false;
-
-        // Limpiar prefijo si existe (usado en AiService)
-        var cleanKey = apiKey.StartsWith("AI-") ? apiKey.Replace("AI-", "") : apiKey;
+        if (string.IsNullOrEmpty(apiKey)) return false;
 
         try
         {
+            // Usamos el GeminiProvider por defecto para esta validación rápida (retrocompatibilidad)
             var client = _httpClientFactory.CreateClient();
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={cleanKey}";
-
-            var prompt = new
-            {
-                contents = new[]
-                {
-                    new {
-                        parts = new[]
-                        {
-                            new { text = "ping" }
-                        }
-                    }
-                }
-            };
-
-            var response = await client.PostAsJsonAsync(url, prompt);
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+            var testPrompt = new { contents = new[] { new { parts = new[] { new { text = "ping" } } } } };
+            var response = await client.PostAsJsonAsync(url, testPrompt);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

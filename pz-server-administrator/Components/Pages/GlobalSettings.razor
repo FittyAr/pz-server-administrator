@@ -1,0 +1,393 @@
+@page "/settings"
+@using pz_server_administrator.Models
+@using pz_server_administrator.Services
+@using pz_server_administrator.Services.Ai
+@using pz_server_administrator.Data.Database.Mods
+@inject IConfigurationService ConfigService
+@inject ILocalizationService LocService
+@inject IToastService ToastService
+@inject IPzServerService PzServer
+@inject IModDiscoveryService ModDiscovery
+@inject IAuthenticationService AuthService
+@inject NavigationManager NavManager
+@inject ICommunityService CommunityService
+
+<PageTitle>@LocService.Get("Nav.Settings")</PageTitle>
+
+<FluentHeader Style="background-color: transparent; padding: 0;">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center" Spacing="3">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" Color="Color.Accent" />
+        <FluentLabel Typo="Typography.Header">@LocService.Get("Nav.Settings")</FluentLabel>
+    </FluentStack>
+</FluentHeader>
+
+<div style="margin-top: 2rem; max-width: 1000px; padding-bottom: 5rem;">
+    <FluentTabs @bind-ActiveTabId="_activeTabId">
+        @* --- PESTAÑA 1: GENERAL & RUTAS --- *@
+        <FluentTab Id="tab-general" Label="General & Servidor" IconOriginal="@(new Icons.Regular.Size20.Options())">
+            <FluentStack Orientation="Orientation.Vertical" Spacing="4" Style="padding: 1.5rem;">
+
+                @* Idioma *@
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 1rem;">
+                        @LocService.Get("Settings.General")</FluentLabel>
+                    <FluentSelect Label="@LocService.Get("Language.Select")" Items="@_availableLanguages"
+                        OptionText="@(i => i.Name)" OptionValue="@(i => i.Code)" @bind-Value="_selectedLanguage"
+                    @bind-Value:after="ChangeLanguage" Style="min-width: 250px;" />
+                </FluentCard>
+
+                @* Rutas del Servidor *@
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 1rem;">
+                        @LocService.Get("Settings.ServerFiles")</FluentLabel>
+                    <FluentGrid Spacing="3">
+                        <FluentGridItem xs="12" sm="6">
+                            <FluentTextField @bind-Value="_config.AppSettings.ServerDirectoryPath"
+                                Label="Ruta Base de Zomboid (Instalación)" Style="width: 100%;" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" sm="6">
+                            <FluentTextField @bind-Value="_config.AppSettings.ServerIniPath"
+                                Label="Archivo .INI (Configuración)" Style="width: 100%;" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" sm="6">
+                            <FluentTextField @bind-Value="_config.AppSettings.SandboxVarsPath" Label="SandboxVars.lua"
+                                Style="width: 100%;" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" sm="6">
+                            <FluentTextField @bind-Value="_config.AppSettings.PlayersDatabasePath"
+                                Label="Base de Datos Players.db" Style="width: 100%;" />
+                        </FluentGridItem>
+                    </FluentGrid>
+
+                    <div style="margin-top: 1.5rem;">
+                        <FluentButton IconStart="@(new Icons.Regular.Size20.Search())" OnClick="RunDeepScan"
+                            Loading="_isScanning" Appearance="Appearance.Neutral">
+                            Autodetectar Rutas (Deep Scan)
+                        </FluentButton>
+                    </div>
+                </FluentCard>
+
+                @* RCON *@
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 1rem;">Control RCON</FluentLabel>
+                    <FluentGrid Spacing="3">
+                        <FluentGridItem xs="12" sm="6">
+                            <FluentTextField @bind-Value="_config.AppSettings.Rcon.Host" Label="Host / IP"
+                                Style="width: 100%;" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" sm="3">
+                            <FluentNumberField @bind-Value="_config.AppSettings.Rcon.Port" Label="Puerto"
+                                Style="width: 100%;" />
+                        </FluentGridItem>
+                        <FluentGridItem xs="12" sm="3">
+                            <FluentTextField @bind-Value="_config.AppSettings.Rcon.Password" Label="Contraseña"
+                                Type="TextFieldType.Password" Style="width: 100%;" />
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentCard>
+            </FluentStack>
+        </FluentTab>
+
+        @* --- PESTAÑA 2: IA & CLOUD --- *@
+        <FluentTab Id="tab-ai" Label="IA & Cloud" IconOriginal="@(new Icons.Regular.Size20.Wand())">
+            <FluentStack Orientation="Orientation.Vertical" Spacing="4" Style="padding: 1.5rem;">
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 1rem;">Motor de Inteligencia
+                        Artificial</FluentLabel>
+                    <FluentStack Orientation="Orientation.Vertical" Spacing="3">
+                        <FluentSelect Label="Proveedor de IA" Items="@_aiProviders" @bind-Value="_aiProviderString"
+                            Style="min-width: 250px;" />
+
+                        <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                            <FluentTextField @bind-Value="_config.Ai.ApiKey" @bind-Value:after="OnAiKeyChanged"
+                                Label="API Key" Type="TextFieldType.Password" Style="flex-grow: 1;" />
+                            <FluentButton OnClick="TestAiKey" Loading="_isValidatingAiKey">Validar Key</FluentButton>
+                        </div>
+
+                        @if (_config.Ai.IsApiKeyValid)
+                        {
+                            <FluentMessageBar Title="Validación" Intent="MessageIntent.Success">API Key verificada
+                                correctamente para @_config.Ai.Provider.</FluentMessageBar>
+                        }
+
+                        <FluentTextField @bind-Value="_config.Ai.ModelName" Label="Modelo Específico"
+                            Placeholder="Ej: gemini-1.5-flash, gpt-4o" Style="width: 100%;" />
+
+                        @if (_config.Ai.Provider == AiProviderType.Ollama)
+                        {
+                            <FluentTextField @bind-Value="_config.Ai.CustomEndpoint" Label="Endpoint Local (Ollama)"
+                                Placeholder="http://localhost:11434" Style="width: 100%;" />
+                        }
+
+                        <FluentCheckbox @bind-Value="_config.Ai.AiAutoFixEnabled"
+                            Label="Habilitar Agente de Reparación Autónoma" Disabled="@(!_config.Ai.IsApiKeyValid)" />
+                    </FluentStack>
+                </FluentCard>
+
+                <FluentCard Style="padding: 1.5rem;">
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 1rem;">@LocService.Get("Settings.CloudSyncTitle")</FluentLabel>
+                    <FluentStack Orientation="Orientation.Vertical" Spacing="4">
+                        <FluentCheckbox @bind-Value="@(_config.Cloud.CloudSyncEnabled)"
+                            Label="@LocService.Get("Settings.CloudSyncEnabled")" />
+                        
+                        <div style="display: flex; gap: 1rem; align-items: flex-end; margin-top: 0.5rem;">
+                            <FluentTextField @bind-Value="@(_config.Cloud.ApiKey)" 
+                                             Label="Cloud API Key" 
+                                             Type="TextFieldType.Password" 
+                                             Style="flex-grow: 1;" 
+                                             Disabled="@(!_config.Cloud.CloudSyncEnabled)" />
+                            <FluentButton OnClick="TestCloudKey" 
+                                          Loading="_isValidatingCloudKey" 
+                                          Disabled="@(!_config.Cloud.CloudSyncEnabled)">
+                                @LocService.Get("Settings.ValidateKey")
+                            </FluentButton>
+                        </div>
+
+                        @if (_config.Cloud.IsApiKeyValid)
+                        {
+                            <FluentMessageBar Title="Cloud Active" Intent="MessageIntent.Success">
+                                @LocService.Get("Settings.CloudKeyValid")
+                            </FluentMessageBar>
+                        }
+
+                        <FluentCheckbox @bind-Value="@(_config.Cloud.AutoReport)"
+                            Label="@LocService.Get("Settings.AutoReport")" />
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+        </FluentTab>
+
+        @* --- PESTAÑA 3: USUARIOS --- *@
+        <FluentTab Id="tab-users" Label="Usuarios & Seguridad" IconOriginal="@(new Icons.Regular.Size20.People())">
+            <FluentStack Orientation="Orientation.Vertical" Spacing="4" Style="padding: 1.5rem;">
+                <FluentCard Style="padding: 1.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <FluentLabel Typo="Typography.Subject">Usuarios Registrados</FluentLabel>
+                        <FluentButton IconStart="@(new Icons.Regular.Size16.Add())"
+                            OnClick="@(() => _showAddUser = true)">Nuevo Usuario</FluentButton>
+                    </div>
+
+                    <FluentDataGrid Items="@_users.AsQueryable()" TGridItem="AuthUser" Style="width: 100%;">
+                        <PropertyColumn Property="@(p => p.Username)" Title="Usuario" />
+                        <PropertyColumn Property="@(p => p.Role)" Title="Rol" />
+                        <PropertyColumn Property="@(p => p.CreatedAt)" Title="Creado" Format="dd/MM/yyyy" />
+                        <TemplateColumn Title="Estado">
+                            <FluentBadge Appearance="@(context.IsActive ? Appearance.Accent : Appearance.Neutral)">
+                                @(context.IsActive ? "Activo" : "Inactivo")</FluentBadge>
+                            </TemplateColumn>
+                        </FluentDataGrid>
+                    </FluentCard>
+                </FluentStack>
+            </FluentTab>
+        </FluentTabs>
+
+        @* BOTONES DE ACCIÓN GLOBAL *@
+        <div
+            style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--fill-color); padding: 1rem; border-top: 1px solid var(--neutral-stroke-rest); z-index: 100;">
+            <div style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: flex-end; gap: 1rem;">
+                <FluentButton Appearance="Appearance.Neutral" OnClick="ResetChanges">@LocService.Get("Generic.Cancel")
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size20.Save())"
+                    OnClick="SaveAllSettings" Loading="_isSaving">
+                    @LocService.Get("Generic.Save")
+                </FluentButton>
+            </div>
+        </div>
+    </div>
+
+    @* DIALOGO NUEVO USUARIO *@
+    <FluentDialog @bind-Visible="_showAddUser" Modal="true">
+        <FluentDialogHeader>Crear Nuevo Usuario</FluentDialogHeader>
+        <div style="padding: 1rem;">
+            <FluentStack Orientation="Orientation.Vertical" Spacing="3">
+                <FluentTextField @bind-Value="_newUsername" Label="Nombre de Usuario" Style="width: 100%;" />
+                <FluentTextField @bind-Value="_newPassword" Label="Contraseña" Type="TextFieldType.Password"
+                    Style="width: 100%;" />
+                <FluentSelect Label="Rol" Items="@_roles" @bind-Value="_newRoleString" Style="width: 100%;" />
+            </FluentStack>
+        </div>
+        <FluentDialogFooter>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => _showAddUser = false)">Cancelar</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="AddUser">Crear</FluentButton>
+        </FluentDialogFooter>
+    </FluentDialog>
+
+    @code {
+    private string _activeTabId = "tab-general";
+    private ZsmConfiguration _config = new();
+    private List<AuthUser> _users = new();
+    private bool _isScanning;
+    private bool _isSaving;
+    private bool _isValidatingAiKey;
+    private bool _isValidatingCloudKey;
+    private string _selectedLanguage = "es";
+    private List<LangOption> _availableLanguages = new();
+
+    public class LangOption
+    {
+        public string Code { get; set; } = "";
+        public string Name { get; set; } = "";
+    }
+
+    // AI Helpers
+    private AiProviderType[] _aiProviders = (AiProviderType[])Enum.GetValues(typeof(AiProviderType));
+
+    // User Control
+    private bool _showAddUser;
+    private string _newUsername = "";
+    private string _newPassword = "";
+    private UserRole _newRoleValue = UserRole.Guest;
+    private string _newRoleString
+    {
+        get => _newRoleValue.ToString();
+        set => _newRoleValue = Enum.Parse<UserRole>(value);
+    }
+    private UserRole[] _roles = (UserRole[])Enum.GetValues(typeof(UserRole));
+
+    private string _aiProviderString
+    {
+        get => _config.Ai.Provider.ToString();
+        set => _config.Ai.Provider = Enum.Parse<AiProviderType>(value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AuthService.HasPermission(p => p.AllowConfigEdit))
+        {
+            NavManager.NavigateTo("/login?ReturnUrl=/settings");
+            return;
+        }
+
+        _config = ConfigService.GetConfiguration();
+        _aiProviderString = _config.Ai.Provider.ToString();
+        _users = _config.Users?.ToList() ?? new();
+        _selectedLanguage = LocService.CurrentLanguage;
+
+        foreach (var code in LocService.AvailableLanguages)
+        {
+            var name = await LocService.GetLanguageNameAsync(code);
+            _availableLanguages.Add(new LangOption { Code = code, Name = name });
+        }
+    }
+
+    private async Task ChangeLanguage()
+    {
+        await LocService.SetLanguage(_selectedLanguage);
+        ToastService.ShowSuccess("Idioma cambiado");
+    }
+
+    private async Task RunDeepScan()
+    {
+        _isScanning = true;
+        try
+        {
+            var success = await PzServer.AutoConfigureAsync();
+            if (success)
+            {
+                _config = ConfigService.GetConfiguration();
+                ToastService.ShowSuccess("Escaneo profundo completado con éxito.");
+            }
+            else
+            {
+                ToastService.ShowWarning("Se encontraron algunos archivos, pero faltan otros importantes.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error durante el escaneo: {ex.Message}");
+        }
+        finally
+        {
+            _isScanning = false;
+        }
+    }
+
+    private void OnAiKeyChanged() => _config.Ai.IsApiKeyValid = false;
+
+    private async Task TestAiKey()
+    {
+        if (string.IsNullOrEmpty(_config.Ai.ApiKey))
+        {
+            ToastService.ShowWarning("Ingresa una clave para probar.");
+            return;
+        }
+
+        _isValidatingAiKey = true;
+        try
+        {
+            // Nota: Aquí deberíamos usar el proveedor seleccionado, pero por ahora delegamos a ModDiscovery
+            // que internamente usa Gemini (retrocompatibilidad).
+            bool isValid = await ModDiscovery.ValidateApiKeyAsync(_config.Ai.ApiKey);
+            _config.Ai.IsApiKeyValid = isValid;
+
+            if (isValid) ToastService.ShowSuccess("API Key validada con éxito.");
+            else ToastService.ShowError("La API Key no es válida.");
+        }
+        finally
+        {
+            _isValidatingAiKey = false;
+        }
+    }
+
+    private async Task AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(_newUsername) || string.IsNullOrWhiteSpace(_newPassword)) return;
+
+        var success = await AuthService.CreateUserAsync(_newUsername, _newPassword, _newRoleValue);
+        if (success)
+        {
+            _users = _config.Users?.ToList() ?? new();
+            _showAddUser = false;
+            _newUsername = _newPassword = "";
+            ToastService.ShowSuccess($"Usuario {_newUsername} creado.");
+        }
+        else
+        {
+            ToastService.ShowError("Error al crear usuario. ¿Ya existe?");
+        }
+    }
+
+    private async Task TestCloudKey()
+    {
+        if (string.IsNullOrEmpty(_config.Cloud.ApiKey)) return;
+
+        _isValidatingCloudKey = true;
+        try
+        {
+            _config.Cloud.IsApiKeyValid = await CommunityService.ValidateApiKeyAsync(_config.Cloud.ApiKey);
+            if (_config.Cloud.IsApiKeyValid)
+                ToastService.ShowSuccess("Cloud API Key validada correctamente.");
+            else
+                ToastService.ShowError("La Cloud API Key no es válida.");
+        }
+        finally
+        {
+            _isValidatingCloudKey = false;
+        }
+    }
+
+    private async Task SaveAllSettings()
+    {
+        _isSaving = true;
+        try
+        {
+            await ConfigService.SaveConfigurationAsync(_config);
+            ToastService.ShowSuccess("Configuración global guardada correctamente.");
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Error al guardar: {ex.Message}");
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void ResetChanges()
+    {
+        _config = ConfigService.GetConfiguration();
+        _users = _config.Users?.ToList() ?? new();
+    }
+}

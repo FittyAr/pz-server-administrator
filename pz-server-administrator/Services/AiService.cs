@@ -17,18 +17,18 @@ public class AiService : IAiService
     private readonly ILogger<AiService> _logger;
     private readonly IConfigurationService _configService;
     private readonly IModDiscoveryService _modDiscovery;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly pz_server_administrator.Services.Ai.AiProviderFactory _providerFactory;
 
     public AiService(
         ILogger<AiService> logger,
         IConfigurationService configService,
         IModDiscoveryService modDiscovery,
-        IHttpClientFactory httpClientFactory)
+        pz_server_administrator.Services.Ai.AiProviderFactory providerFactory)
     {
         _logger = logger;
         _configService = configService;
         _modDiscovery = modDiscovery;
-        _httpClientFactory = httpClientFactory;
+        _providerFactory = providerFactory;
     }
 
     /// <summary>
@@ -38,11 +38,11 @@ public class AiService : IAiService
     {
         _logger.LogInformation("[AI] Iniciando análisis exhaustivo de conflictos...");
 
-        var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (profile?.IsApiKeyValid == true && !string.IsNullOrEmpty(profile.ApiKey))
+        var config = _configService.GetConfiguration().Ai;
+        if (config.IsApiKeyValid && !string.IsNullOrEmpty(config.ApiKey))
         {
-            var apiKey = profile.ApiKey.StartsWith("AI-") ? profile.ApiKey.Replace("AI-", "") : profile.ApiKey;
-            return await AnalyzeWithGeminiAsync(activeMods, apiKey);
+            var provider = _providerFactory.GetProvider(config.Provider);
+            return await provider.AnalyzeModConflictsAsync(activeMods, config);
         }
 
         await Task.Delay(1500); // Simulando procesamiento profundo
@@ -97,7 +97,7 @@ public class AiService : IAiService
         _logger.LogInformation("[AI] Calculando orden óptimo...");
         await Task.Delay(500);
 
-        // Seguir el estándar técnico de Zomboid (definido en PROJECT_PLAN.md)
+        // Seguir el estándar técnico de Zomboid
         return activeMods
             .OrderBy(m => (int)m.Category)
             .ThenBy(m => m.Name)
@@ -106,90 +106,32 @@ public class AiService : IAiService
 
     public async Task<string> ExplainErrorAsync(string errorLog)
     {
-        await Task.Yield();
         if (string.IsNullOrEmpty(errorLog)) return "Proporciona el error del log para analizarlo.";
 
-        // Aquí iría la llamada al LLM
-        return "Análisis preliminar: El error parece estar relacionado con un archivo Lua inexistente o mal cargado. Revisa tus mods de lógica.";
-    }
-
-    private async Task<string> AnalyzeWithGeminiAsync(IEnumerable<ModInstance> mods, string apiKey)
-    {
-        try
+        var config = _configService.GetConfiguration().Ai;
+        if (config.IsApiKeyValid && !string.IsNullOrEmpty(config.ApiKey))
         {
-            var client = _httpClientFactory.CreateClient();
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
-
-            var modData = string.Join("\n", mods.Select(m => $"- ID: {m.ModId}, Name: {m.Name}, Category: {m.Category}"));
-
-            var prompt = new
-            {
-                contents = new[]
-                {
-                    new {
-                        parts = new[]
-                        {
-                            new { text = $"Eres un experto en el juego Project Zomboid y su arquitectura de mods. Analiza el siguiente orden de carga y detecta conflictos potenciales de carga (ej: frameworks o localizaciones mal posicionados, mapas encimados). Responde de forma técnica y breve en español.\n\nMODS ACTIVOS:\n{modData}" }
-                        }
-                    }
-                }
-            };
-
-            var response = await client.PostAsJsonAsync(url, prompt);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<dynamic>();
-                // Navegar por el JSON de Gemini para extraer el texto (v1beta)
-                string? text = result?.candidates[0].content.parts[0].text;
-                return "🤖 Informe de Inteligencia Artificial (Gemini Pro):\n\n" + (text ?? "No se recibió respuesta legible de la IA.");
-            }
-
-            return "❌ Error al conectar con Gemini API. Revisa tu API Key o conexión.";
+            var provider = _providerFactory.GetProvider(config.Provider);
+            return await provider.AnalyzeLogAsync(errorLog, config);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "[AI] Error llamando a Gemini.");
-            return "❌ Excepción contactando al servicio de IA externo.";
-        }
+
+        return "Análisis preliminar (Heurístico): El error parece estar relacionado con un archivo Lua o de configuración. Valida una API Key para un diagnóstico detallado.";
     }
 
     public async Task<string> AnalyzeLogAsync(string logContent)
     {
         if (string.IsNullOrEmpty(logContent)) return "El log está vacío.";
 
-        var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (profile?.IsApiKeyValid != true || string.IsNullOrEmpty(profile.ApiKey))
+        var config = _configService.GetConfiguration().Ai;
+        if (!config.IsApiKeyValid || string.IsNullOrEmpty(config.ApiKey))
         {
-            return "⚠️ Se requiere una Gemini API Key validada en los ajustes para realizar análisis de logs profundos.";
+            return "⚠️ Se requiere una API Key de IA validada en los ajustes para realizar análisis de logs profundos.";
         }
 
         try
         {
-            var apiKey = profile.ApiKey.Replace("AI-", "");
-            var client = _httpClientFactory.CreateClient();
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
-
-            var prompt = new
-            {
-                contents = new[]
-                {
-                    new {
-                        parts = new[]
-                        {
-                            new { text = $"Analiza el siguiente fragmento de log de un servidor de Project Zomboid. Identifica errores fatales, excepciones de Lua o problemas de mods. Explica la causa y qué mod podría estar fallando. Responde en español.\n\nLOG:\n{logContent}" }
-                        }
-                    }
-                }
-            };
-
-            var response = await client.PostAsJsonAsync(url, prompt);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<dynamic>();
-                string? text = result?.candidates[0].content.parts[0].text;
-                return "🤖 Diagnóstico de Log (Gemini Pro):\n\n" + (text ?? "No se pudo interpretar el log.");
-            }
-            return "❌ Error conectando con el servicio de IA.";
+            var provider = _providerFactory.GetProvider(config.Provider);
+            return await provider.AnalyzeLogAsync(logContent, config);
         }
         catch (Exception ex)
         {
@@ -200,24 +142,21 @@ public class AiService : IAiService
 
     public async Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null, IProgress<string>? progress = null)
     {
-        var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (profile?.IsApiKeyValid != true || string.IsNullOrEmpty(profile.ApiKey))
+        var config = _configService.GetConfiguration().Ai;
+        if (!config.IsApiKeyValid || string.IsNullOrEmpty(config.ApiKey))
         {
-            progress?.Report("Falta API Key de Gemini validada. Canceling.");
+            progress?.Report("Falta API Key de IA validada. Canceling.");
             return new List<AiAction> {
                 new AiAction {
                     Type = AiActionType.Recommendation,
-                    Reason = "Ingresa y valida una Gemini API Key en los ajustes para habilitar el Agente de Diagnóstico Autónomo."
+                    Reason = "Ingresa y valida una API Key en los ajustes para habilitar el Agente de Diagnóstico Autónomo."
                 }
             };
         }
 
         try
         {
-            var apiKey = profile.ApiKey.Replace("AI-", "");
-            var client = _httpClientFactory.CreateClient();
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
-
+            var provider = _providerFactory.GetProvider(config.Provider);
             var modData = string.Join("\n", currentMods.Select(m => $"- ID: {m.ModId}, Category: {m.Category}, Workshop: {m.WorkshopItemId}, Order: {m.Order}"));
             var dynamicContext = logContext != null ? $"CONTEXTO INICIAL:\n{logContext}\n" : "";
 
@@ -256,29 +195,7 @@ Si no hay problemas y no necesitas datos, devuelve un array vacío [].";
 
                 var fullPrompt = $"MODS ACTUALES:\n{modData}\n\nCONTEXTO ACUMULADO:\n{dynamicContext}\n\nAnaliza y genera las acciones necesarias en formato JSON (Intento {currentLoop}/{maxLoops}).";
 
-                var requestBody = new
-                {
-                    contents = new[]
-                    {
-                        new {
-                            parts = new[]
-                            {
-                                new { text = systemPrompt },
-                                new { text = fullPrompt }
-                            }
-                        }
-                    },
-                    generationConfig = new
-                    {
-                        response_mime_type = "application/json"
-                    }
-                };
-
-                var response = await client.PostAsJsonAsync(url, requestBody);
-                if (!response.IsSuccessStatusCode) break; // Error de API
-
-                var result = await response.Content.ReadFromJsonAsync<dynamic>();
-                string? jsonText = result?.candidates[0].content.parts[0].text;
+                string jsonText = await provider.GetCompletionAsync(systemPrompt, fullPrompt, config);
 
                 if (string.IsNullOrEmpty(jsonText)) break;
 

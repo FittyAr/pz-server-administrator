@@ -63,13 +63,11 @@
                     }
                     @if (AuthService.HasPermission(p => p.AllowConfigEdit))
                     {
-                        <FluentNavLink Href="/app-config" Icon="@(new Icons.Regular.Size20.SettingsChat())"
+                        <FluentNavLink Href="/settings" Icon="@(new Icons.Regular.Size20.SettingsChat())"
                             IconColor="Color.Accent">@LocService.Get("NavMenu.AppConfiguration")</FluentNavLink>
                     }
                 </FluentNavGroup>
             }
-            <FluentNavLink href="settings" Icon="@(new Icons.Regular.Size20.Settings())">@LocService.Get("Nav.Settings")
-            </FluentNavLink>
         </FluentNavMenu>
     </nav>
 </div>
