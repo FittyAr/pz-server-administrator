@@ -18,15 +18,22 @@ public class AppSettings
     /// <summary>
     /// RCON connection configuration
     /// </summary>
-    public RconSettings RCON { get; set; } = new();
+    public RconSettings Rcon { get; set; } = new();
 
     // Explicit file paths to avoid rescanning
-    public string IniFilePath { get; set; } = string.Empty;
-    public string LuaFilePath { get; set; } = string.Empty;
+    public string ZomboidDirectory { get; set; } = string.Empty;
+    public string ServerIniPath { get; set; } = string.Empty;
+    public string SandboxVarsPath { get; set; } = string.Empty;
+    public string SpawnRegionsPath { get; set; } = string.Empty;
     public string PlayersDatabasePath { get; set; } = string.Empty;
     public string VehiclesDatabasePath { get; set; } = string.Empty;
     public string ServerTestDatabasePath { get; set; } = string.Empty;
     public string ModsDatabasePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Preferred system language (e.g., "es", "en")
+    /// </summary>
+    public string Language { get; set; } = "es";
 }
 
 /// <summary>

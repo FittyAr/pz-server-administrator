@@ -93,7 +93,7 @@
                                         <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
                                         @if (item.IsUpdateAvailable)
                                         {
-                                            <FluentBadge Appearance="Appearance.Warning" Circular="true" Style="font-size: 0.7rem;">@LocService.Get("Mods.UpdateAvailable")</FluentBadge>
+                                            <FluentBadge Appearance="Appearance.Accent" Circular="true" Style="font-size: 0.7rem;">@LocService.Get("Mods.UpdateAvailable")</FluentBadge>
                                         }
                                     </FluentStack>
                                     <FluentLabel Typo="Typography.Body" Color="Color.Neutral" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
@@ -226,6 +226,15 @@
                         <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
                             <FluentProgressRing />
                             <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiLoading")</FluentLabel>
+                            @if (_aiProgressLogs.Any())
+                            {
+                                <div style="margin-top: 1rem; padding: 1rem; width: 100%; border-radius: 4px; background: var(--neutral-layer-3); text-align: left; opacity: 0.8; font-family: monospace; font-size: 0.85rem;">
+                                    @foreach (var p in _aiProgressLogs)
+                                    {
+                                        <div>> @p</div>
+                                    }
+                                </div>
+                            }
                         </FluentStack>
                     }
                     else if (_aiActions.Any())
@@ -317,8 +326,8 @@
                                 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
                                     <FluentStack Orientation="Orientation.Vertical" Spacing="0">
                                         <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
-                                        <FluentLabel Typo="Typography.Caption">@p.Description</FluentLabel>
-                                        <FluentLabel Typo="Typography.Caption" Style="opacity: 0.6;">
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
                                             @p.Mods.Count mods | @p.CreatedAt.ToLocalTime().ToString("g")
                                         </FluentLabel>
                                     </FluentStack>
@@ -360,8 +369,8 @@
                                 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
                                     <FluentStack Orientation="Orientation.Vertical" Spacing="0">
                                         <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
-                                        <FluentLabel Typo="Typography.Caption">@p.Description</FluentLabel>
-                                        <FluentLabel Typo="Typography.Caption" Style="opacity: 0.6;">
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
                                             Autor: @p.Author | @p.Mods.Count mods | @LocService.Get("Mods.CommunityVerified")
                                         </FluentLabel>
                                     </FluentStack>
@@ -426,6 +435,7 @@
     private bool _isSaving;
     private bool _isAiLoading;
     private string? _aiReport;
+    private List<string> _aiProgressLogs = new();
     private List<AiAction> _aiActions = new();
     private string? _recommendation;
     private ModInstance? _selectedForMove;
@@ -505,10 +515,19 @@
         _isAiLoading = true;
         _aiReport = null;
         _aiActions.Clear();
+        _aiProgressLogs.Clear();
+        StateHasChanged();
+        
         try
         {
+            var progress = new Progress<string>(msg =>
+            {
+                _aiProgressLogs.Add(msg);
+                InvokeAsync(StateHasChanged);
+            });
+
             // Ejecutar análisis agéntico profundo
-            _aiActions = await AiService.AnalyzeAndFixAsync(ActiveModsOrdered);
+            _aiActions = await AiService.AnalyzeAndFixAsync(ActiveModsOrdered, null, progress);
             
             if (!_aiActions.Any())
             {
@@ -711,9 +730,11 @@
     {
         var config = ConfigService.GetConfiguration();
         var serverDir = config.AppSettings.ServerDirectoryPath;
-        var activeServer = config.AppSettings.ActiveServerProfile ?? "servertest";
+        var activeServer = config.AppSettings.ActiveServer ?? "servertest";
         
-        var (port, password) = await PzServer.GetRconCredentialsAsync(serverDir, activeServer);
+        var rconResult = await PzServer.GetRconCredentialsAsync(serverDir, activeServer);
+        int port = rconResult.port;
+        string password = rconResult.password;
         
         if (string.IsNullOrEmpty(password))
         {

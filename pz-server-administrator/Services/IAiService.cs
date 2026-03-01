@@ -38,6 +38,7 @@ public interface IAiService
 
     /// <summary>
     /// Realiza un análisis profundo de la configuración actual y propone acciones correctivas.
+    /// Recibe opcionalmente un reportero de estado para mostrar los pasos en la UI.
     /// </summary>
-    Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null);
+    Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null, IProgress<string>? progress = null);
 }

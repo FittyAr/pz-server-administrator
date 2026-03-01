@@ -37,5 +37,7 @@ public enum AiActionType
     Reorder,
     UpdateMetadata,
     FixConfig,
-    Recommendation
+    Recommendation,
+    RequestDeepScan,
+    RequestFile
 }

@@ -56,4 +56,15 @@ public interface IModDiscoveryService
     /// Aplica un conjunto de acciones correctivas generadas por la IA.
     /// </summary>
     Task BatchApplyAiActionsAsync(IEnumerable<AiAction> actions);
+
+    /// <summary>
+    /// Escanea todos los archivos de los mods activos para detectar conflictos de sobrescritura.
+    /// </summary>
+    /// <returns>Diccionario con el archivo conflictivo como llave y la lista de mods que lo contienen como valor.</returns>
+    Task<Dictionary<string, List<string>>> ScanDeepFileConflictsAsync();
+
+    /// <summary>
+    /// Lee el contenido de un archivo específico dentro de un mod o log.
+    /// </summary>
+    Task<string> GetFileContentAsync(string relativeOrAbsolutePath);
 }

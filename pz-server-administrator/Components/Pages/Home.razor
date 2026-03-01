@@ -87,7 +87,8 @@
                 <FluentGridItem xs="12" md="4">
                     <FluentLabel Typo="Typography.H6">@LocService.Get("Home.ServerDirectory")</FluentLabel>
                     <FluentLabel Typo="Typography.Body">
-                        @(string.IsNullOrEmpty(ServerDirectory) ? LocService.Get("Home.NotConfigured") : ServerDirectory)
+                        @(string.IsNullOrEmpty(ServerDirectory) ? LocService.Get("Home.NotConfigured") :
+                            ServerDirectory)
                     </FluentLabel>
                 </FluentGridItem>
                 <FluentGridItem xs="12" md="4">
@@ -119,14 +120,12 @@
     private string ServerDirectory => ConfigService.GetConfiguration().AppSettings.ServerDirectoryPath;
 
     /// <summary>
-    /// Gets the RCON host
-    /// </summary>
-    private string RconHost => ConfigService.GetConfiguration().AppSettings.RCON.Host;
+    private string RconHost => ConfigService.GetConfiguration().AppSettings.Rcon.Host;
 
     /// <summary>
     /// Gets the RCON port
     /// </summary>
-    private int RconPort => ConfigService.GetConfiguration().AppSettings.RCON.Port;
+    private int RconPort => ConfigService.GetConfiguration().AppSettings.Rcon.Port;
 
     /// <summary>
     /// Gets the number of registered users

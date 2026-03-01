@@ -7,10 +7,12 @@ namespace pz_server_administrator.Services;
 public class PzServerService : IPzServerService
 {
     private readonly ILogger<PzServerService> _logger;
+    private readonly IConfigurationService _configService;
 
-    public PzServerService(ILogger<PzServerService> logger)
+    public PzServerService(ILogger<PzServerService> logger, IConfigurationService configService)
     {
         _logger = logger;
+        _configService = configService;
     }
 
     public async Task<List<PzFile>> GetServerFilesAsync(string serverPath)
@@ -333,5 +335,77 @@ public class PzServerService : IPzServerService
         if (int.TryParse(value, out _)) return "Integer";
         if (double.TryParse(value, out _)) return "Float";
         return "String";
+    }
+
+    public async Task<bool> AutoConfigureAsync()
+    {
+        try
+        {
+            var settings = _configService.GetAppSettings();
+            var serverDir = settings.ServerDirectoryPath;
+            var activeServer = settings.ActiveServer;
+
+            if (string.IsNullOrEmpty(serverDir) || !Directory.Exists(serverDir))
+            {
+                _logger.LogWarning("[PzServer] AutoConfigure failed: ServerDirectoryPath is invalid.");
+                return false;
+            }
+
+            bool changed = false;
+
+            // 1. Zomboid Directory (usually the parent of the server dir or the server dir itself)
+            // If empty, we assume serverDir is the Zomboid directory
+            if (string.IsNullOrEmpty(settings.ZomboidDirectory))
+            {
+                settings.ZomboidDirectory = serverDir;
+                changed = true;
+            }
+
+            // 2. INI File
+            if (string.IsNullOrEmpty(settings.ServerIniPath))
+            {
+                var iniPath = Path.Combine(serverDir, $"{activeServer}.ini");
+                if (File.Exists(iniPath))
+                {
+                    settings.ServerIniPath = iniPath;
+                    changed = true;
+                }
+            }
+
+            // 3. SandboxVars.lua
+            if (string.IsNullOrEmpty(settings.SandboxVarsPath))
+            {
+                var luaPath = Path.Combine(serverDir, $"{activeServer}_SandboxVars.lua");
+                if (File.Exists(luaPath))
+                {
+                    settings.SandboxVarsPath = luaPath;
+                    changed = true;
+                }
+            }
+
+            // 4. SpawnRegions.lua
+            if (string.IsNullOrEmpty(settings.SpawnRegionsPath))
+            {
+                var spawnPath = Path.Combine(serverDir, $"{activeServer}_spawnregions.lua");
+                if (File.Exists(spawnPath))
+                {
+                    settings.SpawnRegionsPath = spawnPath;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                await _configService.SaveAppSettingsAsync(settings);
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PzServer] AutoConfigure threw an exception.");
+            return false;
+        }
     }
 }

@@ -26,7 +26,8 @@ public class ModPresetService : IModPresetService
         _contextFactory = contextFactory;
 
         // Misma lógica que ConfigurationService para volumen persistente
-        var baseDir = Path.Combine(env.ContentRootPath, "config");
+        // Centralizar en Resources para persistencia Docker
+        var baseDir = Path.Combine(env.ContentRootPath, "Resources");
         _presetsDir = Path.Combine(baseDir, "presets");
 
         if (!Directory.Exists(_presetsDir))
@@ -50,14 +51,19 @@ public class ModPresetService : IModPresetService
             }).ToList()
         };
 
-        var fileName = $"{SanitizeFileName(name)}.json";
+        await SavePresetAsync(preset);
+    }
+
+    public async Task SavePresetAsync(ModPreset preset)
+    {
+        var fileName = $"{SanitizeFileName(preset.Name)}.json";
         var filePath = Path.Combine(_presetsDir, fileName);
 
         var options = new JsonSerializerOptions { WriteIndented = true };
         var json = JsonSerializer.Serialize(preset, options);
 
         await File.WriteAllTextAsync(filePath, json);
-        _logger.LogInformation("[ModPreset] Preset guardado: {Name} ({Count} mods)", name, preset.Mods.Count);
+        _logger.LogInformation("[ModPreset] Preset guardado: {Name} ({Count} mods)", preset.Name, preset.Mods.Count);
     }
 
     public async Task<List<ModPreset>> GetAllPresetsAsync()

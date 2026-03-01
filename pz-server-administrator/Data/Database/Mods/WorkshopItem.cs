@@ -54,6 +54,11 @@ public partial class WorkshopItem
     public int Order { get; set; }
 
     /// <summary>
+    /// Ruta local absoluta donde se encuentra el contenido del workshop item.
+    /// </summary>
+    public string? LocalPath { get; set; }
+
+    /// <summary>
     /// Componentes activables individualmente dentro de este Workshop Item.
     /// </summary>
     public virtual ICollection<ModInstance> Instances { get; set; } = new List<ModInstance>();

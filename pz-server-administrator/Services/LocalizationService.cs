@@ -10,20 +10,18 @@ namespace pz_server_administrator.Services
         public event Action? OnLanguageChanged;
         private readonly IWebHostEnvironment _env;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfigurationService _configService;
         private Dictionary<string, string> _translations = new Dictionary<string, string>();
-        private string _currentLanguage = "en"; // Default language
+        private string _currentLanguage = "es"; // Default language es
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LocalizationService"/> class.
         /// </summary>
-        /// <param name="env">The web host environment.</param>
-        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        public LocalizationService(IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor)
+        public LocalizationService(IWebHostEnvironment env, IHttpContextAccessor httpContextAccessor, IConfigurationService configService)
         {
             _env = env;
             _httpContextAccessor = httpContextAccessor;
-            // The language loading is now fully async. 
-            // We need a separate method to initialize the service.
+            _configService = configService;
         }
 
         public async Task InitializeAsync()
@@ -32,20 +30,25 @@ namespace pz_server_administrator.Services
             LoadAvailableLanguages();
             Console.WriteLine($"[LocalizationService] Available languages loaded: {string.Join(", ", AvailableLanguages)}");
 
+            // Prioridad 1: Cookie (sesión actual)
             if (_httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Language", out var language) ?? false)
             {
                 _currentLanguage = language;
                 Console.WriteLine($"[LocalizationService] Language from cookie: {language}");
             }
+            // Prioridad 2: Configuración persistente
             else
             {
-                Console.WriteLine($"[LocalizationService] No language cookie found, using default: {_currentLanguage}");
+                var config = _configService.GetConfiguration();
+                if (!string.IsNullOrEmpty(config.AppSettings.Language))
+                {
+                    _currentLanguage = config.AppSettings.Language;
+                    Console.WriteLine($"[LocalizationService] Language from config: {_currentLanguage}");
+                }
             }
 
             await LoadLanguage(_currentLanguage);
             Console.WriteLine($"[LocalizationService] Language loaded: {_currentLanguage}, translations count: {_translations.Count}");
-            // No disparamos OnLanguageChanged durante la inicialización
-            // ya que no hay componentes suscritos aún
         }
 
         /// <inheritdoc />
@@ -77,9 +80,6 @@ namespace pz_server_administrator.Services
         /// <inheritdoc />
         public async Task SetLanguage(string language)
         {
-            Console.WriteLine($"[LocalizationService] SetLanguage called with: {language}");
-            Console.WriteLine($"[LocalizationService] Available languages: {string.Join(", ", AvailableLanguages)}");
-
             if (AvailableLanguages.Contains(language))
             {
                 _currentLanguage = language;
@@ -89,11 +89,6 @@ namespace pz_server_administrator.Services
                     if (_httpContextAccessor.HttpContext != null && !_httpContextAccessor.HttpContext.Response.HasStarted)
                     {
                         _httpContextAccessor.HttpContext.Response.Cookies.Append("Language", language);
-                        Console.WriteLine($"[LocalizationService] Language cookie saved: {language}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[LocalizationService] Cannot save language cookie (Response already started or HttpContext null)");
                     }
                 }
                 catch (Exception ex)
@@ -102,13 +97,16 @@ namespace pz_server_administrator.Services
                 }
 
                 await LoadLanguage(language);
-                Console.WriteLine($"[LocalizationService] Language loaded, translations count: {_translations.Count}");
+
+                // Persistir en AppSettings
+                var config = _configService.GetConfiguration();
+                if (config.AppSettings.Language != language)
+                {
+                    config.AppSettings.Language = language;
+                    await _configService.SaveConfigurationAsync(config);
+                }
+
                 OnLanguageChanged?.Invoke();
-                Console.WriteLine($"[LocalizationService] OnLanguageChanged event invoked");
-            }
-            else
-            {
-                Console.WriteLine($"[LocalizationService] Language {language} not found in available languages");
             }
         }
 
@@ -154,40 +152,20 @@ namespace pz_server_administrator.Services
                     return name;
                 }
             }
-            return language; // Fallback to language code
+            return language;
         }
 
-        /// <summary>
-        /// Gets the 'lang' directory path. Checks ContentRootPath/Resources/lang.
-        /// </summary>
         private string? GetLangDirectory()
         {
-            // 1. Check in ContentRootPath
             var directPath = Path.Combine(_env.ContentRootPath, "Resources", "lang");
-            if (Directory.Exists(directPath))
-            {
-                return directPath;
-            }
+            if (Directory.Exists(directPath)) return directPath;
 
-            // 2. Fallback: walk up (Development, especially useful for unit testing if ContentRootPath is bin/Debug)
             var directory = new DirectoryInfo(_env.ContentRootPath);
             while (directory != null)
             {
                 var candidate = Path.Combine(directory.FullName, "Resources", "lang");
-                if (Directory.Exists(candidate))
-                {
-                    return candidate;
-                }
-                directory = directory.Parent;
-            }
-
-            // 3. Fallback: check current directory (Fallback for other runners)
-            var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
-            while (currentDir != null)
-            {
-                var candidate = Path.Combine(currentDir.FullName, "Resources", "lang");
                 if (Directory.Exists(candidate)) return candidate;
-                currentDir = currentDir.Parent;
+                directory = directory.Parent;
             }
 
             return null;

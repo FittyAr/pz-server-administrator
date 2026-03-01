@@ -197,11 +197,12 @@ public class AiService : IAiService
         }
     }
 
-    public async Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null)
+    public async Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null, IProgress<string>? progress = null)
     {
         var profile = await _modDiscovery.GetCloudProfileAsync();
         if (string.IsNullOrEmpty(profile?.ApiKey) || !profile.ApiKey.StartsWith("AI-"))
         {
+            progress?.Report("Falta API Key de Gemini. Canceling.");
             return new List<AiAction> {
                 new AiAction {
                     Type = AiActionType.Recommendation,
@@ -217,57 +218,118 @@ public class AiService : IAiService
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
 
             var modData = string.Join("\n", currentMods.Select(m => $"- ID: {m.ModId}, Category: {m.Category}, Workshop: {m.WorkshopItemId}, Order: {m.Order}"));
+            var dynamicContext = logContext != null ? $"CONTEXTO INICIAL:\n{logContext}\n" : "";
 
-            var systemPrompt = @"Actúa como un Ingeniero de Sistemas Senior y experto en Inteligencia Artificial especializado en el motor de Project Zomboid (Java/Lua). 
-Tu objetivo es analizar la lista de mods y el contexto de error opcional para proponer una lista de acciones técnicas que estabilicen el servidor.
+            int maxLoops = 3;
+            int currentLoop = 0;
+
+            while (currentLoop < maxLoops)
+            {
+                currentLoop++;
+                progress?.Report($"Evaluando configuración... (Ciclo {currentLoop}/{maxLoops})");
+
+                var systemPrompt = @"Actúa como un Ingeniero de Sistemas Senior y experto en Inteligencia Artificial especializado en el motor de Project Zomboid (Java/Lua). 
+Tu objetivo es analizar la lista de mods y el contexto para proponer una lista de acciones técnicas que estabilicen el servidor.
 
 REGLAS TÉCNICAS:
 1. Frameworks/Core Libs (Tsar's Common Library, Mod Options, etc.) DEBEN cargar primero (Categoría Framework).
-2. Mapas (Categoría Maps) cargan después de los Frameworks. Si hay conflictos de celdas, el mapa de menor prioridad (abajo) sobreescribe al de arriba.
+2. Mapas (Categoría Maps) cargan después de los Frameworks.
 3. Localizaciones (Categoría Localization) siempre al final.
-4. Si detectas un mod redundante o que causa crash en el log, propone Deactivate.
 
-Responde ÚNICAMENTE con un JSON válido que siga este esquema exacto (Array de objetos):
+ADQUISICIÓN DE DATOS (AGENTIC LOOP):
+Si necesitas más información antes de decidir, puedes devolver UNA de estas acciones especiales:
+- RequestDeepScan: Solicita un escaneo completo de archivos LUA superpuestos entre los mods activos. Usa ""Parameters"": {}.
+- RequestFile: Solicita leer el contenido de un archivo específico de un mod. Usa ""Parameters"": { ""path"": ""ruta relativa o absoluta"" }.
+
+Responde ÚNICAMENTE con un JSON válido (Array de objetos):
 [
   {
-    ""Type"": ""Deactivate"" | ""Activate"" | ""Reorder"" | ""FixConfig"",
-    ""TargetId"": ""ID del mod"",
-    ""Parameters"": { ""new_order"": ""valor_numerico"" },
+    ""Type"": ""Deactivate"" | ""Activate"" | ""Reorder"" | ""FixConfig"" | ""RequestDeepScan"" | ""RequestFile"",
+    ""TargetId"": ""ID del mod afectado o 'system' si es global"",
+    ""Parameters"": { ""new_order"": ""valor_numerico"", ""path"": ""ruta"" },
     ""Reason"": ""Explicación técnica en español"",
     ""Confidence"": 0.95
   }
 ]
-Si no hay problemas, devuelve un array vacío [].";
+Si no hay problemas y no necesitas datos, devuelve un array vacío [].";
 
-            var fullPrompt = $"MODS ACTUALES:\n{modData}\n\nCONTEXTO DE ERROR (LOG/DESC):\n{logContext ?? "No proporcionado"}\n\nAnaliza y genera las acciones necesarias en formato JSON.";
+                var fullPrompt = $"MODS ACTUALES:\n{modData}\n\nCONTEXTO ACUMULADO:\n{dynamicContext}\n\nAnaliza y genera las acciones necesarias en formato JSON (Intento {currentLoop}/{maxLoops}).";
 
-            var requestBody = new
-            {
-                contents = new[]
+                var requestBody = new
                 {
-                    new {
-                        parts = new[]
-                        {
-                            new { text = systemPrompt },
-                            new { text = fullPrompt }
+                    contents = new[]
+                    {
+                        new {
+                            parts = new[]
+                            {
+                                new { text = systemPrompt },
+                                new { text = fullPrompt }
+                            }
                         }
+                    },
+                    generationConfig = new
+                    {
+                        response_mime_type = "application/json"
                     }
-                },
-                generationConfig = new
-                {
-                    response_mime_type = "application/json"
-                }
-            };
+                };
 
-            var response = await client.PostAsJsonAsync(url, requestBody);
-            if (response.IsSuccessStatusCode)
-            {
+                var response = await client.PostAsJsonAsync(url, requestBody);
+                if (!response.IsSuccessStatusCode) break; // Error de API
+
                 var result = await response.Content.ReadFromJsonAsync<dynamic>();
                 string? jsonText = result?.candidates[0].content.parts[0].text;
 
-                if (!string.IsNullOrEmpty(jsonText))
+                if (string.IsNullOrEmpty(jsonText)) break;
+
+                // Extraemos el JSON puro por si Gemini incluye tildes invertidas
+                try
                 {
-                    return JsonSerializer.Deserialize<List<AiAction>>(jsonText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+                    var actions = JsonSerializer.Deserialize<List<AiAction>>(jsonText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+
+                    if (actions.Count == 0) return actions; // IA dice que está todo bien
+
+                    // Revisar si son acciones terminales o peticiones de información
+                    var requests = actions.Where(a => a.Type == AiActionType.RequestDeepScan || a.Type == AiActionType.RequestFile).ToList();
+
+                    if (requests.Count == 0 || currentLoop >= maxLoops)
+                    {
+                        // Son acciones finales a aplicar, o ya no podemos hacer más iteraciones
+                        progress?.Report("Análisis finalizado, generando reporte.");
+                        return actions.Where(a => a.Type != AiActionType.RequestDeepScan && a.Type != AiActionType.RequestFile).ToList();
+                    }
+
+                    // Procesar solicitudes de IA
+                    foreach (var req in requests)
+                    {
+                        if (req.Type == AiActionType.RequestDeepScan)
+                        {
+                            _logger.LogInformation("[AI Agent] IA solicitó Deep Scan de archivos...");
+                            progress?.Report("Agente Solicitando: Escaneo Profundo de Archivos (Deep Scan LUA)...");
+                            var conflicts = await _modDiscovery.ScanDeepFileConflictsAsync();
+                            dynamicContext += "\nRESULTADOS DE DEEP SCAN (Archivos sobrescritos):\n";
+                            if (conflicts.Count == 0) dynamicContext += "No se encontraron conflictos de sobreescritura LUA/INI.\n";
+                            else
+                            {
+                                foreach (var kvp in conflicts)
+                                    dynamicContext += $"- {kvp.Key} es proporcionado por: {string.Join(", ", kvp.Value)}\n";
+                            }
+                        }
+                        else if (req.Type == AiActionType.RequestFile && req.Parameters.TryGetValue("path", out var path))
+                        {
+                            _logger.LogInformation("[AI Agent] IA solicitó leer archivo: {Path}", path);
+                            progress?.Report($"Agente Solicitando: Leer contenido de '{path}'...");
+                            var content = await _modDiscovery.GetFileContentAsync(path);
+                            // Tomamos un fragmento para no pasar los límites de tokens
+                            if (content.Length > 2000) content = content.Substring(0, 2000) + "... (truncado)";
+                            dynamicContext += $"\nCONTENIDO DE {path}:\n{content}\n";
+                        }
+                    }
+                    progress?.Report("Enviando resultados de la investigación al agente...");
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "[AI Agent] Error parseando respuesta JSON de la IA: {JSON}", jsonText);
+                    break;
                 }
             }
 

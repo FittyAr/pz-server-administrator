@@ -25,6 +25,7 @@ builder.Services.AddScoped<IModDiscoveryService, ModDiscoveryService>();
 builder.Services.AddScoped<IAiService, AiService>();
 builder.Services.AddScoped<ICommunityService, CommunityService>();
 builder.Services.AddScoped<IModPresetService, ModPresetService>();
+builder.Services.AddHostedService<pz_server_administrator.BackgroundServices.PzLogObserver>();
 
 var app = builder.Build();
 

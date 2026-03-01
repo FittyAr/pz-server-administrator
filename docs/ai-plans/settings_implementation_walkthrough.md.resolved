@@ -1,0 +1,37 @@
+# Implementación de Página de Ajustes Unificada y Persistencia en Docker
+
+Se ha completado la migración de la configuración del sistema a una estructura centralizada y persistente, junto con una nueva interfaz de usuario para gestionar todos los parámetros de la aplicación.
+
+## Cambios Principales
+
+### 1. Persistencia de Configuración
+- **Nueva Ubicación**: La configuración se ha movido de `appsettings.json` a `Resources/config.json`.
+- **Docker Ready**: La carpeta `Resources` ahora centraliza toda la data persistente (configuración, registros, presets), facilitando el mapeo de volúmenes en contenedores.
+- **Migración Automática**: El sistema migra automáticamente los ajustes existentes desde `appsettings.json` al nuevo formato en el primer inicio.
+
+### 2. Página de Ajustes ([Settings.razor](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Components/Pages/Settings.razor))
+- **General**: Selección de idioma con persistencia en perfil y cookies.
+- **Archivos del Servidor**: Gestión de rutas para el directorio de Zomboid, archivos `.ini`, `SandboxVars` y [SpawnRegions](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/PzServerService.cs#251-266).
+- **Control RCON**: Configuración de Host, Puerto y Contraseña con detección automática desde el `.ini`.
+- **IA & Comunidad**: Configuración de API Key de Gemini, modo auto-fix y sincronización con la nube.
+
+### 3. Refactorización Técnica
+- **Modelo [AppSettings](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Models/AppSettings.cs#6-38)**: Se han renombrado las propiedades para mayor claridad (ej: `ServerIniPath` en lugar de `IniFilePath`).
+- **Servicios**:
+    - [ConfigurationService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ConfigurationService.cs#28-75): Ahora soporta [GetAppSettings()](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ConfigurationService.cs#195-196) y [SaveAppSettingsAsync()](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ConfigurationService.cs#203-208).
+    - [PzServerService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/PzServerService.cs#12-17): Implementa [AutoConfigureAsync()](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/PzServerService.cs#340-411) para localizar archivos automáticamente.
+    - [LocalizationService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/LocalizationService.cs#8-174): Integrado totalmente con la configuración persistente.
+
+## Verificación Realizada
+
+### Pruebas de Compilación
+- Se ejecutó `dotnet build` con éxito (0 errores).
+- Se corrigieron 30 errores de regresión causados por el cambio de nombres de propiedades en componentes antiguos.
+
+### Validación de Traducción
+- Se añadieron nuevas etiquetas en [es.json](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Resources/lang/es.json) y [en.json](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Resources/lang/en.json).
+- El cambio de idioma se ha verificado para que sea instantáneo y persistente.
+
+## Próximos Pasos
+- [ ] Verificar la persistencia efectiva al reiniciar contenedores Docker en el entorno del usuario.
+- [ ] Probar el botón de "Deep Scan" con rutas reales del servidor.

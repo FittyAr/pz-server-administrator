@@ -45,9 +45,9 @@ else
     {
         var config = ConfigurationService.GetConfiguration();
 
-        if (!string.IsNullOrEmpty(config.AppSettings.IniFilePath) && File.Exists(config.AppSettings.IniFilePath))
+        if (!string.IsNullOrEmpty(config.AppSettings.ServerIniPath) && File.Exists(config.AppSettings.ServerIniPath))
         {
-            _iniPath = config.AppSettings.IniFilePath;
+            _iniPath = config.AppSettings.ServerIniPath;
         }
         else
         {

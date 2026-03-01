@@ -143,5 +143,14 @@
   "LogsAudit.NoLogsFound": "No logs found.",
   "LogsAudit.Viewer": "Log Viewer",
   "LogsAudit.Reload": "Reload",
-  "LogsAudit.SelectFilePrompt": "Select a file from the list to read its content. Very large files will be truncated to prevent performance issues."
+  "LogsAudit.SelectFilePrompt": "Select a file from the list to read its content. Very large files will be truncated to prevent performance issues.",
+  "Nav.Settings": "System Settings",
+  "Settings.General": "General",
+  "Language.Select": "App Language",
+  "Settings.LanguageTip": "Change the interface language. Changes will be applied instantly and saved to your profile.",
+  "Settings.ServerFiles": "Server Files",
+  "Settings.FilePathsTip": "Configure paths to your server's key files. You can use Deep Scan to try and locate them automatically.",
+  "Settings.SaveSuccess": "Global configuration saved successfully.",
+  "Generic.Save": "Save Changes",
+  "Generic.Cancel": "Discard"
 }

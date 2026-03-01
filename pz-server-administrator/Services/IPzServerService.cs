@@ -18,4 +18,9 @@ public interface IPzServerService
 
     // RCON
     Task<(int port, string password)> GetRconCredentialsAsync(string serverPath, string activeServer);
+
+    /// <summary>
+    /// Intenta localizar automáticamente los archivos de configuración basados en el directorio base.
+    /// </summary>
+    Task<bool> AutoConfigureAsync();
 }

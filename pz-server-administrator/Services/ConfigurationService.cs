@@ -10,7 +10,9 @@ namespace pz_server_administrator.Services;
 public interface IConfigurationService
 {
     ZsmConfiguration GetConfiguration();
+    AppSettings GetAppSettings();
     Task SaveConfigurationAsync(ZsmConfiguration configuration);
+    Task SaveAppSettingsAsync(AppSettings settings);
     void SaveConfiguration(ZsmConfiguration configuration);
     Task ReloadConfigurationAsync();
     bool RunDeepScan(string rootPath);
@@ -27,28 +29,30 @@ public class ConfigurationService : IConfigurationService
     {
         _logger = logger;
 
-        var baseConfigPath = Path.Combine(env.ContentRootPath, "appsettings.json");
-
-        if (IsRunningInContainer())
+        // El usuario solicitó centralizar toda la configuración persistente en la carpeta /Resources
+        // Esto permite mapear un volumen de Docker a /app/Resources para persistencia total.
+        var resourcesDir = Path.Combine(env.ContentRootPath, "Resources");
+        if (!Directory.Exists(resourcesDir))
         {
-            var persistentDir = Path.Combine(env.ContentRootPath, "config");
-            if (!Directory.Exists(persistentDir))
-            {
-                Directory.CreateDirectory(persistentDir);
-            }
-
-            _configFilePath = Path.Combine(persistentDir, "appsettings.json");
-
-            // Si el archivo persistente no existe pero el base sí, lo copiamos para inicializarlo
-            if (!File.Exists(_configFilePath) && File.Exists(baseConfigPath))
-            {
-                File.Copy(baseConfigPath, _configFilePath);
-                _logger.LogInformation("[Configuration] Copied default appsettings.json to persistent volume at {Path}", _configFilePath);
-            }
+            Directory.CreateDirectory(resourcesDir);
+            _logger.LogInformation("[Configuration] Created Resources directory at {Path}", resourcesDir);
         }
-        else
+
+        _configFilePath = Path.Combine(resourcesDir, "config.json");
+
+        // Si el archivo no existe, intentamos migrar desde el appsettings.json de la raíz si existe
+        var legacyConfigPath = Path.Combine(env.ContentRootPath, "appsettings.json");
+        if (!File.Exists(_configFilePath) && File.Exists(legacyConfigPath))
         {
-            _configFilePath = baseConfigPath;
+            try
+            {
+                File.Copy(legacyConfigPath, _configFilePath);
+                _logger.LogInformation("[Configuration] Migrated legacy appsettings.json to {Path}", _configFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[Configuration] Failed to migrate legacy config: {Msg}", ex.Message);
+            }
         }
         _configuration = new ZsmConfiguration();
 
@@ -120,12 +124,12 @@ public class ConfigurationService : IConfigurationService
             if (!string.IsNullOrEmpty(iniPath))
             {
                 _configuration.AppSettings.ServerDirectoryPath = Path.GetDirectoryName(iniPath) ?? "";
-                _configuration.AppSettings.IniFilePath = iniPath;
+                _configuration.AppSettings.ServerIniPath = iniPath;
                 _configuration.AppSettings.ActiveServer = Path.GetFileNameWithoutExtension(iniPath);
                 foundAnything = true;
             }
 
-            if (!string.IsNullOrEmpty(luaPath)) { _configuration.AppSettings.LuaFilePath = luaPath; foundAnything = true; }
+            if (!string.IsNullOrEmpty(luaPath)) { _configuration.AppSettings.SandboxVarsPath = luaPath; foundAnything = true; }
             if (!string.IsNullOrEmpty(playersDb)) { _configuration.AppSettings.PlayersDatabasePath = playersDb; foundAnything = true; }
             if (!string.IsNullOrEmpty(vehiclesDb)) { _configuration.AppSettings.VehiclesDatabasePath = vehiclesDb; foundAnything = true; }
             if (!string.IsNullOrEmpty(serverTestDb)) { _configuration.AppSettings.ServerTestDatabasePath = serverTestDb; foundAnything = true; }
@@ -186,12 +190,23 @@ public class ConfigurationService : IConfigurationService
         return isContainer;
     }
 
-    public ZsmConfiguration GetConfiguration()
-    {
-        lock (_lock) return _configuration;
-    }
+    public ZsmConfiguration GetConfiguration() => _configuration;
+
+    public AppSettings GetAppSettings() => _configuration.AppSettings;
 
     public async Task SaveConfigurationAsync(ZsmConfiguration configuration)
+    {
+        lock (_lock) _configuration = configuration;
+        await SaveConfigurationToFileAsync();
+    }
+
+    public async Task SaveAppSettingsAsync(AppSettings settings)
+    {
+        lock (_lock) _configuration.AppSettings = settings;
+        await SaveConfigurationToFileAsync();
+    }
+
+    private async Task SaveConfigurationToFileAsync()
     {
         try
         {
@@ -200,7 +215,7 @@ public class ConfigurationService : IConfigurationService
             var existingJson = File.Exists(_configFilePath) ? await File.ReadAllTextAsync(_configFilePath) : "{}";
             var jsonObj = System.Text.Json.Nodes.JsonNode.Parse(existingJson) as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
 
-            var configNode = JsonSerializer.SerializeToNode(configuration, options) as System.Text.Json.Nodes.JsonObject;
+            var configNode = JsonSerializer.SerializeToNode(_configuration, options) as System.Text.Json.Nodes.JsonObject;
             if (configNode != null)
             {
                 foreach (var prop in configNode)
@@ -215,7 +230,6 @@ public class ConfigurationService : IConfigurationService
             var newJsonString = jsonObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_configFilePath, newJsonString);
 
-            lock (_lock) _configuration = configuration;
             _logger.LogInformation("[Configuration] Saved to {FilePath}", _configFilePath);
         }
         catch (Exception ex)
@@ -293,7 +307,7 @@ public class ConfigurationService : IConfigurationService
         {
             _configuration = new ZsmConfiguration
             {
-                AppSettings = new AppSettings { ServerDirectoryPath = "", ActiveServer = "", RCON = new RconSettings() },
+                AppSettings = new AppSettings { ServerDirectoryPath = "", ActiveServer = "", Rcon = new RconSettings() },
                 Users = new List<AuthUser>(),
                 Roles = new Dictionary<string, RolePermissions>
                 {

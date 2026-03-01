@@ -15,6 +15,11 @@ public interface IModPresetService
     Task SavePresetAsync(string name, string? description, List<ModInstance> activeMods);
 
     /// <summary>
+    /// Guarda un preset completo (útil para importación).
+    /// </summary>
+    Task SavePresetAsync(ModPreset preset);
+
+    /// <summary>
     /// Lista todos los presets disponibles en el disco.
     /// </summary>
     Task<List<ModPreset>> GetAllPresetsAsync();

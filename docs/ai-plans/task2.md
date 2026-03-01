@@ -1,0 +1,39 @@
+# AI Agentic Mod Management Tasks
+
+- [x] **Fase 1: Diseño y Estructura de Datos**
+    - [x] Definir el modelo [AiAction](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Data/Database/Mods/AiAction.cs#8-32) para representar cambios sugeridos (Desactivar, Reordenar, Fix Config).
+    - [x] Ampliar [IAiService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IAiService.cs#11-45) para soportar retornos estructurados (JSON/Objetos) en lugar de solo texto.
+- [x] **Fase 2: Enriquecimiento de Datos (Contexto Agéntico)**
+    - [x] Implementar recolector de contexto extendido: `mod.info`, dependencias declaradas y metadatos de Steam.
+    - [x] Investigar/Simular integración con MCP para base de conocimientos externa de conflictos conocidos.
+- [x] **Fase 3: Implementación del Motor de IA**
+    - [x] Refinar los Prompts de System para el rol de "Ingeniero de Sistemas e IA".
+    - [x] Implementar página de configuración unificada [Settings.razor](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Components/Pages/Settings.razor)
+    - [x] Migrar configuración a [Resources/config.json](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Resources/config.json) para persistencia
+    - [x] Refactorizar [ConfigurationService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ConfigurationService.cs#28-75) para manejar [AppSettings](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Models/AppSettings.cs#6-38) y persistencia
+    - [x] Sincronizar modelos y contratos ([AppSettings](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Models/AppSettings.cs#6-38), [IConfigurationService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ConfigurationService.cs#10-20), [IPzServerService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/IPzServerService.cs#5-27))
+    - [x] Actualizar traducciones ([es.json](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Resources/lang/es.json), [en.json](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Resources/lang/en.json))
+    - [x] Corregir regresiones en componentes antiguos (`Home`, `AppConfig`, [ModDiscovery](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ModDiscoveryService.cs#24-35)) y verificar build
+    - [x] Implementar la lógica de análisis profundo de conflictos y armonización de carga.
+    - [x] Implementar parser de acciones para transformar el output de la IA en comandos ejecutables.
+- [x] **Fase 4: UI y Ejecución Autónoma**
+    - [x] Crear el "AI Command Center" en la UI de Mods.
+    - [x] Implementar el botón "Aplicar Correcciones de IA" (Batch processing of actions).
+    - [x] Notificaciones de "Auto-Fix" realizado.
+- [x] **Fase 5: Verificación**
+    - [x] Simular conflictos comunes (Mod IDs duplicados, carga de mapas incorrecta).
+    - [x] Validar que la IA propone y ejecuta el orden correcto.
+- [x] **Fase 6: Documentación y Roadmap**
+    - [x] Crear el registro técnico del Agente de IA ([AI_AGENT_GUIDE.md](file:///d:/GitHub/pz-server-administrator/docs/mods/AI_AGENT_GUIDE.md)).
+    - [x] Definir el ROADMAP global del proyecto.
+    - [x] Implementar el toggle "Modo Automático" en la configuración de la nube.
+- [x] **Fase 7: Expansión de Adquisición de Datos (Agentic AI)**
+    - [x] Implementar escaneo de archivos a nivel de LUA en [ModDiscoveryService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/ModDiscoveryService.cs#24-35).
+    - [x] Actualizar [AiService](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Services/AiService.cs#15-345) para soportar ciclos de razonamiento (Pedir y Recibir archivos/logs).
+    - [x] Integrar reporte de "Conflictos de Sobreescritura" en el diagnóstico.
+- [x] **Fase 8: Monitoreo en Tiempo Real**
+    - [x] Crear [PzLogObserver](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/BackgroundServices/PzLogObserver.cs#22-31) como un BackgroundService de monitoreo.
+    - [x] Implementar disparador automático de diagnóstico en crashes.
+- [x] **Fase 9: Refinamiento UI y UX Agéntico**
+    - [x] Añadir panel de "Pensamiento del Agente" en [ModManager.razor](file:///d:/GitHub/pz-server-administrator/pz-server-administrator/Components/Pages/ModManager.razor).
+    - [x] Implementar alertas proactivas basadas en el observador de logs.

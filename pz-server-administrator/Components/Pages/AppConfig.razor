@@ -47,14 +47,20 @@
                                 Escanear archivos de Servidor (Deep Scan)
                             </FluentButton>
 
-                            @if (!string.IsNullOrEmpty(IniFilePath))
+                            @if (!string.IsNullOrEmpty(ConfigService.GetAppSettings().ServerIniPath))
                             {
                                 <FluentCard Style="margin-top: 15px; padding: 10px; background: var(--neutral-layer-2);">
-                                    <FluentLabel Typo="Typography.Body"><b>INI Mapeado:</b> @IniFilePath</FluentLabel>
-                                    <FluentLabel Typo="Typography.Body"><b>LUA Mapeado:</b> @LuaFilePath</FluentLabel>
-                                    <FluentLabel Typo="Typography.Body"><b>Players DB:</b> @PlayersDbPath</FluentLabel>
-                                    <FluentLabel Typo="Typography.Body"><b>Vehicles DB:</b> @VehiclesDbPath</FluentLabel>
-                                    <FluentLabel Typo="Typography.Body"><b>Server DB:</b> @ServerTestDbPath</FluentLabel>
+                                    <FluentStack Orientation="Orientation.Vertical" Spacing="1">
+                                        <FluentLabel Typo="Typography.Body"><b>INI Mapeado:</b>
+                                            @ConfigService.GetAppSettings().ServerIniPath</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body"><b>LUA Mapeado:</b>
+                                            @ConfigService.GetAppSettings().SandboxVarsPath</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body"><b>Players DB:</b> @PlayersDbPath</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body"><b>Vehicles DB:</b> @VehiclesDbPath
+                                        </FluentLabel>
+                                        <FluentLabel Typo="Typography.Body"><b>Server DB:</b> @ServerTestDbPath
+                                        </FluentLabel>
+                                    </FluentStack>
                                 </FluentCard>
                             }
                         </FluentStack>
@@ -66,23 +72,23 @@
                         <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
                             <FluentLabel Typo="Typography.H5">
                                 <FluentIcon Value="@(new Icons.Regular.Size20.Code())" />
-                                Configuración RCON
+                                Configuración Rcon
                             </FluentLabel>
 
-                            <FluentTextField @bind-Value="RconHost" Label="Host RCON" Placeholder="127.0.0.1"
+                            <FluentTextField @bind-Value="RconHost" Label="Host Rcon" Placeholder="127.0.0.1"
                                 Style="width: 100%;" />
 
-                            <FluentNumberField @bind-Value="RconPort" Label="Puerto RCON" Placeholder="27015"
+                            <FluentNumberField @bind-Value="RconPort" Label="Puerto Rcon" Placeholder="27015"
                                 Style="width: 100%;" />
 
-                            <FluentTextField @bind-Value="RconPassword" Label="Contraseña RCON"
-                                TextFieldType="TextFieldType.Password" Placeholder="Contraseña del servidor RCON"
+                            <FluentTextField @bind-Value="RconPassword" Label="Contraseña Rcon"
+                                TextFieldType="TextFieldType.Password" Placeholder="Contraseña del servidor Rcon"
                                 Style="width: 100%;" />
 
                             <FluentButton Appearance="Appearance.Accent" @onclick="SaveRconConfiguration"
                                 Loading="@IsSaving">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
-                                Guardar Configuración RCON
+                                Guardar Configuración Rcon
                             </FluentButton>
                         </FluentStack>
                     </FluentCard>
@@ -118,8 +124,8 @@
     private MessageIntent MessageIntent = MessageIntent.Info;
     private bool ShowMessage = false;
 
-    private string IniFilePath = string.Empty;
-    private string LuaFilePath = string.Empty;
+    private string ServerIniPath = string.Empty;
+    private string SandboxVarsPath = string.Empty;
     private string PlayersDbPath = string.Empty;
     private string VehiclesDbPath = string.Empty;
     private string ServerTestDbPath = string.Empty;
@@ -140,12 +146,12 @@
         var config = ConfigService.GetConfiguration();
         ServerDirectoryPath = config.AppSettings.ServerDirectoryPath;
         ActiveServerName = config.AppSettings.ActiveServer;
-        RconHost = config.AppSettings.RCON.Host;
-        RconPort = config.AppSettings.RCON.Port;
-        RconPassword = config.AppSettings.RCON.Password;
+        RconHost = config.AppSettings.Rcon.Host;
+        RconPort = config.AppSettings.Rcon.Port;
+        RconPassword = config.AppSettings.Rcon.Password;
 
-        IniFilePath = config.AppSettings.IniFilePath;
-        LuaFilePath = config.AppSettings.LuaFilePath;
+        ServerIniPath = config.AppSettings.ServerIniPath;
+        SandboxVarsPath = config.AppSettings.SandboxVarsPath;
         PlayersDbPath = config.AppSettings.PlayersDatabasePath;
         VehiclesDbPath = config.AppSettings.VehiclesDatabasePath;
         ServerTestDbPath = config.AppSettings.ServerTestDatabasePath;
@@ -220,7 +226,7 @@
     }
 
     /// <summary>
-    /// Saves the RCON configuration
+    /// Saves the Rcon configuration
     /// </summary>
     private async Task SaveRconConfiguration()
     {
@@ -228,17 +234,17 @@
         try
         {
             var config = ConfigService.GetConfiguration();
-            config.AppSettings.RCON.Host = RconHost;
-            config.AppSettings.RCON.Port = RconPort;
-            config.AppSettings.RCON.Password = RconPassword;
+            config.AppSettings.Rcon.Host = RconHost;
+            config.AppSettings.Rcon.Port = RconPort;
+            config.AppSettings.Rcon.Password = RconPassword;
 
             await ConfigService.SaveConfigurationAsync(config);
 
-            ShowStatusMessage("Configuración RCON guardada exitosamente.", MessageIntent.Success);
+            ShowStatusMessage("Configuración Rcon guardada exitosamente.", MessageIntent.Success);
         }
         catch (Exception ex)
         {
-            ShowStatusMessage($"Error al guardar la configuración RCON: {ex.Message}", MessageIntent.Error);
+            ShowStatusMessage($"Error al guardar la configuración Rcon: {ex.Message}", MessageIntent.Error);
         }
         finally
         {

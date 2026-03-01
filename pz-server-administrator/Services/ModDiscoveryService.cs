@@ -51,7 +51,7 @@ public class ModDiscoveryService : IModDiscoveryService
         var modOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         var appConfig = _configurationService.GetConfiguration();
-        var iniPath = appConfig.AppSettings.IniFilePath;
+        var iniPath = appConfig.AppSettings.ServerIniPath;
         if (File.Exists(iniPath))
         {
             var content = File.ReadAllText(iniPath);
@@ -141,6 +141,24 @@ public class ModDiscoveryService : IModDiscoveryService
             // Calculamos hash para detectar cambios (Hacemos un hash básico del contenido de mod.info y la fecha)
             item.VersionHash = CalculateLocalHash(modInfoPath);
             item.LocalUpdatedAt = File.GetLastWriteTimeUtc(modInfoPath);
+
+            // Guardamos la ruta física del workshop item (ej: .../workshop/content/108600/123456789)
+            // Asumimos que la carpeta raíz del workshop item es la que contiene la carpeta 'mods' 
+            // o donde está el mod.info (nivel superior al mod.info en PZ)
+            var modFolder = Path.GetDirectoryName(modInfoPath);
+            if (modFolder != null)
+            {
+                var parent = Directory.GetParent(modFolder);
+                // En PZ usualmente es WorkshopItem/mods/ModName/mod.info
+                // O a veces WorkshopItem/mod.info. 
+                // Buscamos subir hasta que el segmento de la ruta coincida con el workshopId
+                var current = modFolder;
+                while (current != null && Path.GetFileName(current) != workshopId)
+                {
+                    current = Path.GetDirectoryName(current);
+                }
+                item.LocalPath = current ?? modFolder;
+            }
 
             var modData = ParseModInfo(modInfoPath);
             if (modData == null) continue;
@@ -258,7 +276,7 @@ public class ModDiscoveryService : IModDiscoveryService
     public async Task SaveModConfigurationAsync()
     {
         var appConfig = _configurationService.GetConfiguration();
-        var iniPath = appConfig.AppSettings.IniFilePath;
+        var iniPath = appConfig.AppSettings.ServerIniPath;
         if (!File.Exists(iniPath)) return;
 
         using var context = _contextFactory.CreateModsContext();
@@ -530,5 +548,67 @@ public class ModDiscoveryService : IModDiscoveryService
 
         await context.SaveChangesAsync();
         await SaveModConfigurationAsync(); // Persistir a archivos .ini / .lua
+    }
+
+    public async Task<Dictionary<string, List<string>>> ScanDeepFileConflictsAsync()
+    {
+        var conflicts = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var fileToMods = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        using var context = _contextFactory.CreateModsContext();
+        var activeMods = await context.ModInstances
+            .Where(m => m.IsActive)
+            .Include(m => m.WorkshopItem)
+            .ToListAsync();
+
+        foreach (var mod in activeMods)
+        {
+            if (string.IsNullOrEmpty(mod.WorkshopItem.LocalPath)) continue;
+
+            // Buscamos archivos .lua, .ini, .txt (ignoramos media, texturas por ahora)
+            var files = Directory.GetFiles(mod.WorkshopItem.LocalPath, "*.*", SearchOption.AllDirectories)
+                .Where(f => f.EndsWith(".lua") || f.EndsWith(".ini") || f.EndsWith(".txt"));
+
+            foreach (var file in files)
+            {
+                // Obtenemos la ruta relativa interna del mod (ej: media/lua/shared/Items.lua)
+                var localPath = mod.WorkshopItem.LocalPath;
+                if (string.IsNullOrEmpty(localPath)) continue;
+
+                var relativePath = Path.GetRelativePath(localPath, file);
+
+                if (!fileToMods.ContainsKey(relativePath))
+                    fileToMods[relativePath] = new List<string>();
+
+                fileToMods[relativePath].Add(mod.ModId);
+            }
+        }
+
+        // Filtrar solo los que tienen más de un mod (conflictos)
+        return fileToMods.Where(kvp => kvp.Value.Count > 1).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    public async Task<string> GetFileContentAsync(string path)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(path)) return "Error: Ruta vacía.";
+
+            // Por seguridad, limitamos a extensiones de texto
+            var ext = Path.GetExtension(path).ToLower();
+            var allowed = new[] { ".lua", ".ini", ".txt", ".json", ".info" };
+            if (!allowed.Contains(ext)) return $"Error: Extensión {ext} no permitida por seguridad.";
+
+            if (File.Exists(path))
+            {
+                return await File.ReadAllTextAsync(path);
+            }
+
+            return $"Error: El archivo no existe en {path}";
+        }
+        catch (Exception ex)
+        {
+            return $"Error leyendo archivo: {ex.Message}";
+        }
     }
 }
