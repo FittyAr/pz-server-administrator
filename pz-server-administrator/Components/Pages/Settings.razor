@@ -105,17 +105,34 @@
             </div>
             <div style="padding: 1rem;">
                 <FluentStack Orientation="Orientation.Vertical" Spacing="4">
-                    <FluentTextField @bind-Value="_cloudProfile.ApiKey" Label="Gemini API Key" Placeholder="AIza..."
-                        Type="TextFieldType.Password" Style="width: 100%;" />
+                    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <FluentTextField @bind-Value="_cloudProfile.ApiKey" @bind-Value:after="OnApiKeyChanged"
+                            Label="Gemini API Key" Placeholder="AIza..." Type="TextFieldType.Password"
+                            Style="flex-grow: 1;" />
+                        <FluentButton OnClick="TestApiKey" Loading="_isValidatingKey">Probar Key</FluentButton>
+                    </div>
+
+                    @if (_cloudProfile.IsApiKeyValid)
+                    {
+                        <p style="color: #008a00; font-size: 0.8rem; margin-top: -0.5rem;">✅ API Key válida y conectada</p>
+                    }
+                    else if (!string.IsNullOrEmpty(_cloudProfile.ApiKey))
+                    {
+                        <p style="color: #d83b01; font-size: 0.8rem; margin-top: -0.5rem;">⚠️ La API Key no ha sido validada
+                        </p>
+                    }
 
                     <FluentCheckbox @bind-Value="_cloudProfile.AiAutoFixEnabled"
-                        Label="Modo Automático (IA aplica cambios sin confirmar)" />
+                        Label="Modo Automático (IA aplica cambios sin confirmar)"
+                        Disabled="@(!_cloudProfile.IsApiKeyValid)" />
 
                     <FluentCheckbox @bind-Value="_cloudProfile.CloudSyncEnabled"
-                        Label="Sincronizar perfiles con la nube comunitara" />
+                        Label="Sincronizar perfiles con la nube comunitara"
+                        Disabled="@(!_cloudProfile.IsApiKeyValid)" />
 
                     <FluentCheckbox @bind-Value="_cloudProfile.AutoReport"
-                        Label="Reportar estadísticas anónimas para mejorar el Agente" />
+                        Label="Reportar estadísticas anónimas para mejorar el Agente"
+                        Disabled="@(!_cloudProfile.IsApiKeyValid)" />
                 </FluentStack>
             </div>
         </FluentAccordionItem>
@@ -135,6 +152,7 @@
     private ZsmConfiguration _config = new();
     private CloudProfile _cloudProfile = new();
     private bool _isScanning;
+    private bool _isValidatingKey;
     private string _selectedLanguage = "es";
     private List<LangOption> _availableLanguages = new();
 
@@ -181,6 +199,36 @@
         {
             _isScanning = false;
         }
+    }
+
+    private async Task TestApiKey()
+    {
+        if (string.IsNullOrWhiteSpace(_cloudProfile.ApiKey))
+        {
+            ToastService.ShowWarning("Ingresa una clave de API para probar.");
+            return;
+        }
+
+        _isValidatingKey = true;
+        try
+        {
+            bool isValid = await ModDiscovery.ValidateApiKeyAsync(_cloudProfile.ApiKey);
+            _cloudProfile.IsApiKeyValid = isValid;
+
+            if (isValid)
+                ToastService.ShowSuccess("API Key validada con éxito. Funciones de nube habilitadas.");
+            else
+                ToastService.ShowError("La API Key no es válida o hubo un problema de conexión.");
+        }
+        finally
+        {
+            _isValidatingKey = false;
+        }
+    }
+
+    private void OnApiKeyChanged()
+    {
+        _cloudProfile.IsApiKeyValid = false;
     }
 
     private async Task SaveAllSettings()

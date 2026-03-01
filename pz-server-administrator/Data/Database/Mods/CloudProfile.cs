@@ -36,4 +36,9 @@ public class CloudProfile
     /// Indica si el Agente de IA tiene permiso para aplicar cambios automáticamente.
     /// </summary>
     public bool AiAutoFixEnabled { get; set; }
+
+    /// <summary>
+    /// Indica si la clave de API actual ha sido validada con éxito.
+    /// </summary>
+    public bool IsApiKeyValid { get; set; }
 }

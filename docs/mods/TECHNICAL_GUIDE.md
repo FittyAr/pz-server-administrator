@@ -21,8 +21,10 @@ Se utilizará una base de datos independiente para no interferir con las bases d
   - `Category` (Enum): Categoría de ordenamiento (Framework, Map, Vehicle, etc.).
   - `IsActive` (bool): Estado actual en el archivo `.ini`.
 - **`CloudProfile`**:
-  - `ApiKey` (string): Identificador para sincronización con la API externa.
-  - `AutoSync` (bool): Habilitar reporte automático de configuraciones.
+  - `ApiKey` (string): Identificador para sincronización y servicios de IA.
+  - `IsApiKeyValid` (bool): Estado de validación tras probar la conexión.
+  - `CloudSyncEnabled` (bool): Habilitar reporte automático de configuraciones.
+  - `AiAutoFixEnabled` (bool): Permiso para que el Agente aplique cambios.
 
 ---
 
@@ -102,6 +104,7 @@ El sistema inyectará la lista final de `ModIds` en la propiedad `Mods=` del `.i
 - [x] **IA Conflict Resolver**: Implementación del servicio `IAiService` con diagnóstico estructural heurístico (jerarquías, mapas, frameworks).
 - [x] **IA Diagnostics UI**: Pestaña dedicada para solicitar informes de salud y **análisis de logs de servidor** (`server-console.txt`).
 - [x] **Cloud Management**: Interfaz para gestionar API Key y preferencias de sincronización (`CloudProfile`).
+  - [x] **API Key Validation**: Mecanismo de prueba ('Ping') para validar claves antes de activar la IA o Cloud Sync.
 - [x] **Refinamiento de UI**: Sistema de pestañas completo (Explorador, Orden, IA, Ajustes).
 
 ### ✅ Finalizado (Sprint 4: Telemetría y Ecosistema)

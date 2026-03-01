@@ -67,4 +67,11 @@ public interface IModDiscoveryService
     /// Lee el contenido de un archivo específico dentro de un mod o log.
     /// </summary>
     Task<string> GetFileContentAsync(string relativeOrAbsolutePath);
+
+    /// <summary>
+    /// Valida la clave de API con el servicio centralizado (IA/Nube).
+    /// </summary>
+    /// <param name="apiKey">La clave a validar.</param>
+    /// <returns>True si es válida.</returns>
+    Task<bool> ValidateApiKeyAsync(string apiKey);
 }

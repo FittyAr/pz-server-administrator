@@ -39,9 +39,10 @@ public class AiService : IAiService
         _logger.LogInformation("[AI] Iniciando análisis exhaustivo de conflictos...");
 
         var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (!string.IsNullOrEmpty(profile?.ApiKey) && profile.ApiKey.StartsWith("AI-")) // Prefijo para identificar API Keys de IA
+        if (profile?.IsApiKeyValid == true && !string.IsNullOrEmpty(profile.ApiKey))
         {
-            return await AnalyzeWithGeminiAsync(activeMods, profile.ApiKey.Replace("AI-", ""));
+            var apiKey = profile.ApiKey.StartsWith("AI-") ? profile.ApiKey.Replace("AI-", "") : profile.ApiKey;
+            return await AnalyzeWithGeminiAsync(activeMods, apiKey);
         }
 
         await Task.Delay(1500); // Simulando procesamiento profundo
@@ -157,9 +158,9 @@ public class AiService : IAiService
         if (string.IsNullOrEmpty(logContent)) return "El log está vacío.";
 
         var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (string.IsNullOrEmpty(profile?.ApiKey) || !profile.ApiKey.StartsWith("AI-"))
+        if (profile?.IsApiKeyValid != true || string.IsNullOrEmpty(profile.ApiKey))
         {
-            return "⚠️ Se requiere una Gemini API Key (con prefijo AI-) en los ajustes para realizar análisis de logs profundos.";
+            return "⚠️ Se requiere una Gemini API Key validada en los ajustes para realizar análisis de logs profundos.";
         }
 
         try
@@ -200,13 +201,13 @@ public class AiService : IAiService
     public async Task<List<AiAction>> AnalyzeAndFixAsync(IEnumerable<ModInstance> currentMods, string? logContext = null, IProgress<string>? progress = null)
     {
         var profile = await _modDiscovery.GetCloudProfileAsync();
-        if (string.IsNullOrEmpty(profile?.ApiKey) || !profile.ApiKey.StartsWith("AI-"))
+        if (profile?.IsApiKeyValid != true || string.IsNullOrEmpty(profile.ApiKey))
         {
-            progress?.Report("Falta API Key de Gemini. Canceling.");
+            progress?.Report("Falta API Key de Gemini validada. Canceling.");
             return new List<AiAction> {
                 new AiAction {
                     Type = AiActionType.Recommendation,
-                    Reason = "Configura una Gemini API Key (AI-) para habilitar el Agente de Diagnóstico Autónomo."
+                    Reason = "Ingresa y valida una Gemini API Key en los ajustes para habilitar el Agente de Diagnóstico Autónomo."
                 }
             };
         }

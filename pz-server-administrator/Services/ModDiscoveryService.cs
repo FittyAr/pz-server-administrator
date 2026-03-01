@@ -375,9 +375,46 @@ public class ModDiscoveryService : IModDiscoveryService
             existing.AutoReport = profile.AutoReport;
             existing.CloudSyncEnabled = profile.CloudSyncEnabled;
             existing.LastSync = profile.LastSync;
+            existing.AiAutoFixEnabled = profile.AiAutoFixEnabled;
+            existing.IsApiKeyValid = profile.IsApiKeyValid;
         }
 
         await context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ValidateApiKeyAsync(string apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey)) return false;
+
+        // Limpiar prefijo si existe (usado en AiService)
+        var cleanKey = apiKey.StartsWith("AI-") ? apiKey.Replace("AI-", "") : apiKey;
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={cleanKey}";
+
+            var prompt = new
+            {
+                contents = new[]
+                {
+                    new {
+                        parts = new[]
+                        {
+                            new { text = "ping" }
+                        }
+                    }
+                }
+            };
+
+            var response = await client.PostAsJsonAsync(url, prompt);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[ModDiscovery] Error validando API Key.");
+            return false;
+        }
     }
 
     /// <summary>

@@ -17,7 +17,13 @@ El agente utiliza un modelo de lenguaje avanzado (Google Gemini Pro) con un **Sy
 
 ## ⚙️ Configuración y Modos
 
-Se han implementado dos niveles de autonomía configurables en la pestaña de **Diagnóstico IA**:
+Se han implementado dos niveles de autonomía configurables en la pestaña de **Diagnóstico IA**, sujetos a la validación de la **Gemini API Key**:
+
+### 🔑 Requisito: Validación de API Key
+Para habilitar cualquier funcionalidad agéntica o de nube (Cloud), es obligatorio:
+1.  Ingresar una Gemini API Key válida en los ajustes.
+2.  Presionar el botón **"Probar Key"** para validar la conexión.
+3.  Si la clave no es válida o no ha sido probada, todas las opciones de IA y sincronización permanecerán deshabilitadas para evitar errores de comunicación.
 
 ### 1. Modo Manual (Por defecto)
 - La IA presenta el **Plan de Acción Recomendado** en pantalla.
