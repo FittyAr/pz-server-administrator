@@ -15,23 +15,23 @@ public partial class ServerTestContext : DbContext
     {
     }
 
-    public virtual DbSet<Allowedsteamid> Allowedsteamids { get; set; }
+    public virtual DbSet<Allowedsteamid> Allowedsteamids { get; set; } = null!;
 
-    public virtual DbSet<Bannedid> Bannedids { get; set; }
+    public virtual DbSet<Bannedid> Bannedids { get; set; } = null!;
 
-    public virtual DbSet<Bannedip> Bannedips { get; set; }
+    public virtual DbSet<Bannedip> Bannedips { get; set; } = null!;
 
-    public virtual DbSet<Capability> Capabilities { get; set; }
+    public virtual DbSet<Capability> Capabilities { get; set; } = null!;
 
-    public virtual DbSet<DefaultRole> DefaultRoles { get; set; }
+    public virtual DbSet<DefaultRole> DefaultRoles { get; set; } = null!;
 
-    public virtual DbSet<Role> Roles { get; set; }
+    public virtual DbSet<Role> Roles { get; set; } = null!;
 
-    public virtual DbSet<Ticket> Tickets { get; set; }
+    public virtual DbSet<Ticket> Tickets { get; set; } = null!;
 
-    public virtual DbSet<Userlog> Userlogs { get; set; }
+    public virtual DbSet<Userlog> Userlogs { get; set; } = null!;
 
-    public virtual DbSet<Whitelist> Whitelists { get; set; }
+    public virtual DbSet<Whitelist> Whitelists { get; set; } = null!;
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

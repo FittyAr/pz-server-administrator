@@ -15,9 +15,9 @@ public partial class PlayersContext : DbContext
     {
     }
 
-    public virtual DbSet<LocalPlayer> LocalPlayers { get; set; }
+    public virtual DbSet<LocalPlayer> LocalPlayers { get; set; } = null!;
 
-    public virtual DbSet<NetworkPlayer> NetworkPlayers { get; set; }
+    public virtual DbSet<NetworkPlayer> NetworkPlayers { get; set; } = null!;
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

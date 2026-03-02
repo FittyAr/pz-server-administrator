@@ -111,6 +111,7 @@ public class RconService : IRconService, IDisposable
 
             if (response.Id == reqId && response.Type == SERVERDATA_RESPONSE_VALUE)
             {
+                OnMessageReceived?.Invoke(response.Body);
                 return response.Body;
             }
 

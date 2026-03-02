@@ -15,7 +15,7 @@ public partial class VehiclesContext : DbContext
     {
     }
 
-    public virtual DbSet<Vehicle> Vehicles { get; set; }
+    public virtual DbSet<Vehicle> Vehicles { get; set; } = null!;
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
