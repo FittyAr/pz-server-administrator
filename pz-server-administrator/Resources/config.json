@@ -1,60 +1,137 @@
 {
-    "AppSettings": {
-        "ServerDirectoryPath": "C:\\Users\\iefqa\\Zomboid\\Server",
-        "ActiveServer": "MateAmargo",
-        "Rcon": {
-            "Host": "127.0.0.1",
-            "Port": 27015,
-            "Password": "tu_clave_segura"
-        },
-        "ServerIniPath": "",
-        "SandboxVarsPath": "",
-        "PlayersDatabasePath": "",
-        "VehiclesDatabasePath": "",
-        "ServerTestDatabasePath": ""
+  "AppSettings": {
+    "ServerDirectoryPath": "C:\\Users\\iefqa\\Zomboid\\Server",
+    "ActiveServer": "MateAmargo",
+    "Rcon": {
+      "Host": "127.0.0.1",
+      "Port": 27015,
+      "Password": "tu_clave_segura"
     },
-    "Users": [
-        {
-            "Username": "admin",
-            "PasswordHash": "$2a$12$vEi2UHPdOFIl5cQYiucrz.082wgWl.8/wJc0Cs0FEZzxW9b7i3cl6",
-            "Role": 2,
-            "IsActive": true,
-            "CreatedAt": "2024-01-01T00:00:00Z",
-            "LastLoginAt": null
-        },
-        {
-            "Username": "moderador1",
-            "PasswordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcQs1VlFm",
-            "Role": 1,
-            "IsActive": true,
-            "CreatedAt": "2024-01-01T00:00:00Z",
-            "LastLoginAt": null
-        }
-    ],
-    "Roles": {
-        "Guest": {
-            "AllowConfigEdit": false,
-            "AllowRcon": false,
-            "AllowModManagement": false,
-            "AllowDatabaseWrite": false,
-            "AllowServerSwitch": false,
-            "AllowUserManagement": false
-        },
-        "Moderator": {
-            "AllowConfigEdit": false,
-            "AllowRcon": true,
-            "AllowModManagement": true,
-            "AllowDatabaseWrite": true,
-            "AllowServerSwitch": false,
-            "AllowUserManagement": false
-        },
-        "Administrator": {
-            "AllowConfigEdit": true,
-            "AllowRcon": true,
-            "AllowModManagement": true,
-            "AllowDatabaseWrite": true,
-            "AllowServerSwitch": true,
-            "AllowUserManagement": true
-        }
+    "ServerIniPath": "",
+    "SandboxVarsPath": "",
+    "PlayersDatabasePath": "",
+    "VehiclesDatabasePath": "",
+    "ServerTestDatabasePath": ""
+  },
+  "Users": [
+    {
+      "Username": "admin",
+      "PasswordHash": "$2a$12$vEi2UHPdOFIl5cQYiucrz.082wgWl.8/wJc0Cs0FEZzxW9b7i3cl6",
+      "Role": 2,
+      "IsActive": true,
+      "CreatedAt": "2024-01-01T00:00:00Z",
+      "LastLoginAt": null
+    },
+    {
+      "Username": "moderador1",
+      "PasswordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcQs1VlFm",
+      "Role": 1,
+      "IsActive": true,
+      "CreatedAt": "2024-01-01T00:00:00Z",
+      "LastLoginAt": null
     }
+  ],
+  "Roles": {
+    "Guest": {
+      "AllowConfigEdit": false,
+      "AllowRcon": false,
+      "AllowModManagement": false,
+      "AllowDatabaseWrite": false,
+      "AllowServerSwitch": false,
+      "AllowUserManagement": false
+    },
+    "Moderator": {
+      "AllowConfigEdit": false,
+      "AllowRcon": true,
+      "AllowModManagement": true,
+      "AllowDatabaseWrite": true,
+      "AllowServerSwitch": false,
+      "AllowUserManagement": false
+    },
+    "Administrator": {
+      "AllowConfigEdit": true,
+      "AllowRcon": true,
+      "AllowModManagement": true,
+      "AllowDatabaseWrite": true,
+      "AllowServerSwitch": true,
+      "AllowUserManagement": true
+    }
+  },
+  "appSettings": {
+    "serverDirectoryPath": "C:\\Users\\Usuario\\Zomboid",
+    "activeServer": "debugChunkState-options",
+    "rcon": {
+      "host": "127.0.0.1",
+      "port": 27015,
+      "password": "tu_clave_segura"
+    },
+    "zomboidDirectory": "",
+    "serverIniPath": "C:\\Users\\Usuario\\Zomboid\\debugChunkState-options.ini",
+    "sandboxVarsPath": "C:\\Users\\Usuario\\Zomboid\\Server\\servertest2_SandboxVars.lua",
+    "spawnRegionsPath": "",
+    "playersDatabasePath": "C:\\Users\\Usuario\\Zomboid\\Saves\\Multiplayer\\servertest\\players.db",
+    "vehiclesDatabasePath": "C:\\Users\\Usuario\\Zomboid\\Saves\\Multiplayer\\servertest_player\\vehicles.db",
+    "serverTestDatabasePath": "C:\\Users\\Usuario\\Zomboid\\db\\ServerListSteam.db",
+    "modsDatabasePath": "",
+    "language": "es"
+  },
+  "users": [
+    {
+      "username": "admin",
+      "passwordHash": "$2a$12$vEi2UHPdOFIl5cQYiucrz.082wgWl.8/wJc0Cs0FEZzxW9b7i3cl6",
+      "role": 2,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "lastLoginAt": null
+    },
+    {
+      "username": "moderador1",
+      "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcQs1VlFm",
+      "role": 1,
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "lastLoginAt": null
+    }
+  ],
+  "roles": {
+    "Guest": {
+      "allowConfigEdit": false,
+      "allowRcon": false,
+      "allowModManagement": false,
+      "allowDatabaseWrite": false,
+      "allowServerSwitch": false,
+      "allowUserManagement": false
+    },
+    "Moderator": {
+      "allowConfigEdit": false,
+      "allowRcon": true,
+      "allowModManagement": true,
+      "allowDatabaseWrite": true,
+      "allowServerSwitch": false,
+      "allowUserManagement": false
+    },
+    "Administrator": {
+      "allowConfigEdit": true,
+      "allowRcon": true,
+      "allowModManagement": true,
+      "allowDatabaseWrite": true,
+      "allowServerSwitch": true,
+      "allowUserManagement": true
+    }
+  },
+  "ai": {
+    "provider": 0,
+    "apiKey": "",
+    "modelName": "",
+    "customEndpoint": "",
+    "isApiKeyValid": false,
+    "aiAutoFixEnabled": false
+  },
+  "cloud": {
+    "apiKey": "",
+    "isApiKeyValid": false,
+    "cloudSyncEnabled": false,
+    "autoReport": false,
+    "lastSync": null
+  }
 }

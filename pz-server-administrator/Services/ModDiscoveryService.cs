@@ -131,13 +131,13 @@ public class ModDiscoveryService : IModDiscoveryService
                     Id = workshopId,
                     Title = $"Mod {workshopId}",
                     Instances = new List<ModInstance>(),
-                    Order = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999
+                    SortOrder = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999
                 };
                 context.WorkshopItems.Add(item);
             }
             else
             {
-                item.Order = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999;
+                item.SortOrder = workshopOrder.TryGetValue(workshopId, out var o) ? o : 999;
             }
 
             // Calculamos hash para detectar cambios (Hacemos un hash básico del contenido de mod.info y la fecha)
@@ -177,7 +177,7 @@ public class ModDiscoveryService : IModDiscoveryService
                     Name = modName,
                     WorkshopItemId = workshopId,
                     IsActive = activeModIds.Contains(modId),
-                    Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999,
+                    SortOrder = modOrder.TryGetValue(modId, out var mo) ? mo : 999,
                     Category = CategorizeMod(modId, modName, modData)
                 };
                 item.Instances.Add(instance);
@@ -186,7 +186,7 @@ public class ModDiscoveryService : IModDiscoveryService
             {
                 instance.Name = modName;
                 instance.IsActive = activeModIds.Contains(modId);
-                instance.Order = modOrder.TryGetValue(modId, out var mo) ? mo : 999;
+                instance.SortOrder = modOrder.TryGetValue(modId, out var mo) ? mo : 999;
                 instance.Category = CategorizeMod(modId, modName, modData);
             }
         }
@@ -212,7 +212,7 @@ public class ModDiscoveryService : IModDiscoveryService
 
         return await context.WorkshopItems
             .Include(i => i.Instances)
-            .OrderBy(i => i.Order)
+            .OrderBy(i => i.SortOrder)
             .ThenBy(i => i.Title)
             .ToListAsync();
     }
@@ -287,14 +287,14 @@ public class ModDiscoveryService : IModDiscoveryService
         // Recuperar items ordenados. Los que estén activos deben aparecer primero en su respectivo bloque si lo deseamos, 
         // pero PZ requiere que TODOS los WorkshopItems estén en la lista si se van a descargar.
         var workshopIds = await context.WorkshopItems
-            .OrderBy(i => i.Order)
+            .OrderBy(i => i.SortOrder)
             .Select(i => i.Id)
             .ToListAsync();
 
         // Recuperar IDs de mods activos ordenados
         var activeModIds = await context.ModInstances
             .Where(i => i.IsActive)
-            .OrderBy(i => i.Order)
+            .OrderBy(i => i.SortOrder)
             .Select(i => i.ModId)
             .ToListAsync();
 
@@ -592,7 +592,7 @@ public class ModDiscoveryService : IModDiscoveryService
                     var toReorder = allMods.FirstOrDefault(m => m.ModId == action.TargetId);
                     if (toReorder != null && action.Parameters.TryGetValue("new_order", out var orderStrValue) && int.TryParse(orderStrValue, out var newOrderInteger))
                     {
-                        toReorder.Order = newOrderInteger;
+                        toReorder.SortOrder = newOrderInteger;
                     }
                     break;
             }
@@ -608,6 +608,8 @@ public class ModDiscoveryService : IModDiscoveryService
         var fileToMods = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         using var context = _contextFactory.CreateModsContext();
+        if (context == null) return conflicts;
+
         var activeMods = await context.ModInstances
             .Where(m => m.IsActive)
             .Include(m => m.WorkshopItem)

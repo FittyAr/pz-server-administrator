@@ -47,7 +47,7 @@ public class ModPresetService : IModPresetService
             {
                 WorkshopId = m.WorkshopItemId,
                 ModId = m.ModId,
-                Order = m.Order
+                SortOrder = m.SortOrder
             }).ToList()
         };
 
@@ -129,7 +129,7 @@ public class ModPresetService : IModPresetService
             if (inst != null)
             {
                 inst.IsActive = true;
-                inst.Order = entry.Order;
+                inst.SortOrder = entry.SortOrder;
             }
             else
             {

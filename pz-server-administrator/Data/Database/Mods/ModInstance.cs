@@ -31,7 +31,7 @@ public partial class ModInstance
     /// <summary>
     /// Orden de carga relativo.
     /// </summary>
-    public int Order { get; set; }
+    public int SortOrder { get; set; }
 
     /// <summary>
     /// ID del Workshop Item de Steam al cual pertenece (FK).

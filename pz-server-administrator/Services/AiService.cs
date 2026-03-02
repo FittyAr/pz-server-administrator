@@ -48,7 +48,7 @@ public class AiService : IAiService
         await Task.Delay(1500); // Simulando procesamiento profundo
 
         var reports = new List<string>();
-        var mods = activeMods.OrderBy(m => m.Order).ToList();
+        var mods = activeMods.OrderBy(m => m.SortOrder).ToList();
 
         if (!mods.Any()) return "No tienes mods activos que analizar.";
 
@@ -157,7 +157,7 @@ public class AiService : IAiService
         try
         {
             var provider = _providerFactory.GetProvider(config.Provider);
-            var modData = string.Join("\n", currentMods.Select(m => $"- ID: {m.ModId}, Category: {m.Category}, Workshop: {m.WorkshopItemId}, Order: {m.Order}"));
+            var modData = string.Join("\n", currentMods.Select(m => $"- ID: {m.ModId}, Category: {m.Category}, Workshop: {m.WorkshopItemId}, SortOrder: {m.SortOrder}"));
             var dynamicContext = logContext != null ? $"CONTEXTO INICIAL:\n{logContext}\n" : "";
 
             int maxLoops = 3;

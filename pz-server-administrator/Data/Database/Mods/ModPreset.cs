@@ -51,5 +51,5 @@ public class ModPresetEntry
 {
     public string WorkshopId { get; set; } = null!;
     public string ModId { get; set; } = null!;
-    public int Order { get; set; }
+    public int SortOrder { get; set; }
 }

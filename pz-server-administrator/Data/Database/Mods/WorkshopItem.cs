@@ -51,7 +51,7 @@ public partial class WorkshopItem
     /// <summary>
     /// Orden de descarga o carga del WorkshopItem.
     /// </summary>
-    public int Order { get; set; }
+    public int SortOrder { get; set; }
 
     /// <summary>
     /// Ruta local absoluta donde se encuentra el contenido del workshop item.
