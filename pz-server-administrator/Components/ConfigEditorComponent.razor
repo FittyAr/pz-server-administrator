@@ -48,13 +48,13 @@
                             <FluentGrid Spacing="3">
                                 @foreach (var entry in categoryGroup.Value)
                                 {
-                                    <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                                    <FluentGridItem xs="12" sm="12" md="6" lg="4" xl="3">
                                         <FluentCard
-                                            Style="padding: 12px; height: 100%; display: flex; flex-direction: column; border-top: 3px solid var(--accent-fill-rest); transition: transform 0.2s;"
+                                            Style="padding: 14px; height: 100%; display: flex; flex-direction: column; border-top: 3px solid var(--accent-fill-rest); box-sizing: border-box; min-width: 0;"
                                             class="config-card">
-                                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="6" Style="min-width: 0; width: 100%;">
                                                 <FluentLabel Typo="Typography.Body"
-                                                    Style="font-weight: bold; color: var(--neutral-foreground-hint); text-transform: uppercase; font-size: 0.8em;">
+                                                    Style="font-weight: 600; color: var(--neutral-foreground-rest); font-size: 0.82em; word-break: break-word; overflow-wrap: anywhere; line-height: 1.3;">
                                                     @entry.Key
                                                 </FluentLabel>
 
@@ -126,20 +126,21 @@
 
     private string GetCategory(string key)
     {
-        if (key.Contains("PVP") || key.Contains("Safehouse")) return "PVP & Combat";
-        if (key.Contains("RCON") || key.Contains("Host") || key.Contains("Port") || key.Contains("UPnP")) return "Network";
-        if (key.Contains("Chat") || key.Contains("Message") || key.Contains("Voice")) return "Social";
-        if (key.Contains("Map") || key.Contains("Spawn") || key.Contains("Region")) return "World";
-        if (key.Contains("Mod") || key.Contains("Workshop")) return "Mods";
-        if (key.Contains("Database") || key.Contains("Log") || key.Contains("Backup")) return "System";
-        if (key.Contains("Zombie") || key.Contains("Loot")) return "Gameplay";
+        if (key.Contains("PVP", StringComparison.OrdinalIgnoreCase) || key.Contains("Safehouse", StringComparison.OrdinalIgnoreCase)) return "PVP & Combat";
+        if (key.Contains("RCON", StringComparison.OrdinalIgnoreCase) || key.Contains("Host", StringComparison.OrdinalIgnoreCase) || key.Contains("Port", StringComparison.OrdinalIgnoreCase) || key.Contains("UPnP", StringComparison.OrdinalIgnoreCase)) return "Network";
+        if (key.Contains("Chat", StringComparison.OrdinalIgnoreCase) || key.Contains("Message", StringComparison.OrdinalIgnoreCase) || key.Contains("Voice", StringComparison.OrdinalIgnoreCase)) return "Social";
+        if (key.Contains("Map", StringComparison.OrdinalIgnoreCase) || key.Contains("Spawn", StringComparison.OrdinalIgnoreCase) || key.Contains("Region", StringComparison.OrdinalIgnoreCase)) return "World";
+        if (key.Contains("Mod", StringComparison.OrdinalIgnoreCase) || key.Contains("Workshop", StringComparison.OrdinalIgnoreCase)) return "Mods";
+        if (key.Contains("Database", StringComparison.OrdinalIgnoreCase) || key.Contains("Log", StringComparison.OrdinalIgnoreCase) || key.Contains("Backup", StringComparison.OrdinalIgnoreCase)) return "System";
+        if (key.Contains("Zombie", StringComparison.OrdinalIgnoreCase) || key.Contains("Loot", StringComparison.OrdinalIgnoreCase)) return "Gameplay";
+        if (key.Contains("Server", StringComparison.OrdinalIgnoreCase)) return "Server";
 
         // Use prefix as category if none of the above matches
         var parts = key.Split('_', 2);
         if (parts.Length > 1 && parts[0].Length > 2)
         {
             var prefix = parts[0];
-            return char.ToUpper(prefix[0]) + prefix.Substring(1);
+            return char.ToUpper(prefix[0]) + prefix.Substring(1).ToLowerInvariant();
         }
 
         return "General";
@@ -153,7 +154,8 @@
         "World" => new Icons.Regular.Size16.Map(),
         "Mods" => new Icons.Regular.Size16.PuzzlePiece(),
         "System" => new Icons.Regular.Size16.Settings(),
-        "Gameplay" => new Icons.Regular.Size16.VehicleBicycle(), // Closest to gameplay/movement icon
+        "Gameplay" => new Icons.Regular.Size16.VehicleBicycle(),
+        "Server" => new Icons.Regular.Size16.Server(),
         _ => new Icons.Regular.Size16.Window()
     };
 

@@ -16,18 +16,53 @@ body {
     min-height: calc(100dvh - 86px);
     color: var(--neutral-foreground-rest);
     align-items: stretch !important;
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+[area="navigation"],
+.main > [area="navigation"] {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    box-sizing: border-box !important;
+    height: calc(100dvh - 86px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.navmenu,
+nav.sitenav,
+#main-menu {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
 }
 
 .body-content {
     align-self: stretch;
     height: calc(100dvh - 86px) !important;
-    display: flex;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: calc(100% - 260px) !important;
+    max-width: calc(100% - 260px) !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    box-sizing: border-box !important;
 }
 
 .content {
-    padding: 0.5rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     align-self: stretch !important;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
 }
 
 .manage {
@@ -204,6 +239,18 @@ code {
         font-weight: 600;
         color: var(--neutral-foreground-rest);
     }
+.setup-card {
+    width: 100% !important;
+    max-width: 800px !important;
+    padding: 2.5rem !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+}
+
+@media (max-width: 600px) {
+    .setup-card {
+        padding: 1.25rem 1rem !important;
+    }
 }
 
 /* ==========================================================================
@@ -211,36 +258,78 @@ code {
    ========================================================================== */
 dialog::backdrop,
 fluent-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.5) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
 }
 
+/* Prevent dialog host from displaying borders or sizing in header / DOM flow */
 fluent-dialog {
-    border-radius: 8px !important;
-    border: 1px solid var(--colorNeutralStroke1, #e0e0e0) !important;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25) !important;
-    background: var(--colorNeutralBackground1, #ffffff) !important;
-    color: var(--colorNeutralForeground1, #242424) !important;
-    overflow: hidden;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    position: static !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
 }
 
-fluent-dialog[modal="true"] {
-    max-width: 95vw !important;
-    max-height: 90vh !important;
+fluent-dialog::part(dialog),
+dialog.dialog {
+    max-width: min(92vw, 560px) !important;
+    max-height: min(85vh, 680px) !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--neutral-stroke-rest, #444) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45) !important;
+    background: var(--neutral-layer-1, var(--neutral-fill-layer-rest, #252526)) !important;
+    color: var(--neutral-foreground-rest, #ffffff) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: auto !important;
 }
 
 fluent-dialog-body {
-    display: flex;
-    flex-direction: column;
-    max-height: 85vh;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: calc(min(85vh, 680px) - 20px) !important;
+    overflow: hidden !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    color: inherit !important;
 }
 
-/* Modal Content Spacing */
-.modal-form-content {
-    padding: 0.5rem 0.25rem;
-    max-height: 65vh;
-    overflow-y: auto;
+/* Modal Content Spacing & Scrolling */
+.modal-form-content,
+fluent-dialog-body [slot="body"] {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0.5rem 0.25rem !important;
+    max-height: calc(min(85vh, 680px) - 150px) !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+}
+
+fluent-dialog-body [slot="action"],
+fluent-dialog-body .action {
+    margin-top: auto !important;
+    padding-top: 1rem !important;
+    display: flex !important;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+    flex-shrink: 0 !important;
+}
+
+/* Config Editor Card Enhancements */
+.config-card {
+    min-width: 0 !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    box-sizing: border-box !important;
 }
 
 /* Not Authorized Card Experience */

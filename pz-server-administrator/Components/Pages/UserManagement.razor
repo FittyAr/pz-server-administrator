@@ -75,7 +75,7 @@
         <!-- Create/Edit User Dialog -->
         @if (_isUserDialogOpen)
         {
-            <FluentDialog @ref="_userDialog" Modal="true" Style="width: 520px; max-width: 95vw;">
+            <FluentDialog @ref="_userDialog" Modal="true" Style="width: 100%; max-width: 500px;">
                 <FluentDialogBody>
                     <TitleTemplate>
                         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
@@ -149,7 +149,7 @@
         <!-- Delete Confirmation Dialog -->
         @if (_isDeleteDialogOpen)
         {
-            <FluentDialog @ref="_deleteDialog" Modal="true" Style="width: 440px; max-width: 95vw;">
+            <FluentDialog @ref="_deleteDialog" Modal="true" Style="width: 100%; max-width: 440px;">
                 <FluentDialogBody>
                     <TitleTemplate>
                         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">

@@ -22,24 +22,26 @@
     Permite el descubrimiento, activación, ordenamiento y diagnóstico inteligente.
 *@
 
-<FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+<FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Wrap="true" Style="gap: 16px; margin-bottom: 0.5rem;">
     <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.Title")</FluentLabel>
-    <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
+    <FluentStack Orientation="Orientation.Horizontal" Wrap="true" Style="gap: 8px;">
         <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" 
                       Appearance="ButtonAppearance.Primary"
+                      Style="white-space: nowrap;"
                       OnClick="SaveConfigAsync" 
                       Loading="@_isSaving">
             @LocService.Get("Mods.SaveConfig")
         </FluentButton>
         <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" 
                       Appearance="ButtonAppearance.Default"
+                      Style="white-space: nowrap;"
                       OnClick="ScanModsAsync" 
                       Loading="@_isScanning">
             @LocService.Get("Mods.ScanButton")
         </FluentButton>
-        <FluentDivider Role="DividerRole.Presentation" Orientation="Orientation.Vertical" />
         <FluentButton IconStart="@(new Icons.Regular.Size20.Power())" 
                       Appearance="ButtonAppearance.Default"
+                      Style="white-space: nowrap;"
                       OnClick="RestartViaRcon"
                       Title="@LocService.Get("Mods.RestartServer")">
             @LocService.Get("Mods.RestartServer")
@@ -196,27 +198,36 @@
         <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
             <FluentStack Orientation="Orientation.Vertical" Spacing="4">
                 <FluentCard Style="padding: 1.5rem;">
-                    <FluentStack VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Wrap="true" Style="gap: 12px;">
                         <FluentLabel Typo="Typography.Header">AI Health Desk</FluentLabel>
-                        @if (!string.IsNullOrEmpty(_recommendation))
-                        {
-                            <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand">@_recommendation</FluentBadge>
-                        }
-                        <FluentButton IconStart="@(new Icons.Regular.Size20.Wand())"
-                                      Appearance="ButtonAppearance.Primary"
-                                      OnClick="RunAiDiagnosis"
-                                      Loading="@_isAiLoading"
-                                      Disabled="@(!_config.Ai.IsApiKeyValid)">
-                            @LocService.Get("Mods.ScanAi")
-                        </FluentButton>
-                        <FluentButton IconStart="@(new Icons.Regular.Size20.Eye())"
-                                      Appearance="ButtonAppearance.Default"
-                                      OnClick="AnalyzeServerLog"
-                                      Loading="@_isAiLoading"
-                                      Disabled="@(!_config.Ai.IsApiKeyValid)">
-                            @LocService.Get("Mods.AnalyzeLog")
-                        </FluentButton>
+                        <FluentStack Orientation="Orientation.Horizontal" Wrap="true" Style="gap: 8px;">
+                            <FluentButton IconStart="@(new Icons.Regular.Size20.Wand())"
+                                          Appearance="ButtonAppearance.Primary"
+                                          Style="white-space: nowrap;"
+                                          OnClick="RunAiDiagnosis"
+                                          Loading="@_isAiLoading"
+                                          Disabled="@(!_config.Ai.IsApiKeyValid)">
+                                @LocService.Get("Mods.ScanAi")
+                            </FluentButton>
+                            <FluentButton IconStart="@(new Icons.Regular.Size20.Eye())"
+                                          Appearance="ButtonAppearance.Default"
+                                          Style="white-space: nowrap;"
+                                          OnClick="AnalyzeServerLog"
+                                          Loading="@_isAiLoading"
+                                          Disabled="@(!_config.Ai.IsApiKeyValid)">
+                                @LocService.Get("Mods.AnalyzeLog")
+                            </FluentButton>
+                        </FluentStack>
                     </FluentStack>
+
+                    @if (!string.IsNullOrEmpty(_recommendation))
+                    {
+                        <div style="margin-top: 1rem;">
+                            <FluentMessageBar Intent="MessageBarIntent.Info">
+                                @_recommendation
+                            </FluentMessageBar>
+                        </div>
+                    }
 
                     <FluentStack VerticalAlignment="VerticalAlignment.Center" Style="margin-top: 1rem;">
                         <FluentCheckbox @bind-Value="@(_config.Ai.AiAutoFixEnabled)" 
