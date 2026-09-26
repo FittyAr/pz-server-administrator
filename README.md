@@ -5,11 +5,11 @@
 **IMPORTANTE**: Este proyecto está actualmente en desarrollo y **NO ES UTILIZABLE** para uso en producción. La aplicación está siendo desarrollada y probada. Este README será actualizado cuando el proyecto esté listo para uso general.
 
 
-# Zomboid Server Manager - Blazor .NET 9
+# Zomboid Server Manager - Blazor .NET 10
 
 ## Descripción general
 
-Aplicación web construida con **Blazor Server en .NET 9** para administrar servidores dedicados del juego **Project Zomboid (versión 41)**. La app permitirá seleccionar, visualizar y editar la configuración de servidores, ejecutar comandos por RCON, consultar estadísticas desde la base de datos SQLite del juego y, en el futuro, gestionar mods.
+Aplicación web construida con **Blazor Server en .NET 10** para administrar servidores dedicados del juego **Project Zomboid (versión 41)**. La app permitirá seleccionar, visualizar y editar la configuración de servidores, ejecutar comandos por RCON, consultar estadísticas desde la base de datos SQLite del juego y, en el futuro, gestionar mods.
 
 ---
 
@@ -184,7 +184,7 @@ Permite:
 
 ## 🛠️ Requisitos técnicos
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 - Blazor Server
 - Visual Studio 2022 o Visual Studio Code
 - Permisos de lectura/escritura sobre la carpeta donde se almacenan los servidores
