@@ -197,27 +197,39 @@
 </div>
 
 @* DIALOGO NUEVO USUARIO *@
-<FluentDialog @ref="_addUserDialog" Modal="true">
-    <FluentDialogBody>
-        <TitleTemplate>
-            <FluentLabel Typo="Typography.H5">Crear Nuevo Usuario</FluentLabel>
-        </TitleTemplate>
-        <ChildContent>
-            <div style="padding: 1rem 0;">
-                <FluentStack Orientation="Orientation.Vertical" Spacing="3">
-                    <FluentTextInput @bind-Value="_newUsername" Label="Nombre de Usuario" Style="width: 100%;" />
-                    <FluentTextInput @bind-Value="_newPassword" Label="Contraseña" TextInputType="TextInputType.Password"
-                        Style="width: 100%;" />
-                    <FluentSelect TOption="UserRole" TValue="UserRole" Label="Rol" Items="@_roles" @bind-Value="_newRoleValue" Style="width: 100%;" />
+@if (_isAddUserDialogOpen)
+{
+    <FluentDialog @ref="_addUserDialog" Modal="true" Style="width: 480px; max-width: 95vw;">
+        <FluentDialogBody>
+            <TitleTemplate>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.PersonAdd())" Color="Color.Primary" />
+                    <FluentLabel Typo="Typography.H5">Crear Nuevo Usuario</FluentLabel>
                 </FluentStack>
-            </div>
-        </ChildContent>
-        <ActionTemplate>
-            <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseAddUserModal">Cancelar</FluentButton>
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="AddUser">Crear</FluentButton>
-        </ActionTemplate>
-    </FluentDialogBody>
-</FluentDialog>
+            </TitleTemplate>
+            <TitleActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Subtle"
+                              IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                              OnClick="CloseAddUserModal"
+                              Title="Cancelar" />
+            </TitleActionTemplate>
+            <ChildContent>
+                <div class="modal-form-content">
+                    <FluentStack Orientation="Orientation.Vertical" Spacing="3">
+                        <FluentTextInput @bind-Value="_newUsername" Label="Nombre de Usuario" Style="width: 100%;" />
+                        <FluentTextInput @bind-Value="_newPassword" Label="Contraseña" TextInputType="TextInputType.Password"
+                            Style="width: 100%;" />
+                        <FluentSelect TOption="UserRole" TValue="UserRole" Label="Rol" Items="@_roles" @bind-Value="_newRoleValue" Style="width: 100%;" />
+                    </FluentStack>
+                </div>
+            </ChildContent>
+            <ActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Primary" OnClick="AddUser">Crear</FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseAddUserModal">Cancelar</FluentButton>
+            </ActionTemplate>
+        </FluentDialogBody>
+    </FluentDialog>
+}
 
 @code {
     private string _activeTabId = "tab-general";
@@ -241,6 +253,7 @@
 
     // User Control
     private FluentDialog? _addUserDialog;
+    private bool _isAddUserDialogOpen = false;
     private string _newUsername = "";
     private string _newPassword = "";
     private UserRole _newRoleValue = UserRole.Guest;
@@ -248,6 +261,9 @@
 
     private async Task OpenAddUserModal()
     {
+        _isAddUserDialogOpen = true;
+        StateHasChanged();
+        await Task.Yield();
         if (_addUserDialog != null)
             await _addUserDialog.ShowAsync();
     }
@@ -256,6 +272,8 @@
     {
         if (_addUserDialog != null)
             await _addUserDialog.HideAsync();
+        _isAddUserDialogOpen = false;
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
