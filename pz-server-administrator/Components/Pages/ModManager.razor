@@ -102,33 +102,36 @@
                                     <FluentLabel Typo="Typography.Body" Color="Color.Default" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
 
                                     <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                                        @foreach (var instance in item.Instances)
+                                        @if (item.Instances != null)
                                         {
-                                            var hasAiWarning = _aiActions.Any(a => a.TargetId == instance.ModId && (a.Type == AiActionType.Deactivate || a.Type == AiActionType.Reorder));
+                                            @foreach (var instance in item.Instances)
+                                            {
+                                                var hasAiWarning = _aiActions.Any(a => a.TargetId == instance.ModId && (a.Type == AiActionType.Deactivate || a.Type == AiActionType.Reorder));
 
-                                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                                <FluentBadge Appearance="@(instance.IsActive ? BadgeAppearance.Filled : BadgeAppearance.Ghost)"
-                                                             Color="@(instance.IsActive ? BadgeColor.Brand : BadgeColor.Subtle)"
-                                                             Style="cursor: pointer;" 
-                                                             @onclick="@(() => ToggleActive(item.Id, instance))">
-                                                    @(instance.IsActive ? "✅ " : "❌ ") 
-                                                    @if (hasAiWarning)
-                                                    {
-                                                        <span title="Este mod tiene advertencias de la IA" style="margin-right: 4px;">⚠️</span>
-                                                    }
-                                                    @instance.ModId
-                                                </FluentBadge>
-                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
-                                                    @GetCategoryIcon(instance.Category) @instance.Category
-                                                </FluentLabel>
-                                            </div>
+                                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                    <FluentBadge Appearance="@(instance.IsActive ? BadgeAppearance.Filled : BadgeAppearance.Ghost)"
+                                                                 Color="@(instance.IsActive ? BadgeColor.Brand : BadgeColor.Subtle)"
+                                                                 Style="cursor: pointer;" 
+                                                                 @onclick="@(() => ToggleActive(item.Id, instance))">
+                                                        @(instance.IsActive ? "✅ " : "❌ ") 
+                                                        @if (hasAiWarning)
+                                                        {
+                                                            <span title="Este mod tiene advertencias de la IA" style="margin-right: 4px;">⚠️</span>
+                                                        }
+                                                        @instance.ModId
+                                                    </FluentBadge>
+                                                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
+                                                        @GetCategoryIcon(instance.Category) @instance.Category
+                                                    </FluentLabel>
+                                                </div>
+                                            }
                                         }
                                     </div>
 
                                     <div style="margin-top: auto; padding-top: 1rem;">
                                         <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
                                             <FluentButton IconStart="@(new Icons.Regular.Size16.Info())" 
-                                                          Appearance="ButtonAppearance.Subtle"
+                                                          Appearance="ButtonAppearance.Subtle" 
                                                           Style="flex-grow: 1;" 
                                                           OnClick="@(() => FetchMetadata(item.Id))">
                                                 @LocService.Get("Mods.UpdateInfo")
@@ -160,34 +163,47 @@
             </FluentMessageBar>
 
             <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-                @if (_items != null)
+                @{
+                    var activeMods = ActiveModsOrdered;
+                }
+                @if (activeMods.Any())
                 {
-                    <FluentListbox TOption="ModInstance" 
-                                   TValue="ModInstance"
-                                   Items="@ActiveModsOrdered" 
-                                   @bind-Value="@_selectedForMove"
-                                   Style="min-height: 400px; width: 100%;">
-                        <OptionTemplate Context="option">
-                            @if (option != null)
-                            {
+                    <FluentStack Orientation="Orientation.Vertical" Spacing="2">
+                        @for (int i = 0; i < activeMods.Count; i++)
+                        {
+                            var mod = activeMods[i];
+                            var index = i;
+                            <FluentCard Style="padding: 10px 16px; margin-bottom: 4px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <div style="display: flex; align-items: center;">
-                                        <FluentIcon Value="@(GetIconForCategory(option.Category))" Color="Color.Primary" />
-                                        <span style="font-weight: bold; margin-left: 8px;">@option.ModId</span>
-                                        <span style="margin-left: 10px; opacity: 0.7; font-size: 0.8rem;">(@option.Name)</span>
+                                    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; text-overflow: ellipsis;">
+                                        <span style="font-weight: bold; min-width: 28px; opacity: 0.6; font-size: 0.85rem;">#@(index + 1)</span>
+                                        <FluentIcon Value="@(GetIconForCategory(mod.Category))" Color="Color.Primary" />
+                                        <span style="font-weight: 600; white-space: nowrap;">@mod.ModId</span>
+                                        <span style="opacity: 0.7; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">(@mod.Name)</span>
                                     </div>
-                                    <div>
+                                    <div style="display: flex; gap: 4px; flex-shrink: 0;">
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowUp())" 
                                                       Appearance="ButtonAppearance.Subtle" 
-                                                      OnClick="@(() => MoveOrder(option, -1))" />
+                                                      Disabled="@(index == 0)"
+                                                      OnClick="@(() => MoveOrder(mod, -1))" 
+                                                      Title="@LocService.Get("Common.MoveUp", "Subir")" />
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDown())" 
                                                       Appearance="ButtonAppearance.Subtle" 
-                                                      OnClick="@(() => MoveOrder(option, 1))" />
+                                                      Disabled="@(index == activeMods.Count - 1)"
+                                                      OnClick="@(() => MoveOrder(mod, 1))" 
+                                                      Title="@LocService.Get("Common.MoveDown", "Bajar")" />
                                     </div>
                                 </div>
-                            }
-                        </OptionTemplate>
-                    </FluentListbox>
+                            </FluentCard>
+                        }
+                    </FluentStack>
+                }
+                else
+                {
+                    <div style="height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Default" />
+                        <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoActiveMods", "No hay mods activos para ordenar.")</FluentLabel>
+                    </div>
                 }
             </div>
         </div>
@@ -421,40 +437,81 @@
     private List<string> _aiProgressLogs = new();
     private List<AiAction> _aiActions = new();
     private string? _recommendation;
-    private ModInstance? _selectedForMove;
     private List<ModPreset>? _presets;
     private List<ModPreset>? _communityPresets;
     private string _newPresetName = "";
     private string _newPresetDesc = "";
 
-    private IEnumerable<WorkshopItem>? FilteredItems => _items?
-        .Where(i => string.IsNullOrEmpty(_filterText) ||
-        i.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase) ||
-        i.Id.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<WorkshopItem> FilteredItems => _items?
+        .Where(i => i != null && (
+            string.IsNullOrWhiteSpace(_filterText) ||
+            (!string.IsNullOrEmpty(i.Title) && i.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase)) ||
+            (!string.IsNullOrEmpty(i.Id) && i.Id.Contains(_filterText, StringComparison.OrdinalIgnoreCase))
+        )) ?? Enumerable.Empty<WorkshopItem>();
 
     private List<ModInstance> ActiveModsOrdered => _items?
+        .Where(i => i?.Instances != null)
         .SelectMany(i => i.Instances)
-        .Where(i => i.IsActive)
+        .Where(i => i != null && i.IsActive)
         .OrderBy(i => i.SortOrder)
         .ToList() ?? new List<ModInstance>();
 
     protected override async Task OnInitializedAsync()
     {
-        _config = ConfigService.GetConfiguration();
-        await LoadDataAsync();
-        _recommendation = await CommunityService.GetGlobalRecommendationsAsync();
-        _presets = await PresetService.GetAllPresetsAsync();
+        try
+        {
+            _config = ConfigService.GetConfiguration() ?? new ZsmConfiguration();
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _items = new List<WorkshopItem>();
+            await NotificationService.ShowErrorAsync($"Error cargando mods: {ex.Message}");
+        }
+
+        try
+        {
+            _recommendation = await CommunityService.GetGlobalRecommendationsAsync();
+        }
+        catch
+        {
+            _recommendation = null;
+        }
+
+        try
+        {
+            _presets = await PresetService.GetAllPresetsAsync();
+        }
+        catch
+        {
+            _presets = new List<ModPreset>();
+        }
     }
 
     private async Task LoadDataAsync()
     {
-        _items = await ModDiscovery.GetWorkshopItemsAsync();
+        try
+        {
+            _items = await ModDiscovery.GetWorkshopItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            _items = new List<WorkshopItem>();
+            await NotificationService.ShowErrorAsync($"Error al obtener items de workshop: {ex.Message}");
+        }
     }
 
     private async Task ToggleActive(string workshopId, ModInstance instance)
     {
-        instance.IsActive = !instance.IsActive;
-        await ModDiscovery.ToggleModActiveAsync(workshopId, instance.ModId, instance.IsActive);
+        try
+        {
+            instance.IsActive = !instance.IsActive;
+            await ModDiscovery.ToggleModActiveAsync(workshopId, instance.ModId, instance.IsActive);
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al cambiar estado del mod: {ex.Message}");
+        }
     }
 
     private async Task SaveConfigAsync()
@@ -479,14 +536,17 @@
     {
         var list = ActiveModsOrdered;
         int index = list.IndexOf(instance);
+        if (index < 0) return;
         int newIndex = index + direction;
 
         if (newIndex >= 0 && newIndex < list.Count)
         {
-            var other = list[newIndex];
-            var tempOrder = other.SortOrder;
-            other.SortOrder = instance.SortOrder;
-            instance.SortOrder = tempOrder;
+            list.RemoveAt(index);
+            list.Insert(newIndex, instance);
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i].SortOrder = i;
+            }
             StateHasChanged();
         }
     }
@@ -589,17 +649,24 @@
 
     private async Task CreatePreset()
     {
-        if (string.IsNullOrWhiteSpace(_newPresetName))
+        try
         {
-            await NotificationService.ShowWarningAsync("El nombre del perfil es obligatorio.");
-            return;
-        }
+            if (string.IsNullOrWhiteSpace(_newPresetName))
+            {
+                await NotificationService.ShowWarningAsync("El nombre del perfil es obligatorio.");
+                return;
+            }
 
-        await PresetService.SavePresetAsync(_newPresetName, _newPresetDesc, ActiveModsOrdered);
-        await NotificationService.ShowSuccessAsync("Perfil de mods guardado.");
-        _presets = await PresetService.GetAllPresetsAsync();
-        _newPresetName = "";
-        _newPresetDesc = "";
+            await PresetService.SavePresetAsync(_newPresetName, _newPresetDesc, ActiveModsOrdered);
+            await NotificationService.ShowSuccessAsync("Perfil de mods guardado.");
+            _presets = await PresetService.GetAllPresetsAsync();
+            _newPresetName = "";
+            _newPresetDesc = "";
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al guardar perfil: {ex.Message}");
+        }
     }
 
     private async Task ApplyPreset(ModPreset p)
@@ -619,8 +686,15 @@
 
     private async Task DeletePreset(ModPreset p)
     {
-        await PresetService.DeletePresetAsync(p.Name);
-        _presets = await PresetService.GetAllPresetsAsync();
+        try
+        {
+            await PresetService.DeletePresetAsync(p.Name);
+            _presets = await PresetService.GetAllPresetsAsync();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al eliminar perfil: {ex.Message}");
+        }
     }
 
     private async Task ScanModsAsync()
@@ -629,7 +703,7 @@
         try
         {
             var config = ConfigService.GetConfiguration();
-            var serverDir = config.AppSettings.ServerDirectoryPath;
+            var serverDir = config?.AppSettings?.ServerDirectoryPath;
 
             if (string.IsNullOrEmpty(serverDir) || !Directory.Exists(serverDir))
             {
@@ -638,7 +712,7 @@
             }
 
             var possibleWorkshopPaths = new List<string> {
-                config.AppSettings.WorkshopDirectoryPath,
+                config?.AppSettings?.WorkshopDirectoryPath ?? "",
                 Environment.GetEnvironmentVariable("PZ_WORKSHOP_DIR") ?? "",
                 "/project-zomboid-files/steamapps/workshop",
                 "/project-zomboid-files/Workshop",
@@ -674,47 +748,67 @@
 
     private async Task SharePreset(ModPreset p)
     {
-        if (string.IsNullOrEmpty(_config.Cloud.ApiKey))
+        try
         {
-            await NotificationService.ShowWarningAsync("Configura tu API Key en la página de Configuración Global para compartir perfiles.");
-            return;
-        }
+            if (string.IsNullOrEmpty(_config?.Cloud?.ApiKey))
+            {
+                await NotificationService.ShowWarningAsync("Configura tu API Key en la página de Configuración Global para compartir perfiles.");
+                return;
+            }
 
-        var success = await CommunityService.UploadPresetAsync(_config.Cloud.ApiKey, p);
-        if (success)
-        {
-            await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' compartido con éxito.");
+            var success = await CommunityService.UploadPresetAsync(_config.Cloud.ApiKey, p);
+            if (success)
+            {
+                await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' compartido con éxito.");
+            }
+            else
+            {
+                await NotificationService.ShowErrorAsync("Error al subir el perfil.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await NotificationService.ShowErrorAsync("Error al subir el perfil.");
+            await NotificationService.ShowErrorAsync($"Error al compartir perfil: {ex.Message}");
         }
     }
 
     private async Task TriggerUpdate(string workshopId)
     {
-        await ModDiscovery.TriggerModUpdateAsync(workshopId);
-        await NotificationService.ShowInfoAsync($"Se ha solicitado la actualización de {workshopId}. Reinicia el servidor para aplicar.");
+        try
+        {
+            await ModDiscovery.TriggerModUpdateAsync(workshopId);
+            await NotificationService.ShowInfoAsync($"Se ha solicitado la actualización de {workshopId}. Reinicia el servidor para aplicar.");
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al actualizar mod: {ex.Message}");
+        }
     }
 
     private async Task RestartViaRcon()
     {
-        var config = ConfigService.GetConfiguration();
-        var serverDir = config.AppSettings.ServerDirectoryPath;
-        var activeServer = config.AppSettings.ActiveServer ?? "servertest";
-
-        var rconResult = await PzServer.GetRconCredentialsAsync(serverDir, activeServer);
-        int port = rconResult.port;
-        string password = rconResult.password;
-
-        if (string.IsNullOrEmpty(password))
-        {
-            await NotificationService.ShowWarningAsync("RCON no configurado o sin contraseña en el archivo .ini.");
-            return;
-        }
-
         try
         {
+            var config = ConfigService.GetConfiguration();
+            var serverDir = config?.AppSettings?.ServerDirectoryPath;
+            var activeServer = config?.AppSettings?.ActiveServer ?? "servertest";
+
+            if (string.IsNullOrEmpty(serverDir))
+            {
+                await NotificationService.ShowWarningAsync("Directorio del servidor no configurado.");
+                return;
+            }
+
+            var rconResult = await PzServer.GetRconCredentialsAsync(serverDir, activeServer);
+            int port = rconResult.port;
+            string password = rconResult.password;
+
+            if (string.IsNullOrEmpty(password))
+            {
+                await NotificationService.ShowWarningAsync("RCON no configurado o sin contraseña en el archivo .ini.");
+                return;
+            }
+
             var success = await RconService.ConnectAsync("localhost", port, password);
             if (success)
             {
@@ -737,28 +831,49 @@
 
     private async Task LoadCommunityPresets()
     {
-        _communityPresets = await CommunityService.GetCommunityPresetsAsync();
+        try
+        {
+            _communityPresets = await CommunityService.GetCommunityPresetsAsync();
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al cargar perfiles públicos: {ex.Message}");
+        }
         StateHasChanged();
     }
 
     private async Task DownloadCommunityPreset(ModPreset p)
     {
-        await PresetService.SavePresetAsync(p);
-        _presets = await PresetService.GetAllPresetsAsync();
-        await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' importado correctamente.");
+        try
+        {
+            await PresetService.SavePresetAsync(p);
+            _presets = await PresetService.GetAllPresetsAsync();
+            await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' importado correctamente.");
+        }
+        catch (Exception ex)
+        {
+            await NotificationService.ShowErrorAsync($"Error al importar perfil: {ex.Message}");
+        }
     }
 
     private async Task FetchMetadata(string workshopId)
     {
-        var result = await ModDiscovery.FetchSteamMetadataAsync(workshopId);
-        if (result)
+        try
         {
-            await LoadDataAsync();
-            await NotificationService.ShowSuccessAsync(LocService.Get("Mods.MetadataSuccess"));
+            var result = await ModDiscovery.FetchSteamMetadataAsync(workshopId);
+            if (result)
+            {
+                await LoadDataAsync();
+                await NotificationService.ShowSuccessAsync(LocService.Get("Mods.MetadataSuccess"));
+            }
+            else
+            {
+                await NotificationService.ShowWarningAsync(LocService.Get("Mods.MetadataError"));
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await NotificationService.ShowWarningAsync(LocService.Get("Mods.MetadataError"));
+            await NotificationService.ShowErrorAsync($"Error al obtener metadatos: {ex.Message}");
         }
     }
 

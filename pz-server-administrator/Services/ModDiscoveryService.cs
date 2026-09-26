@@ -237,19 +237,22 @@ public class ModDiscoveryService : IModDiscoveryService
             if (titleMatch.Success)
             {
                 using var context = _contextFactory.CreateModsContext();
-                var item = await context!.WorkshopItems.FindAsync(workshopId);
-                if (item != null)
+                if (context != null)
                 {
-                    item.Title = titleMatch.Groups[1].Value.Trim();
-                    if (imageMatch.Success)
+                    var item = await context.WorkshopItems.FindAsync(workshopId);
+                    if (item != null)
                     {
-                        item.ThumbnailPath = imageMatch.Groups[1].Value;
-                    }
-                    item.LastUpdated = DateTime.Now;
+                        item.Title = titleMatch.Groups[1].Value.Trim();
+                        if (imageMatch.Success)
+                        {
+                            item.ThumbnailPath = imageMatch.Groups[1].Value;
+                        }
+                        item.LastUpdated = DateTime.Now;
 
-                    await context.SaveChangesAsync();
-                    _logger.LogInformation("[ModDiscovery] Metadatos actualizados para {Id}: {Title}", workshopId, item.Title);
-                    return true;
+                        await context.SaveChangesAsync();
+                        _logger.LogInformation("[ModDiscovery] Metadatos actualizados para {Id}: {Title}", workshopId, item.Title);
+                        return true;
+                    }
                 }
             }
         }
@@ -617,7 +620,7 @@ public class ModDiscoveryService : IModDiscoveryService
 
         foreach (var mod in activeMods)
         {
-            if (string.IsNullOrEmpty(mod.WorkshopItem.LocalPath)) continue;
+            if (mod.WorkshopItem == null || string.IsNullOrEmpty(mod.WorkshopItem.LocalPath) || !Directory.Exists(mod.WorkshopItem.LocalPath)) continue;
 
             // Buscamos archivos .lua, .ini, .txt (ignoramos media, texturas por ahora)
             var files = Directory.GetFiles(mod.WorkshopItem.LocalPath, "*.*", SearchOption.AllDirectories)
