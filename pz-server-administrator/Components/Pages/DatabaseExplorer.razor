@@ -7,7 +7,7 @@
 @using pz_server_administrator.Data.Database.Vehicles
 @using pz_server_administrator.Data.Database.ServerTest
 @inject IDatabaseContextFactory DatabaseContextFactory
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @implements IDisposable
 
 <PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
@@ -29,10 +29,10 @@
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center"
             HorizontalGap="10">
             <FluentIcon Value="@(new Icons.Regular.Size20.Filter())" />
-            <FluentTextField Value="@_filterText" @oninput="HandleFilterInput"
+            <FluentTextInput Value="@_filterText" @oninput="HandleFilterInput"
                 Placeholder="Buscar en todos los campos..." Style="width: 100%;" Immediate="true">
                 <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
-            </FluentTextField>
+            </FluentTextInput>
             <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="LoadTabData"
                 Title="Refrescar" />
         </FluentStack>
@@ -40,29 +40,29 @@
 
     @if (_isBusy)
     {
-        <FluentProgressRing />
+        <FluentSpinner />
     }
     else if (!_isConfigured)
     {
         <FluentCard>
-            <FluentMessageBar Intent="MessageIntent.Warning">
+            <FluentMessageBar Intent="MessageBarIntent.Warning">
                 El directorio del servidor no está configurado correctamente o no se encontraron los archivos `.db`.
             </FluentMessageBar>
         </FluentCard>
     }
     else
     {
-        <FluentTabs @bind-ActiveTabId="activeTabId" OnTabChange="HandleTabChange" Width="100%">
-            <FluentTab Id="tab-players" Label="Players DB">
+        <FluentTabs @bind-ActiveTabId="activeTabId" @bind-ActiveTabId:after="LoadTabData" Width="100%">
+            <FluentTab Id="tab-players" Header="Players DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
-                    <FluentSelect TValue="string" Items="@_playersTables" @bind-Value="@_selectedPlayerTable"
+                    <FluentSelect TOption="string" TValue="string" Items="@_playersTables" @bind-Value="@_selectedPlayerTable"
                         Label="Seleccionar Tabla" />
 
                     @if (_selectedPlayerTable == "NetworkPlayers" && _netPlayers != null)
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_netPlayers" TGridItem="NetworkPlayer" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(p => p.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Username)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
@@ -70,9 +70,9 @@
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -82,15 +82,15 @@
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_locPlayers" TGridItem="LocalPlayer" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(p => p.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -99,23 +99,23 @@
                 </FluentStack>
             </FluentTab>
 
-            <FluentTab Id="tab-vehicles" Label="Vehicles DB">
+            <FluentTab Id="tab-vehicles" Header="Vehicles DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
                     <FluentLabel Typo="Typography.H6">Tabla: Vehicles</FluentLabel>
                     @if (_vehicles != null)
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_vehicles" TGridItem="Vehicle" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(v => v.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.X)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Y)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Wx)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Wy)" Sortable="true" />
                                 <PropertyColumn Property="@(v => v.Worldversion)" Sortable="true" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -124,24 +124,24 @@
                 </FluentStack>
             </FluentTab>
 
-            <FluentTab Id="tab-server" Label="ServerTest DB">
+            <FluentTab Id="tab-server" Header="ServerTest DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
-                    <FluentSelect TValue="string" Items="@_serverTables" @bind-Value="@_selectedServerTable"
+                    <FluentSelect TOption="string" TValue="string" Items="@_serverTables" @bind-Value="@_selectedServerTable"
                         Label="Seleccionar Tabla" />
 
                     @if (_selectedServerTable == "Whitelist" && _whitelists != null)
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_whitelists" TGridItem="Whitelist" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(w => w.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Username)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Steamid)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.Role)" Sortable="true" />
                                 <PropertyColumn Property="@(w => w.LastConnection)" Sortable="true" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -151,16 +151,16 @@
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_userlogs" TGridItem="Userlog" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(u => u.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.Username)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.Type)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.Amount)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.Text)" Sortable="true" />
                                 <PropertyColumn Property="@(u => u.IssuedBy)" Sortable="true" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -170,15 +170,15 @@
                     {
                         <div class="grid" style="width: 100%; overflow-x: auto; max-height: 600px;">
                             <FluentDataGrid Items="@_tickets" TGridItem="Ticket" Pagination="@pagination"
-                                GenerateHeader="GenerateHeaderOption.Default">
+                                GenerateHeader="DataGridGeneratedHeaderType.Default">
                                 <PropertyColumn Property="@(t => t.Id)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.Author)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.Message)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.Viewed)" Sortable="true" />
                                 <PropertyColumn Property="@(t => t.AnsweredId)" Sortable="true" />
-                                <TemplateColumn Title="Acciones" Align="Align.Center">
-                                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size16.Edit())"
-                                        OnClick="@(() => ShowEditDialog(context))" />
+                                <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
+                                    <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
+                                        OnClick="@(async () => await ShowEditDialog(context))" />
                                 </TemplateColumn>
                             </FluentDataGrid>
                             <FluentPaginator State="@pagination" />
@@ -190,80 +190,81 @@
     }
 </FluentStack>
 
-<FluentDialog @bind-Hidden="@_isDialogHidden" Modal="true" TrapFocus="true" Width="500px">
-    <FluentDialogHeader>
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center"
-            HorizontalGap="10">
-            <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
-            <FluentLabel Typo="Typography.H4">Editar Registro</FluentLabel>
-        </FluentStack>
-    </FluentDialogHeader>
+<FluentDialog @ref="_editDialog" Modal="true">
     <FluentDialogBody>
-        @if (_editingRecord != null)
-        {
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
-                @if (_editingRecord is NetworkPlayer np)
-                {
-                    <FluentTextField Value="@np.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="np.Username" Label="Username" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="np.Name" Label="Nombre" Style="width: 100%" />
-                    <FluentTextField @bind-Value="np.Steamid" Label="Steam ID" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="np.X" Label="Posición X" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="np.Y" Label="Posición Y" Style="width: 100%" />
-                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="¿Está muerto?" />
-                }
-                else if (_editingRecord is LocalPlayer lp)
-                {
-                    <FluentTextField Value="@lp.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="lp.Name" Label="Nombre" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="lp.X" Label="Posición X" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="lp.Y" Label="Posición Y" Style="width: 100%" />
-                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="¿Está muerto?" />
-                }
-                else if (_editingRecord is Vehicle ve)
-                {
-                    <FluentTextField Value="@ve.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentNumberField @bind-Value="ve.X" Label="Posición X" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="ve.Y" Label="Posición Y" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="ve.Wx" Label="World X" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="ve.Wy" Label="World Y" Style="width: 100%" />
-                }
-                else if (_editingRecord is Whitelist w)
-                {
-                    <FluentTextField Value="@w.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="w.Username" Label="Username" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="w.DisplayName" Label="Nombre Visible" Style="width: 100%" />
-                    <FluentTextField @bind-Value="w.Steamid" Label="Steam ID" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="w.Role" Label="Rol (Int)" Style="width: 100%" />
-                    <FluentTextField @bind-Value="w.Password" Label="Contraseña (Hashed)" Style="width: 100%" />
-                }
-                else if (_editingRecord is Userlog u)
-                {
-                    <FluentTextField Value="@u.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="u.Username" Label="Username" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="u.Type" Label="Tipo" Style="width: 100%" />
-                    <FluentNumberField @bind-Value="u.Amount" Label="Cantidad" Style="width: 100%" />
-                    <FluentTextArea @bind-Value="u.Text" Label="Texto / Razón" Rows="3" Style="width: 100%" />
-                }
-                else if (_editingRecord is Ticket t)
-                {
-                    <FluentTextField Value="@t.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                    <FluentTextField @bind-Value="t.Author" Label="Autor" ReadOnly Style="width: 100%" />
-                    <FluentTextArea @bind-Value="t.Message" Label="Mensaje" Rows="4" Style="width: 100%" />
-                    <FluentCheckbox Value="@_boolWrapper" OnChanged="UpdateBoolStatus" Label="Visto" />
-                    <FluentNumberField @bind-Value="t.AnsweredId" Label="ID Respuesta" Style="width: 100%" />
-                }
+        <TitleTemplate>
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="10">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
+                <FluentLabel Typo="Typography.H4">Editar Registro</FluentLabel>
             </FluentStack>
-        }
+        </TitleTemplate>
+        <ChildContent>
+            @if (_editingRecord != null)
+            {
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="padding: 1rem 0;">
+                    @if (_editingRecord is NetworkPlayer np)
+                    {
+                        <FluentTextInput Value="@np.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="np.Username" Label="Username" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="np.Name" Label="Nombre" Style="width: 100%" />
+                        <FluentTextInput @bind-Value="np.Steamid" Label="Steam ID" Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="np.X" Label="Posición X" Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="np.Y" Label="Posición Y" Style="width: 100%" />
+                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                    }
+                    else if (_editingRecord is LocalPlayer lp)
+                    {
+                        <FluentTextInput Value="@lp.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="lp.Name" Label="Nombre" Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="lp.X" Label="Posición X" Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="lp.Y" Label="Posición Y" Style="width: 100%" />
+                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                    }
+                    else if (_editingRecord is Vehicle ve)
+                    {
+                        <FluentTextInput Value="@ve.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="ve.X" Label="Posición X" Style="width: 100%" />
+                        <FluentNumberInput TValue="double?" @bind-Value="ve.Y" Label="Posición Y" Style="width: 100%" />
+                        <FluentNumberInput TValue="int?" @bind-Value="ve.Wx" Label="World X" Style="width: 100%" />
+                        <FluentNumberInput TValue="int?" @bind-Value="ve.Wy" Label="World Y" Style="width: 100%" />
+                    }
+                    else if (_editingRecord is Whitelist w)
+                    {
+                        <FluentTextInput Value="@w.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="w.Username" Label="Username" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="w.DisplayName" Label="Nombre Visible" Style="width: 100%" />
+                        <FluentTextInput @bind-Value="w.Steamid" Label="Steam ID" Style="width: 100%" />
+                        <FluentNumberInput TValue="int" @bind-Value="w.Role" Label="Rol (Int)" Style="width: 100%" />
+                        <FluentTextInput @bind-Value="w.Password" Label="Contraseña (Hashed)" Style="width: 100%" />
+                    }
+                    else if (_editingRecord is Userlog u)
+                    {
+                        <FluentTextInput Value="@u.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="u.Username" Label="Username" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="u.Type" Label="Tipo" Style="width: 100%" />
+                        <FluentNumberInput TValue="int?" @bind-Value="u.Amount" Label="Cantidad" Style="width: 100%" />
+                        <FluentTextArea @bind-Value="u.Text" Label="Texto / Razón" Rows="3" Style="width: 100%" />
+                    }
+                    else if (_editingRecord is Ticket t)
+                    {
+                        <FluentTextInput Value="@t.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                        <FluentTextInput @bind-Value="t.Author" Label="Autor" ReadOnly Style="width: 100%" />
+                        <FluentTextArea @bind-Value="t.Message" Label="Mensaje" Rows="4" Style="width: 100%" />
+                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="Visto" />
+                        <FluentNumberInput TValue="int?" @bind-Value="t.AnsweredId" Label="ID Respuesta" Style="width: 100%" />
+                    }
+                </FluentStack>
+            }
+        </ChildContent>
+        <ActionTemplate>
+            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SaveRecord" Loading="_isSaving">
+                Guardar Cambios
+            </FluentButton>
+            <FluentButton OnClick="CloseEditDialog">
+                Cancelar
+            </FluentButton>
+        </ActionTemplate>
     </FluentDialogBody>
-    <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Accent" OnClick="SaveRecord" Loading="_isSaving">
-            Guardar Cambios
-        </FluentButton>
-        <FluentButton OnClick="@(() => _isDialogHidden = true)">
-            Cancelar
-        </FluentButton>
-    </FluentDialogFooter>
 </FluentDialog>
 
 @code {
@@ -271,7 +272,7 @@
     private bool _isConfigured = false;
     private string activeTabId = "tab-players";
     private string _filterText = "";
-    private bool _isDialogHidden = true;
+    private FluentDialog? _editDialog;
     private object? _editingRecord;
     private bool _isSaving = false;
     private bool _boolWrapper = false;
@@ -314,17 +315,12 @@
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error al cargar bases de datos: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error al cargar bases de datos: {ex.Message}");
         }
         finally
         {
             _isBusy = false;
         }
-    }
-
-    private void HandleTabChange(FluentTab tab)
-    {
-        LoadTabData();
     }
 
     private void HandleFilterInput(ChangeEventArgs e)
@@ -385,7 +381,7 @@
         }
     }
 
-    private void ShowEditDialog(object record)
+    private async Task ShowEditDialog(object record)
     {
         _editingRecord = record;
 
@@ -395,7 +391,14 @@
         else if (record is LocalPlayer lp) _boolWrapper = lp.IsDead ?? false;
         else if (record is Ticket t) _boolWrapper = t.Viewed ?? false;
 
-        _isDialogHidden = false;
+        if (_editDialog != null)
+            await _editDialog.ShowAsync();
+    }
+
+    private async Task CloseEditDialog()
+    {
+        if (_editDialog != null)
+            await _editDialog.HideAsync();
     }
 
     private async Task SaveRecord()
@@ -412,13 +415,13 @@
             else if (_editingRecord is Whitelist || _editingRecord is Userlog || _editingRecord is Ticket)
                 changes = await _serverContext!.SaveChangesAsync();
 
-            ToastService.ShowSuccess($"Éxito: {changes} cambios guardados.");
-            _isDialogHidden = true;
+            await NotificationService.ShowSuccessAsync($"Éxito: {changes} cambios guardados.");
+            await CloseEditDialog();
             LoadTabData();
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
         }
         finally
         {
