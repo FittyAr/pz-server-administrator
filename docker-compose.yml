@@ -41,7 +41,7 @@ services:
   # =========================================================================
   pz-admin:
     build:
-      context: ../pz-server-administrator
+      context: ./pz-server-administrator
       dockerfile: Dockerfile
     container_name: pz-admin
     restart: unless-stopped
@@ -59,9 +59,13 @@ services:
       - PZ_ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - PZ_ADMIN_PASSWORD=${ADMIN_PASSWORD:-CHANGEME}
     volumes:
+      # Datos y configuraciones del servidor Project Zomboid (compartido con indifferentbroccoli)
       - ./server-data:/project-zomboid-config:rw
+      # Archivos binarios del servidor PZ y Steam Workshop (para descubrimiento de mods)
       - ./server-files:/project-zomboid-files:ro
+      # Persistencia propia de la app de administración (config.json, usuarios, roles, etc.)
       - ./admin-config:/app/config:rw
+      # Claves de protección de datos de ASP.NET Core
       - ./admin-config/keys:/root/.aspnet/DataProtection-Keys:rw
     depends_on:
       - projectzomboid
@@ -76,6 +80,7 @@ services:
     container_name: playit-agent
     restart: unless-stopped
     environment:
+      # Si está vacío en el primer inicio, revisa los logs del contenedor para obtener el link de asociación
       - SECRET_KEY=${PLAYIT_SECRET_KEY:-}
     volumes:
       - ./playit-data:/etc/playit

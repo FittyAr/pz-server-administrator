@@ -39,48 +39,74 @@ public class ServerLoggerService : IServerLoggerService
         _configurationService = configurationService;
     }
 
-    private string? GetServerDirectory()
+    private IEnumerable<string> GetPotentialLogRoots()
     {
+        var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var config = _configurationService.GetConfiguration();
-        return config?.AppSettings?.ServerDirectoryPath;
+
+        var serverDir = config?.AppSettings?.ServerDirectoryPath;
+        if (!string.IsNullOrEmpty(serverDir) && Directory.Exists(serverDir))
+        {
+            roots.Add(serverDir);
+            var parent = Directory.GetParent(serverDir)?.FullName;
+            if (!string.IsNullOrEmpty(parent) && Directory.Exists(parent))
+            {
+                roots.Add(parent);
+            }
+        }
+
+        var zomboidDir = config?.AppSettings?.ZomboidDirectory;
+        if (!string.IsNullOrEmpty(zomboidDir) && Directory.Exists(zomboidDir))
+        {
+            roots.Add(zomboidDir);
+        }
+
+        return roots;
     }
 
     public List<LogFileInfo> GetAvailableLogFiles()
     {
-        var rootDir = GetServerDirectory();
-        if (string.IsNullOrEmpty(rootDir) || !Directory.Exists(rootDir)) return new List<LogFileInfo>();
+        var roots = GetPotentialLogRoots();
+        if (!roots.Any()) return new List<LogFileInfo>();
 
         var result = new List<LogFileInfo>();
+        var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Add server-console.txt
-        var serverConsole = Path.Combine(rootDir, "server-console.txt");
-        if (File.Exists(serverConsole))
+        foreach (var rootDir in roots)
         {
-            var info = new FileInfo(serverConsole);
-            result.Add(new LogFileInfo
+            // Add server-console.txt
+            var serverConsole = Path.Combine(rootDir, "server-console.txt");
+            if (File.Exists(serverConsole) && seenPaths.Add(serverConsole))
             {
-                Name = "server-console.txt",
-                RelativePath = "server-console.txt",
-                Size = info.Length,
-                LastModified = info.LastWriteTime
-            });
-        }
-
-        // Add everything in Logs
-        var logsDir = Path.Combine(rootDir, "Logs");
-        if (Directory.Exists(logsDir))
-        {
-            var files = Directory.GetFiles(logsDir, "*.txt", SearchOption.AllDirectories);
-            foreach (var file in files)
-            {
-                var info = new FileInfo(file);
+                var info = new FileInfo(serverConsole);
                 result.Add(new LogFileInfo
                 {
-                    Name = info.Name,
-                    RelativePath = Path.GetRelativePath(rootDir, file),
+                    Name = "server-console.txt",
+                    RelativePath = "server-console.txt",
                     Size = info.Length,
                     LastModified = info.LastWriteTime
                 });
+            }
+
+            // Add everything in Logs
+            var logsDir = Path.Combine(rootDir, "Logs");
+            if (Directory.Exists(logsDir))
+            {
+                var files = Directory.GetFiles(logsDir, "*.txt", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    if (seenPaths.Add(file))
+                    {
+                        var info = new FileInfo(file);
+                        result.Add(new LogFileInfo
+                        {
+                            Name = info.Name,
+                            RelativePath = Path.GetRelativePath(rootDir, file),
+                            Size = info.Length,
+                            LastModified = info.LastWriteTime
+                        });
+                    }
+                }
             }
         }
 
@@ -89,14 +115,24 @@ public class ServerLoggerService : IServerLoggerService
 
     public async Task<string> ReadLogFileAsync(string relativePath, int maxLines = 1000)
     {
-        var rootDir = GetServerDirectory();
-        if (string.IsNullOrEmpty(rootDir)) return string.Empty;
-
         // Path traversal protection
-        if (relativePath.Contains("..")) return string.Empty;
+        if (string.IsNullOrWhiteSpace(relativePath) || relativePath.Contains("..")) return string.Empty;
 
-        var fullPath = Path.Combine(rootDir, relativePath);
-        if (!File.Exists(fullPath)) return string.Empty;
+        var roots = GetPotentialLogRoots();
+        string? targetFile = null;
+
+        foreach (var root in roots)
+        {
+            var candidate = Path.Combine(root, relativePath);
+            if (File.Exists(candidate))
+            {
+                targetFile = candidate;
+                break;
+            }
+        }
+
+        if (targetFile == null) return string.Empty;
+        var fullPath = targetFile;
 
         try
         {

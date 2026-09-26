@@ -1,19 +1,19 @@
 {
   "AppSettings": {
-    "ServerDirectoryPath": "C:\\Users\\Usuario\\Zomboid",
-    "ActiveServer": "debugChunkState-options",
+    "ServerDirectoryPath": "/project-zomboid-config/Server",
+    "ActiveServer": "pzserver",
     "Rcon": {
-      "Host": "127.0.0.1",
+      "Host": "projectzomboid",
       "Port": 27015,
-      "Password": "tu_clave_segura"
+      "Password": ""
     },
-    "ZomboidDirectory": "",
-    "ServerIniPath": "C:\\Users\\Usuario\\Zomboid\\debugChunkState-options.ini",
-    "SandboxVarsPath": "C:\\Users\\Usuario\\Zomboid\\Server\\servertest2_SandboxVars.lua",
-    "SpawnRegionsPath": "",
-    "PlayersDatabasePath": "C:\\Users\\Usuario\\Zomboid\\Saves\\Multiplayer\\servertest\\players.db",
-    "VehiclesDatabasePath": "C:\\Users\\Usuario\\Zomboid\\Saves\\Multiplayer\\servertest_player\\vehicles.db",
-    "ServerTestDatabasePath": "C:\\Users\\Usuario\\Zomboid\\db\\ServerListSteam.db",
+    "ZomboidDirectory": "/project-zomboid-config",
+    "ServerIniPath": "/project-zomboid-config/Server/pzserver.ini",
+    "SandboxVarsPath": "/project-zomboid-config/Server/pzserver_SandboxVars.lua",
+    "SpawnRegionsPath": "/project-zomboid-config/Server/pzserver_spawnregions.lua",
+    "PlayersDatabasePath": "/project-zomboid-config/Saves/Multiplayer/pzserver/players.db",
+    "VehiclesDatabasePath": "/project-zomboid-config/Saves/Multiplayer/pzserver/vehicles.db",
+    "ServerTestDatabasePath": "/project-zomboid-config/db/pzserver.sqlite",
     "ModsDatabasePath": "",
     "Language": "es"
   },

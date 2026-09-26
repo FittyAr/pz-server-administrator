@@ -31,13 +31,17 @@
             {
                 <FluentBadge Appearance="Appearance.Neutral">Desconectado</FluentBadge>
                 <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="5">
-                    <FluentSelect TOption="string" @bind-Value="@_selectedHostOption" Style="width: 220px;" Disabled="@_isConnecting">
+                    <FluentSelect TOption="string" @bind-Value="@_selectedHostOption" Style="width: 260px;" Disabled="@_isConnecting">
+                        @if (!string.IsNullOrEmpty(_configuredHost))
+                        {
+                            <FluentOption TOption="string" Value="@("configured")">Servidor: @_configuredHost</FluentOption>
+                        }
                         @if (!string.IsNullOrEmpty(_detectedIp))
                         {
                             <FluentOption TOption="string" Value="@("auto")">Red Local: @_detectedIp</FluentOption>
                         }
-                        <FluentOption TOption="string" Value="@("docker")">Podman: host.containers.internal</FluentOption>
-                        <FluentOption TOption="string" Value="@("local")">Nativo: 127.0.0.1</FluentOption>
+                        <FluentOption TOption="string" Value="@("docker")">Docker/Podman: host.containers.internal</FluentOption>
+                        <FluentOption TOption="string" Value="@("local")">Localhost: 127.0.0.1</FluentOption>
                         <FluentOption TOption="string" Value="@("custom")">Otra IP o Hostname...</FluentOption>
                     </FluentSelect>
 
@@ -127,6 +131,7 @@
     
     private string _selectedHostOption = "auto";
     private string _customHostInput = "";
+    private string _configuredHost = "";
     
     private string _currentHost = "";
     private int _currentPort = 27015;
@@ -141,8 +146,20 @@
         RconService.OnConnectionStateChanged += UpdateState;
         RconService.OnMessageReceived += HandleIncomingMessage;
         
+        var config = ConfigurationService.GetConfiguration();
+        _configuredHost = config.AppSettings?.Rcon?.Host ?? "";
+
         _detectedIp = DetectLocalIp();
-        if (string.IsNullOrEmpty(_detectedIp))
+
+        if (!string.IsNullOrEmpty(_configuredHost))
+        {
+            _selectedHostOption = "configured";
+        }
+        else if (!string.IsNullOrEmpty(_detectedIp))
+        {
+            _selectedHostOption = "auto";
+        }
+        else
         {
             _selectedHostOption = "docker";
         }
@@ -201,32 +218,27 @@
             var serverPath = config.AppSettings.ServerDirectoryPath;
             var activeServer = config.AppSettings.ActiveServer;
 
-            if (string.IsNullOrEmpty(serverPath) || string.IsNullOrEmpty(activeServer))
-            {
-                _consoleLogs.Add(new RconLog { Message = "Error: Configuración de servidor no encontrada.", IsError = true });
-                return;
-            }
-
             var credentials = await PzServerService.GetRconCredentialsAsync(serverPath, activeServer);
-            var port = credentials.port;
-            var password = credentials.password;
+            var port = credentials.port != 0 ? credentials.port : (config.AppSettings.Rcon.Port != 0 ? config.AppSettings.Rcon.Port : 27015);
+            var password = !string.IsNullOrEmpty(credentials.password) ? credentials.password : config.AppSettings.Rcon.Password;
             
             _currentPort = port;
             
             string targetRaw = _selectedHostOption switch
             {
+                "configured" => _configuredHost,
                 "auto" => _detectedIp,
                 "docker" => "host.containers.internal",
                 "local" => "127.0.0.1",
                 "custom" => _customHostInput,
-                _ => "127.0.0.1"
+                _ => !string.IsNullOrEmpty(_configuredHost) ? _configuredHost : "127.0.0.1"
             };
             
             var host = string.IsNullOrWhiteSpace(targetRaw) ? "127.0.0.1" : targetRaw;
             
             if (string.IsNullOrEmpty(password))
             {
-                _consoleLogs.Add(new RconLog { Message = "Error: No se ha configurado la contraseña RCON en el archivo .ini.", IsError = true });
+                _consoleLogs.Add(new RconLog { Message = "Error: No se ha configurado la contraseña RCON ni en el archivo .ini ni en las variables de entorno/configuración.", IsError = true });
                 return;
             }
 
