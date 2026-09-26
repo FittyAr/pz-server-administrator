@@ -6,6 +6,7 @@
 @inject IAuthenticationService AuthService
 @inject IPasswordHashingService PasswordHashingService
 @inject ILocalizationService LocService
+@inject NavigationManager Navigation
 
 <PageTitle>@LocService.Get("UserManagement.Title") - PZ Server Administrator</PageTitle>
 
@@ -72,104 +73,143 @@
         </FluentStack>
 
         <!-- Create/Edit User Dialog -->
-        <FluentDialog @ref="_userDialog" Modal="true">
-            <FluentDialogBody>
-                <TitleTemplate>
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
-                        @if (IsEditMode)
-                        {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonEdit())" />
-                        }
-                        else
-                        {
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonAdd())" />
-                        }
-                        <FluentLabel Typo="Typography.H5">@(IsEditMode ?
-                            LocService.Get("UserManagement.Dialog.EditUser") :
-                            LocService.Get("UserManagement.Dialog.CreateUser"))</FluentLabel>
-                    </FluentStack>
-                </TitleTemplate>
+        @if (_isUserDialogOpen)
+        {
+            <FluentDialog @ref="_userDialog" Modal="true" Style="width: 520px; max-width: 95vw;">
+                <FluentDialogBody>
+                    <TitleTemplate>
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                            @if (IsEditMode)
+                            {
+                                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonEdit())" Color="Color.Primary" />
+                            }
+                            else
+                            {
+                                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.PersonAdd())" Color="Color.Primary" />
+                            }
+                            <FluentLabel Typo="Typography.H5">@(IsEditMode ?
+                                LocService.Get("UserManagement.Dialog.EditUser") :
+                                LocService.Get("UserManagement.Dialog.CreateUser"))</FluentLabel>
+                        </FluentStack>
+                    </TitleTemplate>
 
-                <ChildContent>
-                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-                        @if (!string.IsNullOrEmpty(DialogErrorMessage))
-                        {
-                            <FluentMessageBar Intent="MessageBarIntent.Error">
-                                @DialogErrorMessage
-                            </FluentMessageBar>
-                        }
+                    <TitleActionTemplate>
+                        <FluentButton Appearance="ButtonAppearance.Subtle"
+                                      IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                                      OnClick="CloseUserDialog"
+                                      Title="@LocService.Get("UserManagement.Dialog.Cancel")" />
+                    </TitleActionTemplate>
 
-                        <FluentTextInput @bind-Value="DialogUsername"
-                            Label="@LocService.Get("UserManagement.Dialog.Username")" Required="true" Disabled="@IsEditMode"
-                            Style="width: 100%" />
+                    <ChildContent>
+                        <div class="modal-form-content">
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                                @if (!string.IsNullOrEmpty(DialogErrorMessage))
+                                {
+                                    <FluentMessageBar Intent="MessageBarIntent.Error">
+                                        @DialogErrorMessage
+                                    </FluentMessageBar>
+                                }
 
-                        @if (!IsEditMode || !string.IsNullOrEmpty(DialogPassword))
-                        {
-                            <FluentTextInput @bind-Value="DialogPassword"
-                                Label="@(IsEditMode ? LocService.Get("UserManagement.Dialog.NewPassword") : LocService.Get("UserManagement.Dialog.Password"))"
-                                TextInputType="TextInputType.Password" Required="@(!IsEditMode)" Style="width: 100%" />
-                        }
+                                <FluentTextInput @bind-Value="DialogUsername"
+                                    Label="@LocService.Get("UserManagement.Dialog.Username")" Required="true" Disabled="@IsEditMode"
+                                    Style="width: 100%" />
 
-                        <FluentSelect TOption="(string Value, string Label)" TValue="string" @bind-Value="DialogRole"
-                            Label="@LocService.Get("UserManagement.Dialog.Role")" Style="width: 100%" Items="@_roleOptions"
-                            OptionText="@(r => r.Label)" OptionValue="@(r => r.Value)" />
+                                @if (!IsEditMode || !string.IsNullOrEmpty(DialogPassword))
+                                {
+                                    <FluentTextInput @bind-Value="DialogPassword"
+                                        Label="@(IsEditMode ? LocService.Get("UserManagement.Dialog.NewPassword") : LocService.Get("UserManagement.Dialog.Password"))"
+                                        TextInputType="TextInputType.Password" Required="@(!IsEditMode)" Style="width: 100%" />
+                                }
 
-                        <FluentCheckbox @bind-Value="DialogIsActive"
-                            Label="@LocService.Get("UserManagement.Dialog.ActiveUser")" />
-                    </FluentStack>
-                </ChildContent>
+                                <FluentSelect TOption="(string Value, string Label)" TValue="string" @bind-Value="DialogRole"
+                                    Label="@LocService.Get("UserManagement.Dialog.Role")" Style="width: 100%" Items="@_roleOptions"
+                                    OptionText="@(r => r.Label)" OptionValue="@(r => r.Value)" />
 
-                <ActionTemplate>
-                    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SaveUser" Loading="@IsDialogLoading"
-                        Disabled="@(IsDialogLoading || string.IsNullOrWhiteSpace(DialogUsername) || (!IsEditMode && string.IsNullOrWhiteSpace(DialogPassword)))">
-                        @(IsEditMode ? LocService.Get("UserManagement.Dialog.Update") :
-                            LocService.Get("UserManagement.Dialog.Create"))
-                    </FluentButton>
+                                <FluentCheckbox @bind-Value="DialogIsActive"
+                                    Label="@LocService.Get("UserManagement.Dialog.ActiveUser")" />
+                            </FluentStack>
+                        </div>
+                    </ChildContent>
 
-                    <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseUserDialog" Disabled="@IsDialogLoading">
-                        @LocService.Get("UserManagement.Dialog.Cancel")
-                    </FluentButton>
-                </ActionTemplate>
-            </FluentDialogBody>
-        </FluentDialog>
+                    <ActionTemplate>
+                        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SaveUser" Loading="@IsDialogLoading"
+                            Disabled="@(IsDialogLoading || string.IsNullOrWhiteSpace(DialogUsername) || (!IsEditMode && string.IsNullOrWhiteSpace(DialogPassword)))">
+                            @(IsEditMode ? LocService.Get("UserManagement.Dialog.Update") :
+                                LocService.Get("UserManagement.Dialog.Create"))
+                        </FluentButton>
+
+                        <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseUserDialog" Disabled="@IsDialogLoading">
+                            @LocService.Get("UserManagement.Dialog.Cancel")
+                        </FluentButton>
+                    </ActionTemplate>
+                </FluentDialogBody>
+            </FluentDialog>
+        }
 
         <!-- Delete Confirmation Dialog -->
-        <FluentDialog @ref="_deleteDialog" Modal="true">
-            <FluentDialogBody>
-                <TitleTemplate>
-                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Warning())"
-                            Color="Color.Error" />
-                        <FluentLabel Typo="Typography.H5">@LocService.Get("UserManagement.DeleteDialog.Title")</FluentLabel>
-                    </FluentStack>
-                </TitleTemplate>
+        @if (_isDeleteDialogOpen)
+        {
+            <FluentDialog @ref="_deleteDialog" Modal="true" Style="width: 440px; max-width: 95vw;">
+                <FluentDialogBody>
+                    <TitleTemplate>
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Warning())"
+                                Color="Color.Error" />
+                            <FluentLabel Typo="Typography.H5">@LocService.Get("UserManagement.DeleteDialog.Title")</FluentLabel>
+                        </FluentStack>
+                    </TitleTemplate>
 
-                <ChildContent>
-                    <FluentLabel Typo="Typography.Body">
-                        @string.Format(LocService.Get("UserManagement.DeleteDialog.Message"), UserToDelete?.Username)
-                        @LocService.Get("UserManagement.DeleteDialog.Warning")
-                    </FluentLabel>
-                </ChildContent>
+                    <TitleActionTemplate>
+                        <FluentButton Appearance="ButtonAppearance.Subtle"
+                                      IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                                      OnClick="CancelDelete"
+                                      Title="@LocService.Get("UserManagement.Dialog.Cancel")" />
+                    </TitleActionTemplate>
 
-                <ActionTemplate>
-                    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="ConfirmDeleteUser" Loading="@IsDeleteLoading">
-                        Eliminar
-                    </FluentButton>
+                    <ChildContent>
+                        <div class="modal-form-content">
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <FluentLabel Typo="Typography.Body">
+                                    @string.Format(LocService.Get("UserManagement.DeleteDialog.Message"), UserToDelete?.Username)
+                                </FluentLabel>
+                                <FluentMessageBar Intent="MessageBarIntent.Warning">
+                                    @LocService.Get("UserManagement.DeleteDialog.Warning")
+                                </FluentMessageBar>
+                            </FluentStack>
+                        </div>
+                    </ChildContent>
 
-                    <FluentButton Appearance="ButtonAppearance.Default" OnClick="CancelDelete" Disabled="@IsDeleteLoading">
-                        Cancelar
-                    </FluentButton>
-                </ActionTemplate>
-            </FluentDialogBody>
-        </FluentDialog>
+                    <ActionTemplate>
+                        <FluentButton Appearance="ButtonAppearance.Primary" OnClick="ConfirmDeleteUser" Loading="@IsDeleteLoading">
+                            @LocService.Get("UserManagement.DeleteDialog.Delete")
+                        </FluentButton>
+
+                        <FluentButton Appearance="ButtonAppearance.Default" OnClick="CancelDelete" Disabled="@IsDeleteLoading">
+                            @LocService.Get("UserManagement.Dialog.Cancel")
+                        </FluentButton>
+                    </ActionTemplate>
+                </FluentDialogBody>
+            </FluentDialog>
+        }
     </ChildContent>
 
     <NotAuthorizedContent>
-        <FluentMessageBar Intent="MessageBarIntent.Warning">
-            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())"
-                Slot="start" />
-            @LocService.Get("UserManagement.NoPermission")
-        </FluentMessageBar>
+        <div class="not-authorized-container">
+            <FluentCard Class="not-authorized-card">
+                <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" VerticalGap="16">
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.ShieldLock())" Color="Color.Primary" />
+                    <FluentLabel Typo="Typography.H4">Acceso Restringido</FluentLabel>
+                    <FluentLabel Typo="Typography.Body">
+                        @LocService.Get("UserManagement.NoPermission")
+                    </FluentLabel>
+                    <FluentButton Appearance="ButtonAppearance.Primary"
+                                  IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.LockClosed())"
+                                  OnClick="NavigateToLogin">
+                        Iniciar Sesión
+                    </FluentButton>
+                </FluentStack>
+            </FluentCard>
+        </div>
     </NotAuthorizedContent>
 </AuthorizedView>
 
@@ -187,6 +227,8 @@
     // Dialog state
     private FluentDialog? _userDialog;
     private FluentDialog? _deleteDialog;
+    private bool _isUserDialogOpen = false;
+    private bool _isDeleteDialogOpen = false;
     private bool IsEditMode = false;
     private bool IsDialogLoading = false;
     private bool IsDeleteLoading = false;
@@ -203,6 +245,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadUsers();
+    }
+
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/login?ReturnUrl=/users");
     }
 
     private async Task LoadUsers()
@@ -233,6 +280,9 @@
         DialogIsActive = true;
         DialogErrorMessage = string.Empty;
         EditingUser = null;
+        _isUserDialogOpen = true;
+        StateHasChanged();
+        await Task.Yield();
         if (_userDialog != null)
             await _userDialog.ShowAsync();
     }
@@ -246,6 +296,9 @@
         DialogIsActive = user.IsActive;
         DialogErrorMessage = string.Empty;
         EditingUser = user;
+        _isUserDialogOpen = true;
+        StateHasChanged();
+        await Task.Yield();
         if (_userDialog != null)
             await _userDialog.ShowAsync();
     }
@@ -299,13 +352,18 @@
     {
         if (_userDialog != null)
             await _userDialog.HideAsync();
+        _isUserDialogOpen = false;
         DialogErrorMessage = string.Empty;
         IsDialogLoading = false;
+        StateHasChanged();
     }
 
     private async Task ShowDeleteConfirmation(AuthUser user)
     {
         UserToDelete = user;
+        _isDeleteDialogOpen = true;
+        StateHasChanged();
+        await Task.Yield();
         if (_deleteDialog != null)
             await _deleteDialog.ShowAsync();
     }
@@ -338,8 +396,10 @@
     {
         if (_deleteDialog != null)
             await _deleteDialog.HideAsync();
+        _isDeleteDialogOpen = false;
         UserToDelete = null;
         IsDeleteLoading = false;
+        StateHasChanged();
     }
 
     private string GetRoleDisplayName(UserRole role)
