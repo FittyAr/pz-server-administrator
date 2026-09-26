@@ -5,9 +5,10 @@
 @inject IPzServerService PzServerService
 @inject IConfigurationService ConfigurationService
 @inject INotificationService NotificationService
+@inject ILocalizationService LocService
 @implements IDisposable
 
-<PageTitle>Consola RCON - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("NavMenu.RconConsole") - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20" Style="height: calc(100vh - 120px);">
     <!-- Header -->
@@ -17,32 +18,32 @@
                 <FluentIcon Value="@(new Icons.Filled.Size24.Stream())" />
             </div>
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
-                <FluentLabel Typo="Typography.H3" Style="margin: 0;">Consola RCON</FluentLabel>
-                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Conexión directa al servidor de Project Zomboid</FluentLabel>
+                <FluentLabel Typo="Typography.H3" Style="margin: 0;">@LocService.Get("NavMenu.RconConsole")</FluentLabel>
+                <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">@LocService.Get("Rcon.Subtitle")</FluentLabel>
             </FluentStack>
             <FluentSpacer />
             
             @if (_isConnected)
             {
-                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Success">Conectado a @_currentHost:@_currentPort</FluentBadge>
-                <FluentButton IconStart="@(new Icons.Regular.Size16.PlugDisconnected())" OnClick="DisconnectRcon" Appearance="ButtonAppearance.Subtle">Desconectar</FluentButton>
+                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Success">@LocService.Get("Rcon.ConnectedTo", $"{_currentHost}:{_currentPort}")</FluentBadge>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.PlugDisconnected())" OnClick="DisconnectRcon" Appearance="ButtonAppearance.Subtle">@LocService.Get("Rcon.Disconnect")</FluentButton>
             }
             else
             {
-                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Warning">Desconectado</FluentBadge>
+                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Warning">@LocService.Get("Rcon.Disconnected")</FluentBadge>
                 <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="5">
                     <FluentSelect TOption="string" TValue="string" @bind-Value="@_selectedHostOption" Style="width: 260px;" Disabled="@_isConnecting">
                         @if (!string.IsNullOrEmpty(_configuredHost))
                         {
-                            <FluentOption TValue="string" Value="@("configured")">Servidor: @_configuredHost</FluentOption>
+                            <FluentOption TValue="string" Value="@("configured")">@LocService.Get("Rcon.ServerConfigured", _configuredHost)</FluentOption>
                         }
                         @if (!string.IsNullOrEmpty(_detectedIp))
                         {
-                            <FluentOption TValue="string" Value="@("auto")">Red Local: @_detectedIp</FluentOption>
+                            <FluentOption TValue="string" Value="@("auto")">@LocService.Get("Rcon.LocalNetwork", _detectedIp)</FluentOption>
                         }
                         <FluentOption TValue="string" Value="@("docker")">Docker/Podman: host.containers.internal</FluentOption>
                         <FluentOption TValue="string" Value="@("local")">Localhost: 127.0.0.1</FluentOption>
-                        <FluentOption TValue="string" Value="@("custom")">Otra IP o Hostname...</FluentOption>
+                        <FluentOption TValue="string" Value="@("custom")">@LocService.Get("Rcon.OtherHost")</FluentOption>
                     </FluentSelect>
 
                     @if (_selectedHostOption == "custom")
@@ -55,7 +56,7 @@
                                   Appearance="ButtonAppearance.Primary" 
                                   Loading="@_isConnecting"
                                   Disabled="@_isConnecting">
-                        @(_isConnecting ? "Conectando..." : "Conectar")
+                        @(_isConnecting ? LocService.Get("Rcon.Connecting") : LocService.Get("Rcon.Connect"))
                     </FluentButton>
                 </FluentStack>
             }
@@ -65,8 +66,8 @@
     <!-- Console Output -->
     <FluentCard Style="padding: 0; overflow: hidden; border-radius: 8px; flex-grow: 1; display: flex; flex-direction: column;">
         <div style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest); display: flex; justify-content: space-between;">
-            <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Salida de la Consola</FluentLabel>
-            <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle" OnClick="ClearConsole">Limpiar</FluentButton>
+            <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">@LocService.Get("Rcon.ConsoleOutput")</FluentLabel>
+            <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle" OnClick="ClearConsole">@LocService.Get("Rcon.Clear")</FluentButton>
         </div>
         <div style="flex-grow: 1; background: #1e1e1e; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; display: flex; flex-direction: column;" id="rcon-console-output">
             @foreach (var log in _consoleLogs)
@@ -78,41 +79,46 @@
 
     <!-- Command Input -->
     <div style="display: flex; gap: 10px; align-items: stretch;">
-        <FluentTextInput @bind-Value="@_commandInput" Placeholder="Escribe un comando RCON (ej: help, players, servermsg Hola)" Style="flex-grow: 1;" Disabled="@(!_isConnected)" @onkeyup="HandleKeyUp" />
-        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size16.Send())" Disabled="@(!_isConnected || string.IsNullOrWhiteSpace(_commandInput))" OnClick="SendCommand">Enviar</FluentButton>
+        <FluentTextInput @bind-Value="@_commandInput" Placeholder="@LocService.Get("Rcon.CommandPlaceholder")" Style="flex-grow: 1;" Disabled="@(!_isConnected)" @onkeyup="HandleKeyUp" />
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size16.Send())" Disabled="@(!_isConnected || string.IsNullOrWhiteSpace(_commandInput))" OnClick="SendCommand">@LocService.Get("Rcon.Send")</FluentButton>
     </div>
     
     <!-- Quick Commands -->
     <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
         <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("help"))" Appearance="ButtonAppearance.Outline">Help</FluentButton>
         <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("players"))" Appearance="ButtonAppearance.Outline">Players</FluentButton>
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="ButtonAppearance.Outline">Save World</FluentButton>
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="ButtonAppearance.Outline">Quit Server</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="ButtonAppearance.Outline">@LocService.Get("Rcon.SaveWorld")</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="ButtonAppearance.Outline">@LocService.Get("Rcon.QuitServer")</FluentButton>
     </FluentStack>
 
     <!-- Troubleshooting Documentation -->
     <FluentAccordion Style="margin-top: 10px;">
-        <FluentAccordionItem Heading="¿Problemas de Conexión? Guía de Solución (Docker / Podman / Windows / Linux)">
-            <div style="padding: 10px; font-size: 0.9em; line-height: 1.5;">
-                <p><strong>Configuración Básica de Project Zomboid</strong></p>
-                <ul>
-                    <li>Asegúrate de que en el archivo <code>servertest.ini</code> tengas configurado un puerto (ej: <code>RCONPort=27015</code>) y una contraseña (ej: <code>RCONPassword=tu_pass</code>). El servidor debe ser reiniciado si haces cambios aquí.</li>
-                </ul>
-                
-                <p><strong>Si usas la app nativa (Linux o Windows sin contenedor)</strong></p>
-                <ul>
-                    <li>Usa la IP <code>127.0.0.1</code> si el servidor PZ está en la misma máquina.</li>
-                    <li>Si el servidor PZ está en otra red, usa su IP pública o local y asegúrate de abrir el puerto en el router/firewall.</li>
-                </ul>
+        <FluentAccordionItem>
+            <HeaderTemplate>
+                <span style="font-weight: 600;">@LocService.Get("Rcon.TroubleshootingTitle")</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <div style="padding: 10px; font-size: 0.9em; line-height: 1.5;">
+                    <p><strong>@LocService.Get("Rcon.TroubleshootingBasic")</strong></p>
+                    <ul>
+                        <li>@LocService.Get("Rcon.TroubleshootingBasicText")</li>
+                    </ul>
+                    
+                    <p><strong>@LocService.Get("Rcon.TroubleshootingNative")</strong></p>
+                    <ul>
+                        <li>@LocService.Get("Rcon.TroubleshootingNativeText1")</li>
+                        <li>@LocService.Get("Rcon.TroubleshootingNativeText2")</li>
+                    </ul>
 
-                <p><strong>Si usas la app en Docker o Podman sobre Windows (El problema más común)</strong></p>
-                <ul>
-                    <li>El servidor de Project Zomboid suele restringir conexiones RCON solo a <code>localhost</code>. Al ejecutar esta app desde un contenedor, la conexión viene desde una red virtual (ej: 10.89.x.x), por lo que PZ o el Firewall de Windows la rechazan indicando <strong>Timeout</strong> o <strong>Connection Refused</strong>.</li>
-                    <li><strong>Solución 1:</strong> Usa la <strong>IP Local IPv4</strong> de tu máquina (ej: <code>192.168.0.x</code>) en lugar de <code>127.0.0.1</code> o <code>host.containers.internal</code>. Para conocerla, abre una consola (cmd) y escribe <code>ipconfig</code>.</li>
-                    <li><strong>Solución 2:</strong> Permite el tráfico de la red del contenedor en PowerShell como Administrador: <br/><code>New-NetFirewallRule -DisplayName "Docker/Podman Subnet" -Direction Inbound -Action Allow -Protocol TCP -RemoteAddress 10.89.0.0/16</code></li>
-                    <li><strong>Solución 3:</strong> Crea un puente de puertos en Windows desde PowerShell como Administrador: <br/><code>netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=27015 connectaddress=127.0.0.1 connectport=27015</code></li>
-                </ul>
-            </div>
+                    <p><strong>@LocService.Get("Rcon.TroubleshootingDocker")</strong></p>
+                    <ul>
+                        <li>@LocService.Get("Rcon.TroubleshootingDockerText1")</li>
+                        <li><strong>@LocService.Get("Rcon.TroubleshootingSol1Title"):</strong> @LocService.Get("Rcon.TroubleshootingSol1Text")</li>
+                        <li><strong>@LocService.Get("Rcon.TroubleshootingSol2Title"):</strong> @LocService.Get("Rcon.TroubleshootingSol2Text") <br/><code>New-NetFirewallRule -DisplayName "Docker/Podman Subnet" -Direction Inbound -Action Allow -Protocol TCP -RemoteAddress 10.89.0.0/16</code></li>
+                        <li><strong>@LocService.Get("Rcon.TroubleshootingSol3Title"):</strong> @LocService.Get("Rcon.TroubleshootingSol3Text") <br/><code>netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=27015 connectaddress=127.0.0.1 connectport=27015</code></li>
+                    </ul>
+                </div>
+            </ChildContent>
         </FluentAccordionItem>
     </FluentAccordion>
 </FluentStack>
@@ -143,6 +149,7 @@
 
     protected override void OnInitialized()
     {
+        LocService.OnLanguageChanged += StateHasChanged;
         RconService.OnConnectionStateChanged += UpdateState;
         RconService.OnMessageReceived += HandleIncomingMessage;
         
@@ -331,5 +338,6 @@
     {
         RconService.OnConnectionStateChanged -= UpdateState;
         RconService.OnMessageReceived -= HandleIncomingMessage;
+        LocService.OnLanguageChanged -= StateHasChanged;
     }
 }

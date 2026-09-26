@@ -5,8 +5,9 @@
 @inject IConfigurationService ConfigurationService
 @inject IPzServerService PzServerService
 @inject INotificationService NotificationService
+@inject ILocalizationService LocService
 
-<PageTitle>Regiones de Spawn - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("NavMenu.SpawnRegions") - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
     <!-- Header Premium con Acciones -->
@@ -20,10 +21,9 @@
                     <FluentIcon Value="@(new Icons.Filled.Size24.Location())" />
                 </div>
                 <div style="display: flex; flex-direction: column;">
-                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Regiones de Spawn
+                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">@LocService.Get("NavMenu.SpawnRegions")
                     </FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gestiona las zonas de aparición inicial
-                    para nuevos jugadores.</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">@LocService.Get("SpawnRegions.Subtitle")</FluentLabel>
                 </div>
             </div>
 
@@ -36,11 +36,11 @@
                     <FluentButton Appearance="@(_editMode == "simple" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "simple")"
                         IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
-                        Visual
+                        @LocService.Get("SpawnRegions.Visual")
                     </FluentButton>
                     <FluentButton Appearance="@(_editMode == "advanced" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
-                        Código LUA
+                        @LocService.Get("SpawnRegions.LuaCode")
                     </FluentButton>
                 </div>
 
@@ -50,10 +50,10 @@
                 @if (_editMode == "simple")
                 {
                     <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="ButtonAppearance.Primary"
-                        OnClick="AddRegion">Nueva Región</FluentButton>
+                        OnClick="AddRegion">@LocService.Get("SpawnRegions.NewRegion")</FluentButton>
                 }
                 <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="ButtonAppearance.Outline"
-                    OnClick="SaveAsync">Guardar</FluentButton>
+                    OnClick="SaveAsync">@LocService.Get("Generic.Save")</FluentButton>
             </FluentStack>
         </FluentStack>
     </div>
@@ -70,8 +70,7 @@
         {
             @if (_regions.Count == 0)
             {
-                <FluentMessageBar Intent="MessageBarIntent.Info">No hay regiones definidas. Usa el botón "Nueva Región" para añadir
-                    una.</FluentMessageBar>
+                <FluentMessageBar Intent="MessageBarIntent.Info">@LocService.Get("SpawnRegions.Empty")</FluentMessageBar>
             }
             else
             {
@@ -82,28 +81,28 @@
                             <FluentCard
                                 Style="padding: 15px; position: relative; border-radius: 8px; border-top: 4px solid var(--accent-fill-rest);">
                                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-                                    <FluentTextInput @bind-Value="region.Name" Label="Nombre de la Región" Style="width: 100%;" />
+                                    <FluentTextInput @bind-Value="region.Name" Label="@LocService.Get("SpawnRegions.RegionName")" Style="width: 100%;" />
 
-                                    <FluentSelect TOption="string" TValue="string" Label="Tipo de Archivo" Value="@GetFileType(region)"
+                                    <FluentSelect TOption="string" TValue="string" Label="@LocService.Get("SpawnRegions.FileType")" Value="@GetFileType(region)"
                                         ValueChanged="@(v => SetFileType(region, v))" Style="width: 100%;">
-                                        <FluentOption TValue="string" Value="@("file")">Mapa Estándar (media/maps/...)</FluentOption>
-                                        <FluentOption TValue="string" Value="@("serverfile")">Archivo del Servidor (serverfile)</FluentOption>
+                                        <FluentOption TValue="string" Value="@("file")">@LocService.Get("SpawnRegions.StandardMap")</FluentOption>
+                                        <FluentOption TValue="string" Value="@("serverfile")">@LocService.Get("SpawnRegions.ServerFile")</FluentOption>
                                     </FluentSelect>
 
                                     @if (GetFileType(region) == "file")
                                     {
-                                        <FluentTextInput @bind-Value="region.File" Label="Ruta LUA" Style="width: 100%;"
+                                        <FluentTextInput @bind-Value="region.File" Label="@LocService.Get("SpawnRegions.LuaPath")" Style="width: 100%;"
                                             Placeholder="Ej: media/maps/Muldraugh, KY/spawnpoints.lua" />
                                     }
                                     else
                                     {
-                                        <FluentTextInput @bind-Value="region.ServerFile" Label="Nombre de Archivo" Style="width: 100%;"
+                                        <FluentTextInput @bind-Value="region.ServerFile" Label="@LocService.Get("SpawnRegions.FileName")" Style="width: 100%;"
                                             Placeholder="Ej: mi_spawn.lua" />
                                     }
 
                                     <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                                         <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle"
-                                            OnClick="@(() => RemoveRegion(region))" Color="Color.Error">Eliminar</FluentButton>
+                                            OnClick="@(() => RemoveRegion(region))" Color="Color.Error">@LocService.Get("Generic.Delete")</FluentButton>
                                     </div>
                                 </FluentStack>
                             </FluentCard>
@@ -118,8 +117,7 @@
                 Style="padding: 0; overflow: hidden; border-radius: 8px; height: calc(100vh - 350px); min-height: 500px;">
                 <div
                     style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest);">
-                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Editor de Texto Plano
-                        (Precaución: La edición incorrecta puede romper el archivo LUA)</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">@LocService.Get("SpawnRegions.RawEditorWarning")</FluentLabel>
                 </div>
                 <FluentTextArea @bind-Value="@_rawContent"
                     Style="width: 100%; height: 100%; font-family: 'Consolas', monospace; border: none; padding: 15px; resize: none;"
@@ -164,7 +162,7 @@
 
     private void AddRegion()
     {
-        var newRegion = new SpawnRegion { Name = "Nueva Región", File = "media/maps/Muldraugh, KY/spawnpoints.lua" };
+        var newRegion = new SpawnRegion { Name = LocService.Get("SpawnRegions.NewRegion"), File = "media/maps/Muldraugh, KY/spawnpoints.lua" };
         _regions?.Add(newRegion);
         _fileTypeMap[newRegion] = "file";
     }
@@ -214,11 +212,11 @@
             }
 
             await LoadDataAsync();
-            await NotificationService.ShowSuccessAsync("Regiones de spawn guardadas correctamente.");
+            await NotificationService.ShowSuccessAsync(LocService.Get("Generic.SaveSuccess"));
         }
         catch (Exception ex)
         {
-            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"{LocService.Get("Generic.SaveError")}: {ex.Message}");
         }
     }
 }

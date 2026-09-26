@@ -6,7 +6,7 @@
 @implements IDisposable
 
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right"
-    VerticalAlignment="VerticalAlignment.Center" Gap="8">
+    VerticalAlignment="VerticalAlignment.Center" Gap="8" Style="width: auto;">
     @if (AuthService.CurrentState.IsAuthenticated)
     {
         <FluentAvatar Name="@AuthService.CurrentState.CurrentUser?.Username"

@@ -12,6 +12,7 @@
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
     <label for="navmenu-toggle" class="navmenu-icon">
         <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Default" />
+        <span class="navmenu-toggle-text">@LocService.Get("NavMenu.ToggleMenu")</span>
     </label>
     <nav class="sitenav" aria-labelledby="main-menu">
         <FluentNav Id="main-menu" Width="250">

@@ -3,6 +3,7 @@
 @using pz_server_administrator.Services
 @inject IPzServerService PzServerService
 @inject INotificationService NotificationService
+@inject ILocalizationService LocService
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
     <FluentCard Style="padding: 10px; width: 100%;">
@@ -11,22 +12,22 @@
             <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="5" Style="flex-grow: 1;">
                 <FluentButton IconStart="@(new Icons.Regular.Size16.Options())"
                     Appearance="@(_editMode == EditMode.Simple ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
-                    OnClick="@(() => _editMode = EditMode.Simple)">Simple</FluentButton>
+                    OnClick="@(() => _editMode = EditMode.Simple)">@LocService.Get("ConfigEditor.Simple")</FluentButton>
                 <FluentButton IconStart="@(new Icons.Regular.Size16.Code())"
                     Appearance="@(_editMode == EditMode.Advanced ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
-                    OnClick="@(() => _editMode = EditMode.Advanced)">Avanzado</FluentButton>
+                    OnClick="@(() => _editMode = EditMode.Advanced)">@LocService.Get("ConfigEditor.Advanced")</FluentButton>
                 <FluentDivider Role="DividerRole.Separator" Orientation="Orientation.Vertical" />
                 <FluentButton IconStart="@(new Icons.Regular.Size16.Save())" Appearance="ButtonAppearance.Primary"
                     OnClick="SaveAsync">
-                    Guardar</FluentButton>
+                    @LocService.Get("Generic.Save")</FluentButton>
                 <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowCounterclockwise())" OnClick="LoadAsync">
-                    Recargar
+                    @LocService.Get("Generic.Reload")
                 </FluentButton>
             </FluentStack>
 
             @if (_editMode == EditMode.Simple)
             {
-                <FluentTextInput TextInputType="TextInputType.Search" @bind-Value="_searchText" Placeholder="Buscar configuración..." Style="width: 300px;" />
+                <FluentTextInput TextInputType="TextInputType.Search" @bind-Value="_searchText" Placeholder="@LocService.Get("ConfigEditor.Search")" Style="width: 300px;" />
             }
         </FluentStack>
     </FluentCard>
@@ -62,7 +63,7 @@
                                                     {
                                                         <FluentCheckbox Value="@GetBoolValue(entry)"
                                                             ValueChanged="@(v => SetBoolValue(entry, v))"
-                                                            Label="@(string.IsNullOrEmpty(entry.Description) ? "Activar" : entry.Description)" />
+                                                            Label="@LocService.Get("Generic.Enable")" />
                                                     }
                                                     else if (entry.Type == "Integer" || entry.Type == "Float")
                                                     {
@@ -77,10 +78,10 @@
                                                     }
                                                 </div>
 
-                                                @if (!string.IsNullOrEmpty(entry.Description) && entry.Type != "Boolean")
+                                                @if (!string.IsNullOrEmpty(entry.Description))
                                                 {
                                                     <FluentLabel Typo="Typography.Body"
-                                                        Style="font-style: italic; opacity: 0.8; font-size: 0.85em;">
+                                                        Style="font-style: italic; opacity: 0.8; font-size: 0.85em; white-space: pre-line;">
                                                         @entry.Description
                                                     </FluentLabel>
                                                 }
@@ -135,7 +136,11 @@
 
         // Use prefix as category if none of the above matches
         var parts = key.Split('_', 2);
-        if (parts.Length > 1 && parts[0].Length > 2) return parts[0];
+        if (parts.Length > 1 && parts[0].Length > 2)
+        {
+            var prefix = parts[0];
+            return char.ToUpper(prefix[0]) + prefix.Substring(1);
+        }
 
         return "General";
     }
@@ -193,11 +198,11 @@
                 await PzServerService.SaveFileContentAsync(FilePath, _rawContent);
                 _config = await PzServerService.ParseConfigAsync(FilePath);
             }
-            await NotificationService.ShowSuccessAsync("Configuración guardada correctamente.");
+            await NotificationService.ShowSuccessAsync(LocService.Get("Generic.SaveSuccess"));
         }
         catch (Exception ex)
         {
-            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"{LocService.Get("Generic.SaveError")}: {ex.Message}");
         }
         finally
         {

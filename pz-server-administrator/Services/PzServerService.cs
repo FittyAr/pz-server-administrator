@@ -121,7 +121,8 @@ public class PzServerService : IPzServerService
 
             if (trimmed.StartsWith("#") || trimmed.StartsWith(";"))
             {
-                lastComment = trimmed.TrimStart('#', ';', ' ').Trim();
+                var commentLine = trimmed.TrimStart('#', ';', ' ').Trim();
+                lastComment = string.IsNullOrEmpty(lastComment) ? commentLine : $"{lastComment}\n{commentLine}";
                 continue;
             }
 
@@ -164,7 +165,8 @@ public class PzServerService : IPzServerService
 
             if (trimmed.StartsWith("--"))
             {
-                lastComment = trimmed.TrimStart('-', ' ').Trim();
+                var commentLine = trimmed.TrimStart('-', ' ').Trim();
+                lastComment = string.IsNullOrEmpty(lastComment) ? commentLine : $"{lastComment}\n{commentLine}";
                 continue;
             }
 

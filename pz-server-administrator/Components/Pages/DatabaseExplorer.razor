@@ -8,19 +8,20 @@
 @using pz_server_administrator.Data.Database.ServerTest
 @inject IDatabaseContextFactory DatabaseContextFactory
 @inject INotificationService NotificationService
+@inject ILocalizationService LocService
 @implements IDisposable
 
-<PageTitle>Database Explorer - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("DatabaseExplorer.Title") - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20" Width="100%">
     <FluentCard>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
             <FluentLabel Typo="Typography.H3">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Database())" />
-                Explorador de Base de Datos (EF Core)
+                @LocService.Get("DatabaseExplorer.Title")
             </FluentLabel>
             <FluentLabel Typo="Typography.Body">
-                Explora y edita directamente las bases de datos SQlite del servidor (Players, Vehicles, ServerTest).
+                @LocService.Get("DatabaseExplorer.Description")
             </FluentLabel>
         </FluentStack>
     </FluentCard>
@@ -30,11 +31,11 @@
             HorizontalGap="10">
             <FluentIcon Value="@(new Icons.Regular.Size20.Filter())" />
             <FluentTextInput Value="@_filterText" @oninput="HandleFilterInput"
-                Placeholder="Buscar en todos los campos..." Style="width: 100%;" Immediate="true">
+                Placeholder="@LocService.Get("DatabaseExplorer.SearchPlaceholder")" Style="width: 100%;" Immediate="true">
                 <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
             </FluentTextInput>
             <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="LoadTabData"
-                Title="Refrescar" />
+                Title="@LocService.Get("DatabaseExplorer.Refresh")" />
         </FluentStack>
     </FluentCard>
 
@@ -56,7 +57,7 @@
             <FluentTab Id="tab-players" Header="Players DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
                     <FluentSelect TOption="string" TValue="string" Items="@_playersTables" @bind-Value="@_selectedPlayerTable"
-                        Label="Seleccionar Tabla" />
+                        Label="@LocService.Get("DatabaseExplorer.SelectTable")" />
 
                     @if (_selectedPlayerTable == "NetworkPlayers" && _netPlayers != null)
                     {
@@ -69,7 +70,7 @@
                                 <PropertyColumn Property="@(p => p.Steamid)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
-                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="@LocService.Get("DatabaseExplorer.Dead")" />
                                 <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
                                     <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
                                         OnClick="@(async () => await ShowEditDialog(context))" />
@@ -87,7 +88,7 @@
                                 <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.X)" Sortable="true" />
                                 <PropertyColumn Property="@(p => p.Y)" Sortable="true" />
-                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="Dead?" />
+                                <PropertyColumn Property="@(p => p.IsDead)" Sortable="true" Title="@LocService.Get("DatabaseExplorer.Dead")" />
                                 <TemplateColumn Title="Acciones" Align="DataGridCellAlignment.Center">
                                     <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Edit())"
                                         OnClick="@(async () => await ShowEditDialog(context))" />
@@ -127,7 +128,7 @@
             <FluentTab Id="tab-server" Header="ServerTest DB">
                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="margin-top: 15px;">
                     <FluentSelect TOption="string" TValue="string" Items="@_serverTables" @bind-Value="@_selectedServerTable"
-                        Label="Seleccionar Tabla" />
+                        Label="@LocService.Get("DatabaseExplorer.SelectTable")" />
 
                     @if (_selectedServerTable == "Whitelist" && _whitelists != null)
                     {

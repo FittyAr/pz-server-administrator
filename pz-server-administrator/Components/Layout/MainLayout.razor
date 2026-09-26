@@ -7,11 +7,10 @@
 
 <FluentLayout>
     <FluentLayoutItem Area="LayoutArea.Header">
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Width="100%">
-            <FluentLabel Typo="Typography.H4" Color="Color.Primary">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Width="100%" Style="gap: 12px; padding: 0 4px;">
+            <FluentLabel Typo="Typography.H5" Color="Color.Primary" Style="margin: 0; font-weight: 600;">
                 @LocService.Get("MainLayout.Title")
             </FluentLabel>
-            <FluentSpacer />
             @if (!string.IsNullOrEmpty(ActiveServerName))
             {
                 <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand" IconStart="@(new Icons.Regular.Size16.Server())">
@@ -40,10 +39,14 @@
         </FluentLayoutItem>
     </FluentStack>
     <FluentLayoutItem Area="LayoutArea.Footer">
-        <a href="https://www.fluentui-blazor.net" target="_blank">@LocService.Get("MainLayout.DocsAndDemos")</a>
+        <FluentLabel Typo="Typography.Body" Style="font-size: 0.85em; opacity: 0.8;">
+            Project Zomboid Server Administrator
+        </FluentLabel>
         <FluentSpacer />
-        <a href="https://learn.microsoft.com/en-us/aspnet/core/blazor"
-            target="_blank">@LocService.Get("MainLayout.AboutBlazor")</a>
+        <a href="https://github.com/FittyAr/pz-server-administrator" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em;">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Code())" />
+            GitHub
+        </a>
     </FluentLayoutItem>
 </FluentLayout>
 

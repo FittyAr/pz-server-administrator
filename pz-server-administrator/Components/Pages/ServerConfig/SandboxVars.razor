@@ -2,9 +2,9 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
+@inject ILocalizationService LocService
 
-
-<PageTitle>Sandbox Variables - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("NavMenu.SandboxVars") - Project Zomboid Server Administrator</PageTitle>
 
 <div
     style="background: var(--neutral-fill-layer-rest); padding: 20px; border-radius: 8px; border-left: 6px solid var(--accent-fill-rest); margin-bottom: 20px;">
@@ -14,9 +14,8 @@
             <FluentIcon Value="@(new Icons.Filled.Size24.Box())" />
         </div>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
-            <FluentLabel Typo="Typography.H3" Style="margin: 0;">Parámetros del Sandbox</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Define las reglas del mundo, población zombie y
-                mecánicas de juego.</FluentLabel>
+            <FluentLabel Typo="Typography.H3" Style="margin: 0;">@LocService.Get("SandboxVars.Title")</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">@LocService.Get("SandboxVars.Description")</FluentLabel>
         </FluentStack>
     </FluentStack>
 </div>
@@ -27,8 +26,8 @@
 }
 else
 {
-    <FluentMessageBar Title="Error" Intent="@MessageBarIntent.Error">
-        No se ha configurado la ruta del servidor o el archivo no existe.
+    <FluentMessageBar Title="@LocService.Get("Generic.Error")" Intent="@MessageBarIntent.Error">
+        @LocService.Get("SandboxVars.FileNotFound")
     </FluentMessageBar>
 }
 

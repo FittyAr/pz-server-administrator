@@ -15,11 +15,13 @@ public class CommunityService : ICommunityService
 {
     private readonly ILogger<CommunityService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILocalizationService _locService;
 
-    public CommunityService(ILogger<CommunityService> logger, IHttpClientFactory httpClientFactory)
+    public CommunityService(ILogger<CommunityService> logger, IHttpClientFactory httpClientFactory, ILocalizationService locService)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _locService = locService;
     }
 
     public async Task ReportConfigurationAsync(string apiKey, List<ModInstance> activeMods)
@@ -45,7 +47,7 @@ public class CommunityService : ICommunityService
     public async Task<string> GetGlobalRecommendationsAsync()
     {
         // Mock de recomendaciones globales basada en comunidad.
-        return await Task.FromResult("🔥 Mod Tendencia: 'Common Sense' - 98% de servidores lo usan.");
+        return await Task.FromResult($"🔥 {_locService.Get("Mods.TrendingMod", "Common Sense", 98)}");
     }
 
     public async Task SyncIncompatibilitiesAsync(string apiKey)

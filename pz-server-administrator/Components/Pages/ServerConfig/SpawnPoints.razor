@@ -5,8 +5,9 @@
 @inject IConfigurationService ConfigurationService
 @inject IPzServerService PzServerService
 @inject INotificationService NotificationService
+@inject ILocalizationService LocService
 
-<PageTitle>Puntos de Spawn - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("NavMenu.SpawnPoints") - Project Zomboid Server Administrator</PageTitle>
 
 <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
     <!-- Header Premium con Acciones -->
@@ -20,10 +21,9 @@
                     <FluentIcon Value="@(new Icons.Filled.Size24.Circle())" />
                 </div>
                 <div style="display: flex; flex-direction: column;">
-                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Puntos de Spawn por Profesión
+                    <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">@LocService.Get("NavMenu.SpawnPoints")
                     </FluentLabel>
-                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Configura las coordenadas de aparición
-                    según el rol del jugador.</FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">@LocService.Get("SpawnPoints.Subtitle")</FluentLabel>
                 </div>
             </div>
 
@@ -36,11 +36,11 @@
                     <FluentButton Appearance="@(_editMode == "simple" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "simple")"
                         IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
-                        Visual
+                        @LocService.Get("SpawnRegions.Visual")
                     </FluentButton>
                     <FluentButton Appearance="@(_editMode == "advanced" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
-                        Código LUA
+                        @LocService.Get("SpawnRegions.LuaCode")
                     </FluentButton>
                 </div>
 
@@ -50,10 +50,10 @@
                 @if (_editMode == "simple")
                 {
                     <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="ButtonAppearance.Primary"
-                        OnClick="AddProfession">Nueva Profesión</FluentButton>
+                        OnClick="AddProfession">@LocService.Get("SpawnPoints.NewProfession")</FluentButton>
                 }
                 <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="ButtonAppearance.Outline"
-                    OnClick="SaveAsync">Guardar</FluentButton>
+                    OnClick="SaveAsync">@LocService.Get("Generic.Save")</FluentButton>
             </FluentStack>
         </FluentStack>
     </div>
@@ -70,24 +70,23 @@
         {
             @if (_config.ProfessionPoints.Count == 0)
             {
-                <FluentMessageBar Intent="MessageBarIntent.Info">No hay puntos definidos. Usa "Nueva Profesión" para empezar.
-                </FluentMessageBar>
+                <FluentMessageBar Intent="MessageBarIntent.Info">@LocService.Get("SpawnPoints.Empty")</FluentMessageBar>
             }
             else
             {
                 <FluentTabs
-                    Style="width: 100%; border: 1px solid var(--neutral-stroke-rest); border-radius: 12px; padding: 10px; background: white;">
+                    Style="width: 100%; border: 1px solid var(--neutral-stroke-rest); border-radius: 12px; padding: 10px; background: var(--neutral-fill-layer-rest);">
                     @foreach (var prof in _config.ProfessionPoints)
                     {
                         <FluentTab Header="@prof.Key" IconStart="@(new Icons.Regular.Size16.Person())">
                             <div style="padding: 20px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                                    <FluentLabel Typo="Typography.H5">Pestaña: @prof.Key</FluentLabel>
+                                    <FluentLabel Typo="Typography.H5">@LocService.Get("SpawnPoints.Tab", prof.Key)</FluentLabel>
                                     <FluentSpacer />
                                     <FluentButton IconStart="@(new Icons.Regular.Size16.Add())" OnClick="@(() => AddPoint(prof.Key))"
-                                        Style="margin-right: 10px;">Añadir Punto</FluentButton>
+                                        Style="margin-right: 10px;">@LocService.Get("SpawnPoints.AddPoint")</FluentButton>
                                     <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle"
-                                        Color="Color.Error" OnClick="@(() => RemoveProfession(prof.Key))">Eliminar Rol</FluentButton>
+                                        Color="Color.Error" OnClick="@(() => RemoveProfession(prof.Key))">@LocService.Get("SpawnPoints.RemoveRole")</FluentButton>
                                 </div>
 
                                 <FluentGrid Spacing="3">
@@ -98,7 +97,7 @@
                                                 Style="padding: 15px; border-left: 4px solid var(--accent-fill-rest); border-radius: 8px;">
                                                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
                                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                                        <FluentLabel Typo="Typography.Body">Coordenadas</FluentLabel>
+                                                        <FluentLabel Typo="Typography.Body">@LocService.Get("SpawnPoints.Coordinates")</FluentLabel>
                                                         <FluentButton IconStart="@(new Icons.Regular.Size16.Dismiss())"
                                                             Appearance="ButtonAppearance.Subtle" OnClick="@(() => prof.Value.Remove(point))" />
                                                     </div>
@@ -107,7 +106,7 @@
                                                     <FluentNumberInput TValue="int" @bind-Value="point.WorldY" Label="World Y" Style="width: 100%;" />
                                                     <FluentNumberInput TValue="int" @bind-Value="point.PosX" Label="Pos X" Style="width: 100%;" />
                                                     <FluentNumberInput TValue="int" @bind-Value="point.PosY" Label="Pos Y" Style="width: 100%;" />
-                                                    <FluentNumberInput TValue="int" @bind-Value="point.PosZ" Label="Pos Z (Piso)" Style="width: 100%;" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.PosZ" Label="@LocService.Get("SpawnPoints.Floor")" Style="width: 100%;" />
                                                 </FluentStack>
                                             </FluentCard>
                                         </FluentGridItem>
@@ -125,8 +124,7 @@
                 Style="padding: 0; overflow: hidden; border-radius: 8px; height: calc(100vh - 350px); min-height: 500px;">
                 <div
                     style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest);">
-                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Editor de Texto Plano (Avanzado)
-                    </FluentLabel>
+                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">@LocService.Get("SpawnPoints.RawEditor")</FluentLabel>
                 </div>
                 <FluentTextArea @bind-Value="@_rawContent"
                     Style="width: 100%; height: 100%; font-family: 'Consolas', monospace; border: none; padding: 15px; resize: none;"
@@ -203,11 +201,11 @@
             }
 
             await LoadDataAsync();
-            await NotificationService.ShowSuccessAsync("Puntos de spawn guardados correctamente.");
+            await NotificationService.ShowSuccessAsync(LocService.Get("Generic.SaveSuccess"));
         }
         catch (Exception ex)
         {
-            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"{LocService.Get("Generic.SaveError")}: {ex.Message}");
         }
     }
 }

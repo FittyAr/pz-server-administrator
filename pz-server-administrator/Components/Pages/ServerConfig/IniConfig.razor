@@ -2,9 +2,9 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
+@inject ILocalizationService LocService
 
-
-<PageTitle>INI Configuration - Project Zomboid Server Administrator</PageTitle>
+<PageTitle>@LocService.Get("NavMenu.IniConfig") - Project Zomboid Server Administrator</PageTitle>
 
 <div
     style="background: var(--neutral-fill-layer-rest); padding: 20px; border-radius: 8px; border-left: 6px solid var(--accent-fill-rest); margin-bottom: 20px;">
@@ -14,24 +14,20 @@
             <FluentIcon Value="@(new Icons.Filled.Size24.Settings())" />
         </div>
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="0">
-            <FluentLabel Typo="Typography.H3" Style="margin: 0;">Configuración del Servidor (INI)</FluentLabel>
-            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gestiona las reglas técnicas y de red del servidor
-                Project Zomboid.</FluentLabel>
+            <FluentLabel Typo="Typography.H3" Style="margin: 0;">@LocService.Get("IniConfig.Title")</FluentLabel>
+            <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">@LocService.Get("IniConfig.Description")</FluentLabel>
         </FluentStack>
     </FluentStack>
 </div>
 
 @if (!string.IsNullOrEmpty(_iniPath))
-
 {
     <ConfigEditorComponent FilePath="@_iniPath" />
 }
-
 else
-
 {
-    <FluentMessageBar Title="Error" Intent="@MessageBarIntent.Error">
-        No se ha configurado la ruta del servidor o el archivo no existe.
+    <FluentMessageBar Title="@LocService.Get("Generic.Error")" Intent="@MessageBarIntent.Error">
+        @LocService.Get("IniConfig.FileNotFound")
     </FluentMessageBar>
 }
 
