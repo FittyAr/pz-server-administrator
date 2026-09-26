@@ -18,7 +18,7 @@
         <FluentStack Orientation="Orientation.Vertical" VerticalGap="24">
             <!-- Header -->
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="8" HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.LockClosed())" Color="Color.Accent" />
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size48.LockClosed())" Color="Color.Primary" />
                 <FluentLabel Typo="Typography.H4">PZ Server Administrator</FluentLabel>
                 <FluentLabel Typo="Typography.Body">@LocService.Get("Login.Title")</FluentLabel>
             </FluentStack>
@@ -26,7 +26,7 @@
             <!-- Error Message -->
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
-                <FluentMessageBar Intent="MessageIntent.Error">
+                <FluentMessageBar Intent="MessageBarIntent.Error">
                     @ErrorMessage
                 </FluentMessageBar>
             }
@@ -34,29 +34,29 @@
             <!-- Success Message -->
             @if (!string.IsNullOrEmpty(SuccessMessage))
             {
-                <FluentMessageBar Intent="MessageIntent.Success">
+                <FluentMessageBar Intent="MessageBarIntent.Success">
                     @SuccessMessage
                 </FluentMessageBar>
             }
             
             <!-- Login Form -->
             <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-                <FluentTextField @bind-Value="Username" 
+                <FluentTextInput @bind-Value="Username" 
                                Placeholder="@LocService.Get("Login.Username")"
                                Label="@LocService.Get("Login.Username")"
                                Required="true"
                                Style="width: 100%"
                                @onkeypress="HandleKeyPress" />
                 
-                <FluentTextField @bind-Value="Password" 
+                <FluentTextInput @bind-Value="Password" 
                                Placeholder="@LocService.Get("Login.Password")"
                                Label="@LocService.Get("Login.Password")"
-                               TextFieldType="TextFieldType.Password"
+                               TextInputType="TextInputType.Password"
                                Required="true"
                                Style="width: 100%"
                                @onkeypress="HandleKeyPress" />
                 
-                <FluentButton Appearance="Appearance.Accent" 
+                <FluentButton Appearance="ButtonAppearance.Primary" 
                              OnClick="HandleLogin"
                              Loading="@IsLoading"
                              Disabled="@(IsLoading || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))"

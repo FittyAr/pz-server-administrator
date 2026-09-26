@@ -13,7 +13,7 @@ else if (NotAuthorizedContent != null)
 }
 else if (ShowDefaultUnauthorized)
 {
-    <FluentMessageBar Intent="MessageIntent.Warning">
+    <FluentMessageBar Intent="MessageBarIntent.Warning">
         <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())" Slot="start" />
         No tienes permisos para acceder a este contenido.
         @if (!AuthService.CurrentState.IsAuthenticated)

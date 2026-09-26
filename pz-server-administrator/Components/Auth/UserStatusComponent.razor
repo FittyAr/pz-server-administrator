@@ -9,50 +9,47 @@
     VerticalAlignment="VerticalAlignment.Center">
     @if (AuthService.CurrentState.IsAuthenticated)
     {
-        <FluentPersona Name="@AuthService.CurrentState.CurrentUser?.Username"
-            SecondaryText="@GetRoleDisplayName(AuthService.CurrentState.CurrentRole)" Size="PersonaSize.Size32"
-            ImageInitials="@GetUserInitials(AuthService.CurrentState.CurrentUser?.Username)" />
+        <FluentAvatar Name="@AuthService.CurrentState.CurrentUser?.Username"
+            Size="AvatarSize.Size32"
+            Initials="@GetUserInitials(AuthService.CurrentState.CurrentUser?.Username)" />
 
         <FluentButton Id="user-menu-button"
             IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Person())"
-            Appearance="Appearance.Stealth" OnClick="ToggleUserMenu">
+            Appearance="ButtonAppearance.Subtle" OnClick="ToggleUserMenu">
             @AuthService.CurrentState.CurrentUser?.Username
         </FluentButton>
 
-        <FluentPopover AnchorId="user-menu-button" @bind-Open="_isUserMenuOpen">
+        <FluentPopover AnchorId="user-menu-button" @bind-Opened="_isUserMenuOpen">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
+                <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="ShowUserInfo"
+                    Style="width: 100%; justify-content: flex-start;">
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())"
+                        Slot="start" />
+                    @LocService.Get("UserStatus.UserInfo")
+                </FluentButton>
 
-            <Body>
-                <FluentStack Orientation="Orientation.Vertical" VerticalGap="5">
-                    <FluentButton Appearance="Appearance.Stealth" OnClick="ShowUserInfo"
+                @if (AuthService.HasPermission(p => p.AllowConfigEdit))
+                {
+                    <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="NavigateToSettings"
                         Style="width: 100%; justify-content: flex-start;">
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Info())"
+                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Settings())"
                             Slot="start" />
-                        @LocService.Get("UserStatus.UserInfo")
+                        @LocService.Get("NavMenu.AppConfiguration")
                     </FluentButton>
+                }
 
-                    @if (AuthService.HasPermission(p => p.AllowConfigEdit))
-                    {
-                        <FluentButton Appearance="Appearance.Stealth" OnClick="NavigateToSettings"
-                            Style="width: 100%; justify-content: flex-start;">
-                            <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Settings())"
-                                Slot="start" />
-                            @LocService.Get("NavMenu.AppConfiguration")
-                        </FluentButton>
-                    }
-
-                    <FluentButton Appearance="Appearance.Stealth" OnClick="HandleLogout"
-                        Style="width: 100%; justify-content: flex-start;">
-                        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowExit())"
-                            Slot="start" />
-                        @LocService.Get("UserStatus.Logout")
-                    </FluentButton>
-                </FluentStack>
-            </Body>
+                <FluentButton Appearance="ButtonAppearance.Subtle" OnClick="HandleLogout"
+                    Style="width: 100%; justify-content: flex-start;">
+                    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.ArrowExit())"
+                        Slot="start" />
+                    @LocService.Get("UserStatus.Logout")
+                </FluentButton>
+            </FluentStack>
         </FluentPopover>
     }
     else
     {
-        <FluentButton Appearance="Appearance.Accent"
+        <FluentButton Appearance="ButtonAppearance.Primary"
             IconStart="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.LockClosed())"
             OnClick="NavigateToLogin">
             @LocService.Get("UserStatus.Login")
@@ -63,66 +60,70 @@
 
 
 <!-- User Info Dialog -->
-<FluentDialog @bind-Hidden="@IsUserInfoHidden" Modal="true">
-    <FluentDialogHeader>
-        <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Person())" />
-        <FluentLabel Typo="Typography.H5">@LocService.Get("UserStatus.UserInfoTitle")</FluentLabel>
-    </FluentDialogHeader>
-
+<FluentDialog @ref="_userInfoDialog" Modal="true">
     <FluentDialogBody>
-        @if (AuthService.CurrentState.IsAuthenticated && AuthService.CurrentState.CurrentUser != null)
-        {
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
-                <FluentCard>
-                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="8">
-                        <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Username"):</strong>
-                            @AuthService.CurrentState.CurrentUser.Username</FluentLabel>
-                        <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Role"):</strong>
-                            @GetRoleDisplayName(AuthService.CurrentState.CurrentRole)</FluentLabel>
-                        <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Status"):</strong>
-                            @(AuthService.CurrentState.CurrentUser.IsActive ? LocService.Get("UserStatus.Active") :
-                                LocService.Get("UserStatus.Inactive"))</FluentLabel>
-                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Created"):</strong>
-                                @AuthService.CurrentState.CurrentUser.CreatedAt.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
-                            @if (AuthService.CurrentState.CurrentUser.LastLoginAt.HasValue)
-                        {
-                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.LastLogin"):</strong>
-                                @AuthService.CurrentState.CurrentUser.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")
-                            </FluentLabel>
-                        }
-                        <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.SessionStarted"):</strong>
-                            @AuthService.CurrentState.SessionStartTime?.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
-                    </FluentStack>
-                </FluentCard>
-
-                <FluentCard>
-                    <FluentLabel Typo="Typography.H6">@LocService.Get("UserStatus.Permissions"):</FluentLabel>
-                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
-                        @foreach (var permission in AuthService.CurrentState.CurrentPermissions.GetPermissionsDictionary())
-                        {
-                            <FluentLabel Typo="Typography.Body">
-                                <FluentIcon
-                                    Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())"
-                                    Color="Color.Success" />
-                                @GetPermissionDisplayName(permission.Key): @(permission.Value ?
-                        LocService.Get("UserStatus.Allowed") : LocService.Get("UserStatus.Denied"))
-                            </FluentLabel>
-                        }
-                    </FluentStack>
-                </FluentCard>
+        <TitleTemplate>
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size24.Person())" />
+                <FluentLabel Typo="Typography.H5">@LocService.Get("UserStatus.UserInfoTitle")</FluentLabel>
             </FluentStack>
-        }
-    </FluentDialogBody>
+        </TitleTemplate>
 
-    <FluentDialogFooter>
-        <FluentButton Appearance="Appearance.Neutral" OnClick="CloseUserInfo">
-            @LocService.Get("UserStatus.Close")
-        </FluentButton>
-    </FluentDialogFooter>
+        <ChildContent>
+            @if (AuthService.CurrentState.IsAuthenticated && AuthService.CurrentState.CurrentUser != null)
+            {
+                <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                    <FluentCard>
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="8">
+                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Username"):</strong>
+                                @AuthService.CurrentState.CurrentUser.Username</FluentLabel>
+                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Role"):</strong>
+                                @GetRoleDisplayName(AuthService.CurrentState.CurrentRole)</FluentLabel>
+                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Status"):</strong>
+                                @(AuthService.CurrentState.CurrentUser.IsActive ? LocService.Get("UserStatus.Active") :
+                                    LocService.Get("UserStatus.Inactive"))</FluentLabel>
+                                <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.Created"):</strong>
+                                    @AuthService.CurrentState.CurrentUser.CreatedAt.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
+                                @if (AuthService.CurrentState.CurrentUser.LastLoginAt.HasValue)
+                            {
+                                <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.LastLogin"):</strong>
+                                    @AuthService.CurrentState.CurrentUser.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")
+                                </FluentLabel>
+                            }
+                            <FluentLabel Typo="Typography.Body"><strong>@LocService.Get("UserStatus.SessionStarted"):</strong>
+                                @AuthService.CurrentState.SessionStartTime?.ToString("dd/MM/yyyy HH:mm")</FluentLabel>
+                        </FluentStack>
+                    </FluentCard>
+
+                    <FluentCard>
+                        <FluentLabel Typo="Typography.H6">@LocService.Get("UserStatus.Permissions"):</FluentLabel>
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4">
+                            @foreach (var permission in AuthService.CurrentState.CurrentPermissions.GetPermissionsDictionary())
+                            {
+                                <FluentLabel Typo="Typography.Body">
+                                    <FluentIcon
+                                        Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Checkmark())"
+                                        Color="Color.Success" />
+                                    @GetPermissionDisplayName(permission.Key): @(permission.Value ?
+                            LocService.Get("UserStatus.Allowed") : LocService.Get("UserStatus.Denied"))
+                                </FluentLabel>
+                            }
+                        </FluentStack>
+                    </FluentCard>
+                </FluentStack>
+            }
+        </ChildContent>
+
+        <ActionTemplate>
+            <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseUserInfo">
+                @LocService.Get("UserStatus.Close")
+            </FluentButton>
+        </ActionTemplate>
+    </FluentDialogBody>
 </FluentDialog>
 
 @code {
-    private bool IsUserInfoHidden = true;
+    private FluentDialog? _userInfoDialog;
     private bool _isUserMenuOpen = false;
 
     protected override void OnInitialized()
@@ -153,10 +154,13 @@
         await AuthService.LogoutAsync();
     }
 
-    private void ShowUserInfo()
+    private async Task ShowUserInfo()
     {
-        IsUserInfoHidden = false;
         _isUserMenuOpen = false;
+        if (_userInfoDialog != null)
+        {
+            await _userInfoDialog.ShowAsync();
+        }
     }
 
     private void ToggleUserMenu()
@@ -164,9 +168,12 @@
         _isUserMenuOpen = !_isUserMenuOpen;
     }
 
-    private void CloseUserInfo()
+    private async Task CloseUserInfo()
     {
-        IsUserInfoHidden = true;
+        if (_userInfoDialog != null)
+        {
+            await _userInfoDialog.HideAsync();
+        }
     }
 
     private string GetRoleDisplayName(UserRole role)
