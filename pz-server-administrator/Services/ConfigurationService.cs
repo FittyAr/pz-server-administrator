@@ -174,6 +174,12 @@ public class ConfigurationService : IConfigurationService
             appSettings.ServerTestDatabasePath = serverTestDb.Trim();
         }
 
+        var workshopDir = Environment.GetEnvironmentVariable("PZ_WORKSHOP_DIR");
+        if (!string.IsNullOrWhiteSpace(workshopDir))
+        {
+            appSettings.WorkshopDirectoryPath = workshopDir.Trim();
+        }
+
         // Check if admin user/password was provided via environment
         var adminUser = Environment.GetEnvironmentVariable("PZ_ADMIN_USERNAME")
             ?? Environment.GetEnvironmentVariable("ADMIN_USERNAME");

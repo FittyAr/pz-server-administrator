@@ -1,0 +1,126 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Project Zomboid Server & Administrator — Docker Compose para 1Panel
+# ──────────────────────────────────────────────────────────────────────────────
+# Integración con 1Panel, OpenResty Reverse Proxy, Umbral Dashboard y Firewalld.
+#
+# Configuración en 1Panel / OpenResty:
+#   - Dominio: pz.home.fitty.ar (o zomboid.home.fitty.ar)
+#   - Destino de Proxy Inverso (Origin): http://127.0.0.1:8088
+#   - Protocolo: HTTP hacia el contenedor, HTTPS público con certificado wildcard *.home.fitty.ar
+#   - WebSockets: Habilitados (Upgrade $http_upgrade / Connection $http_connection) para Blazor Server
+#   - Puertos de juego: UDP 16261 y 16262 expuestos directamente en el Host y abiertos en Firewalld.
+#   - RCON: Protegido internamente dentro de la red 1panel-network (sin exposición pública).
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  # =========================================================================
+  # 1. Servidor Dedicado Project Zomboid (Base: Indifferent Broccoli)
+  # https://github.com/indifferentbroccoli/projectzomboid-server-docker
+  # =========================================================================
+  projectzomboid:
+    image: indifferentbroccoli/projectzomboid-server-docker:latest
+    container_name: projectzomboid
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      # Puertos UDP públicos de juego (abiertos en firewalld)
+      - "${DEFAULT_PORT:-16261}:16261/udp"
+      - "${UDP_PORT:-16262}:16262/udp"
+      # RCON se aísla en la red interna 1panel-network; si requieres acceso local host descomenta:
+      # - "127.0.0.1:${RCON_PORT:-27015}:27015/tcp"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - MEMORY_XMX_GB=${MEMORY_XMX_GB:-8}
+      - MEMORY_XMS_GB=${MEMORY_XMS_GB:-}
+      - VM_ARGS=${VM_ARGS:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-CHANGEME}
+      - RCON_PASSWORD=${RCON_PASSWORD:-CHANGEME}
+      - RCON_PORT=${RCON_PORT:-27015}
+      - SERVER_NAME=${SERVER_NAME:-pzserver}
+      - DEFAULT_PORT=${DEFAULT_PORT:-16261}
+      - UDP_PORT=${UDP_PORT:-16262}
+      - MAX_PLAYERS=${MAX_PLAYERS:-32}
+      - UPDATE_ON_START=${UPDATE_ON_START:-true}
+      - SERVER_BRANCH=${SERVER_BRANCH:-}
+      - STEAM_VAC=${STEAM_VAC:-true}
+      - USE_STEAM=${USE_STEAM:-true}
+    volumes:
+      # Archivos binarios del servidor y Steam Workshop
+      - ${PZ_FILES_DIR:-./server-files}:/project-zomboid
+      # Datos persistentes del servidor (configs .ini, .lua, sqlite db, saves, logs)
+      - ${PZ_DATA_DIR:-./server-data}:/project-zomboid-config
+    networks:
+      - 1panel-network
+    labels:
+      - createdBy=Apps
+
+  # =========================================================================
+  # 2. Project Zomboid Server Administrator (Panel Web .NET 10 Blazor)
+  # =========================================================================
+  pz-admin:
+    build:
+      context: ./pz-server-administrator
+      dockerfile: Dockerfile
+    image: pz-server-administrator:latest
+    container_name: pz-admin
+    restart: unless-stopped
+    ports:
+      # Vinculado a 127.0.0.1 para que el acceso externo pase obligatoriamente
+      # por el Reverse Proxy OpenResty de 1Panel (SSL, WAF y autenticación).
+      # Se usa 8088 por defecto para evitar conflicto con drawio en 8080.
+      - "127.0.0.1:${PZ_ADMIN_PORT:-8088}:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - PZ_SERVER_DIR=/project-zomboid-config/Server
+      - PZ_ZOMBOID_DIR=/project-zomboid-config
+      - PZ_WORKSHOP_DIR=/project-zomboid-files/steamapps/workshop
+      - PZ_ACTIVE_SERVER=${SERVER_NAME:-pzserver}
+      - PZ_RCON_HOST=projectzomboid
+      - PZ_RCON_PORT=${RCON_PORT:-27015}
+      - PZ_RCON_PASSWORD=${RCON_PASSWORD:-CHANGEME}
+      - PZ_ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - PZ_ADMIN_PASSWORD=${ADMIN_PASSWORD:-CHANGEME}
+    volumes:
+      # Datos y configuraciones del servidor Project Zomboid (compartido con indifferentbroccoli)
+      - ${PZ_DATA_DIR:-./server-data}:/project-zomboid-config:rw
+      # Archivos binarios del servidor PZ y Steam Workshop (para descubrimiento y administración de mods)
+      - ${PZ_FILES_DIR:-./server-files}:/project-zomboid-files:ro
+      # Persistencia propia de la app de administración (config.json, Mods.db, usuarios, roles, API keys)
+      - ${PZ_ADMIN_CONFIG_DIR:-./admin-config}:/app/config:rw
+      # Claves de protección de datos de sesión de ASP.NET Core
+      - ${PZ_ADMIN_CONFIG_DIR:-./admin-config}/keys:/root/.aspnet/DataProtection-Keys:rw
+    depends_on:
+      - projectzomboid
+    networks:
+      - 1panel-network
+    labels:
+      - createdBy=Apps
+
+  # =========================================================================
+  # 3. Playit.gg Agent (Túnel Zero-Port-Forwarding para PZ y Admin - Opcional)
+  # =========================================================================
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:latest
+    container_name: playit-agent
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY:-}
+    volumes:
+      - ./playit-data:/etc/playit
+    depends_on:
+      - projectzomboid
+      - pz-admin
+    networks:
+      - 1panel-network
+    labels:
+      - createdBy=Apps
+
+networks:
+  # Red interna administrada por 1Panel (compartida con OpenResty y demás servicios)
+  1panel-network:
+    external: true
+    name: 1panel-network

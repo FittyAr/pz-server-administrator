@@ -29,6 +29,7 @@ public class AppSettings
     public string VehiclesDatabasePath { get; set; } = string.Empty;
     public string ServerTestDatabasePath { get; set; } = string.Empty;
     public string ModsDatabasePath { get; set; } = string.Empty;
+    public string WorkshopDirectoryPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Preferred system language (e.g., "es", "en")

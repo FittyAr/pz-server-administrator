@@ -627,13 +627,20 @@
             }
 
             var possibleWorkshopPaths = new List<string> {
+                config.AppSettings.WorkshopDirectoryPath,
+                Environment.GetEnvironmentVariable("PZ_WORKSHOP_DIR") ?? "",
+                "/project-zomboid-files/steamapps/workshop",
+                "/project-zomboid-files/Workshop",
+                "/project-zomboid/steamapps/workshop",
+                "/project-zomboid/Workshop",
                 Path.Combine(Directory.GetParent(serverDir)?.FullName ?? "", "Workshop"),
-                Path.GetFullPath(Path.Combine(serverDir, "../../Workshop"))
+                Path.GetFullPath(Path.Combine(serverDir, "../../Workshop")),
+                Path.Combine(serverDir, "Workshop")
             };
 
             foreach (var workshopPath in possibleWorkshopPaths)
             {
-                if (Directory.Exists(workshopPath))
+                if (!string.IsNullOrWhiteSpace(workshopPath) && Directory.Exists(workshopPath))
                 {
                     await ModDiscovery.DiscoverLocalModsAsync(workshopPath);
                     await LoadDataAsync();

@@ -64,13 +64,17 @@ public class DatabaseContextFactory : IDatabaseContextFactory
     {
         var path = _configurationService.GetConfiguration()?.AppSettings?.ModsDatabasePath;
 
-        // Si no está configurado, usamos uno por defecto en el directorio de la aplicación o config
+        // Si no está configurado, usamos uno por defecto en el directorio de configuración persistente
         if (string.IsNullOrEmpty(path))
         {
-            // Intentar usar el mismo directorio que appsettings.json si es posible, pero aquí no lo sabemos directamente.
-            // Para simplificar por ahora, si está vacío intentamos crearlo en la raíz del contenido.
-            // En producción, debería estar pre-configurado o autodetectado.
-            path = "Mods.db";
+            if (Directory.Exists("/app/config"))
+            {
+                path = "/app/config/Mods.db";
+            }
+            else
+            {
+                path = "Mods.db";
+            }
         }
 
         var options = new DbContextOptionsBuilder<ModsContext>()

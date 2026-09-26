@@ -1,6 +1,17 @@
 *.txt
 
-# Docker container data folders
+# Environment configuration files with secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.1panel.example
+
+# Docker persistent data folders
+server-data/
+server-files/
+admin-config/
+playit-data/
 container/admin-config/*
 !container/admin-config/.gitkeep
 container/server-data/*

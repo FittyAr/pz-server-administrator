@@ -168,3 +168,33 @@ docker compose down
 # Actualizar las imágenes de contenedores
 docker compose pull && docker compose up -d
 ```
+
+---
+
+## 9. Despliegue en 1Panel y Reverse Proxy (OpenResty)
+
+Para entornos gestionados con **1Panel**, se incluye un archivo específico `docker-compose.1panel.yml` junto con la plantilla `.env.1panel.example`:
+
+### Características clave:
+1. **Red interna `1panel-network`:**
+   Los contenedores se unen a la red Docker administrada por 1Panel (`external: true`), permitiendo comunicación directa y aislamiento.
+2. **Seguridad del Reverse Proxy:**
+   El puerto del panel web `pz-admin` se publica en `127.0.0.1:${PZ_ADMIN_PORT:-8088}:8080`, asegurando que todo acceso externo pase obligatoriamente a través del WAF, SSL y Reverse Proxy de OpenResty.
+3. **Puertos de Juego Abiertos:**
+   Los puertos UDP `16261` y `16262` se exponen en el host y se abren en Firewalld para permitir que los clientes del juego se conecten libremente.
+4. **RCON Seguro:**
+   El puerto RCON `27015` se mantiene estrictamente dentro de la red interna de contenedores, previniendo accesos no autorizados desde Internet.
+5. **Compatibilidad con Blazor Server (SignalR/WebSockets):**
+   OpenResty está configurado con encabezados `Upgrade` y `Connection` y timeouts de 86400s para evitar la desconexión del circuito Blazor en tiempo real.
+6. **Integración con Dashboard Umbral:**
+   Disponible como servicio en el portal de inicio (`https://pz.home.fitty.ar` o `https://home.fitty.ar`).
+
+### Despliegue rápido con 1Panel:
+```bash
+# 1. Copiar plantilla de variables de entorno
+cp .env.1panel.example .env
+
+# 2. Iniciar el stack de 1Panel
+docker compose -f docker-compose.1panel.yml up -d --build
+```
+
