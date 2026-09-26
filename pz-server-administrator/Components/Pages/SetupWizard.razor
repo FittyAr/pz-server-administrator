@@ -6,7 +6,7 @@
 @inject IAuthenticationService AuthService
 @inject ILocalizationService LocService
 @inject IPzServerService PzServer
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @inject NavigationManager NavManager
 
 <div class="setup-container">
@@ -15,7 +15,7 @@
 
             @* HEADER *@
             <FluentStack VerticalAlignment="VerticalAlignment.Center" Spacing="3">
-                <FluentIcon Value="@(new Icons.Regular.Size32.Box())" Color="Color.Accent" />
+                <FluentIcon Value="@(new Icons.Regular.Size32.Box())" Color="Color.Primary" />
                 <div>
                     <FluentLabel Typo="Typography.H3" Style="margin: 0;">Bienvenido a PZ Server Admin</FluentLabel>
                     <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Configura tu servidor en unos simples
@@ -29,25 +29,25 @@
             <FluentStack HorizontalAlignment="HorizontalAlignment.Center" Spacing="5" Style="padding: 1rem 0;">
                 <div style="text-align: center; opacity: @(_currentStep == 0 ? "1" : "0.4")">
                     <FluentIcon Value="@(new Icons.Filled.Size24.Person())"
-                        Color="@(_currentStep >= 0 ? Color.Accent : Color.Neutral)" />
+                        Color="@(_currentStep >= 0 ? Color.Primary : Color.Default)" />
                     <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">Admin</FluentLabel>
                 </div>
                 <FluentDivider Style="width: 50px; margin-top: 12px;" />
                 <div style="text-align: center; opacity: @(_currentStep == 1 ? "1" : "0.4")">
                     <FluentIcon Value="@(new Icons.Filled.Size24.Server())"
-                        Color="@(_currentStep >= 1 ? Color.Accent : Color.Neutral)" />
+                        Color="@(_currentStep >= 1 ? Color.Primary : Color.Default)" />
                     <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">Servidor</FluentLabel>
                 </div>
                 <FluentDivider Style="width: 50px; margin-top: 12px;" />
                 <div style="text-align: center; opacity: @(_currentStep == 2 ? "1" : "0.4")">
                     <FluentIcon Value="@(new Icons.Filled.Size24.Wand())"
-                        Color="@(_currentStep >= 2 ? Color.Accent : Color.Neutral)" />
+                        Color="@(_currentStep >= 2 ? Color.Primary : Color.Default)" />
                     <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">IA</FluentLabel>
                 </div>
                 <FluentDivider Style="width: 50px; margin-top: 12px;" />
                 <div style="text-align: center; opacity: @(_currentStep == 3 ? "1" : "0.4")">
                     <FluentIcon Value="@(new Icons.Filled.Size24.CheckmarkCircle())"
-                        Color="@(_currentStep >= 3 ? Color.Accent : Color.Neutral)" />
+                        Color="@(_currentStep >= 3 ? Color.Primary : Color.Default)" />
                     <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">Listo</FluentLabel>
                 </div>
             </FluentStack>
@@ -59,12 +59,12 @@
                     <FluentStack Orientation="Orientation.Vertical" Spacing="4">
                         <FluentLabel Typo="Typography.H4">Cuenta de Administrador</FluentLabel>
                         <p>Crea el primer usuario con permisos totales para gestionar la plataforma.</p>
-                        <FluentTextField @bind-Value="_adminUser" Label="Usuario" Placeholder="admin"
+                        <FluentTextInput @bind-Value="_adminUser" Label="Usuario" Placeholder="admin"
                             Style="width: 100%;" />
-                        <FluentTextField @bind-Value="_adminPass" Label="Contraseña" Type="TextFieldType.Password"
+                        <FluentTextInput @bind-Value="_adminPass" Label="Contraseña" TextInputType="TextInputType.Password"
                             Style="width: 100%;" />
-                        <FluentTextField @bind-Value="_adminPassConfirm" Label="Confirmar Contraseña"
-                            Type="TextFieldType.Password" Style="width: 100%;" />
+                        <FluentTextInput @bind-Value="_adminPassConfirm" Label="Confirmar Contraseña"
+                            TextInputType="TextInputType.Password" Style="width: 100%;" />
                     </FluentStack>
                 }
                 else if (_currentStep == 1)
@@ -73,9 +73,9 @@
                         <FluentLabel Typo="Typography.H4">Configuración del Servidor</FluentLabel>
                         <p>Dinos dónde están los archivos de tu servidor Project Zomboid.</p>
 
-                        <FluentTextField @bind-Value="_config.AppSettings.ServerDirectoryPath" Label="Ruta Base de Zomboid"
+                        <FluentTextInput @bind-Value="_config.AppSettings.ServerDirectoryPath" Label="Ruta Base de Zomboid"
                             Placeholder="C:\Users\...\Zomboid" Style="width: 100%;" />
-                        <FluentTextField @bind-Value="_config.AppSettings.ServerIniPath" Label="Archivo .INI Principal"
+                        <FluentTextInput @bind-Value="_config.AppSettings.ServerIniPath" Label="Archivo .INI Principal"
                             Placeholder="servertest.ini" Style="width: 100%;" />
 
                         <FluentButton IconStart="@(new Icons.Regular.Size20.Search())" OnClick="AutoDetect"
@@ -94,8 +94,8 @@
                         <p>Habilita el Agente Inteligente para reparar errores automáticamente y optimizar el orden de mods.
                         </p>
 
-                        <FluentSelect Label="Proveedor" Items="@_aiProviders" @bind-Value="_aiProviderString" />
-                        <FluentTextField @bind-Value="_config.Ai.ApiKey" Label="API Key" Type="TextFieldType.Password"
+                        <FluentSelect TOption="AiProviderType" TValue="AiProviderType" Label="Proveedor" Items="@_aiProviders" @bind-Value="_config.Ai.Provider" />
+                        <FluentTextInput @bind-Value="_config.Ai.ApiKey" Label="API Key" TextInputType="TextInputType.Password"
                             Placeholder="Opcional, puedes configurarlo luego" Style="width: 100%;" />
 
                         <FluentCheckbox @bind-Value="_config.Ai.AiAutoFixEnabled"
@@ -125,16 +125,16 @@
 
                 @if (_currentStep < 3)
                 {
-                    <FluentButton Appearance="Appearance.Accent" OnClick="NextStep">Siguiente</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="NextStep">Siguiente</FluentButton>
                 }
                 else
                 {
-                    <FluentButton Appearance="Appearance.Accent" OnClick="FinishSetup">Comenzar</FluentButton>
+                    <FluentButton Appearance="ButtonAppearance.Primary" OnClick="FinishSetup">Comenzar</FluentButton>
                 }
 
                 @if (_currentStep == 0)
                 {
-                    <FluentButton Appearance="Appearance.Neutral" OnClick="SkipSetup" Style="margin-right: auto;">Omitir
+                    <FluentButton Appearance="ButtonAppearance.Default" OnClick="SkipSetup" Style="margin-right: auto;">Omitir
                         Asistente</FluentButton>
                 }
             </FluentStack>
@@ -161,12 +161,6 @@
     private ZsmConfiguration _config = new();
     private bool _isScanning;
 
-    private string _aiProviderString
-    {
-        get => _config.Ai.Provider.ToString();
-        set => _config.Ai.Provider = Enum.Parse<AiProviderType>(value);
-    }
-
     private AiProviderType[] _aiProviders = (AiProviderType[])Enum.GetValues(typeof(AiProviderType));
 
     protected override void OnInitialized()
@@ -180,7 +174,7 @@
         {
             if (string.IsNullOrWhiteSpace(_adminPass) || _adminPass != _adminPassConfirm)
             {
-                ToastService.ShowError("Las contraseñas no coinciden o están vacías.");
+                await NotificationService.ShowErrorAsync("Las contraseñas no coinciden o están vacías.");
                 return;
             }
         }
@@ -197,26 +191,19 @@
         if (success)
         {
             _config = ConfigService.GetConfiguration();
-            ToastService.ShowSuccess("Detección exitosa.");
+            await NotificationService.ShowSuccessAsync("Detección exitosa.");
         }
         else
         {
-            ToastService.ShowWarning("No pudimos detectar todo automáticamente.");
+            await NotificationService.ShowWarningAsync("No pudimos detectar todo automáticamente.");
         }
         _isScanning = false;
     }
 
     private async Task FinishSetup()
     {
-        // 1. Guardar primero la configuración técnica (AI, Rutas)
-        // Usamos el objeto _config que tiene los cambios del wizard
         await ConfigService.SaveConfigurationAsync(_config);
-
-        // 2. Crear el usuario administrador SEGUNDO
-        // Esto añadirá el usuario al archivo que acabamos de guardar
         await AuthService.CreateUserAsync(_adminUser, _adminPass, UserRole.Administrator);
-
-        // 3. Redirigir al login para que el usuario inicie sesión con su nueva cuenta
         NavManager.NavigateTo("/login", true);
     }
 

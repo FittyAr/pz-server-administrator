@@ -28,7 +28,7 @@
                     </FluentLabel>
                     @if (!string.IsNullOrEmpty(ActiveServerName))
                     {
-                        <FluentBadge Appearance="Appearance.Accent">
+                        <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand">
                             @LocService.Get("Home.ActiveServer", ActiveServerName)
                         </FluentBadge>
                         <FluentLabel Typo="Typography.Body">
@@ -37,7 +37,7 @@
                     }
                     else
                     {
-                        <FluentBadge Appearance="Appearance.Neutral">
+                        <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Subtle">
                             @LocService.Get("Home.NoServerSelected")
                         </FluentBadge>
                         <FluentLabel Typo="Typography.Body">

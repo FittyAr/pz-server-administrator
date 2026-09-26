@@ -29,20 +29,20 @@
                                 Configuración de Servidores
                             </FluentLabel>
 
-                            <FluentTextField @bind-Value="ServerDirectoryPath" Label="Directorio de Servidores"
+                            <FluentTextInput @bind-Value="ServerDirectoryPath" Label="Directorio de Servidores"
                                 Placeholder="Ruta completa al directorio que contiene los servidores"
                                 Style="width: 100%;" />
 
-                            <FluentTextField @bind-Value="ActiveServerName" Label="Servidor Activo"
+                            <FluentTextInput @bind-Value="ActiveServerName" Label="Servidor Activo"
                                 Placeholder="Nombre del servidor actualmente seleccionado" Style="width: 100%;" />
 
-                            <FluentButton Appearance="Appearance.Accent" @onclick="SaveServerConfiguration"
+                            <FluentButton Appearance="ButtonAppearance.Primary" @onclick="SaveServerConfiguration"
                                 Loading="@IsSaving" Style="margin-bottom: 10px;">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
                                 Guardar Configuración de Servidores
                             </FluentButton>
 
-                            <FluentButton Appearance="Appearance.Neutral" @onclick="AutoScanServer" Loading="@IsSaving">
+                            <FluentButton Appearance="ButtonAppearance.Default" @onclick="AutoScanServer" Loading="@IsSaving">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Search())" />
                                 Escanear archivos de Servidor (Deep Scan)
                             </FluentButton>
@@ -75,17 +75,17 @@
                                 Configuración Rcon
                             </FluentLabel>
 
-                            <FluentTextField @bind-Value="RconHost" Label="Host Rcon" Placeholder="127.0.0.1"
+                            <FluentTextInput @bind-Value="RconHost" Label="Host Rcon" Placeholder="127.0.0.1"
                                 Style="width: 100%;" />
 
-                            <FluentNumberField @bind-Value="RconPort" Label="Puerto Rcon" Placeholder="27015"
+                            <FluentNumberInput TValue="int" @bind-Value="RconPort" Label="Puerto Rcon" Placeholder="27015"
                                 Style="width: 100%;" />
 
-                            <FluentTextField @bind-Value="RconPassword" Label="Contraseña Rcon"
-                                TextFieldType="TextFieldType.Password" Placeholder="Contraseña del servidor Rcon"
+                            <FluentTextInput @bind-Value="RconPassword" Label="Contraseña Rcon"
+                                TextInputType="TextInputType.Password" Placeholder="Contraseña del servidor Rcon"
                                 Style="width: 100%;" />
 
-                            <FluentButton Appearance="Appearance.Accent" @onclick="SaveRconConfiguration"
+                            <FluentButton Appearance="ButtonAppearance.Primary" @onclick="SaveRconConfiguration"
                                 Loading="@IsSaving">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.Save())" />
                                 Guardar Configuración Rcon
@@ -97,7 +97,7 @@
 
             @if (!string.IsNullOrEmpty(StatusMessage))
             {
-                <FluentMessageBar Intent="@MessageIntent" @bind-Open="ShowMessage">
+                <FluentMessageBar Intent="@_messageIntent" Visible="@ShowMessage">
                     @StatusMessage
                 </FluentMessageBar>
             }
@@ -105,7 +105,7 @@
     </ChildContent>
 
     <NotAuthorizedContent>
-        <FluentMessageBar Intent="MessageIntent.Warning">
+        <FluentMessageBar Intent="MessageBarIntent.Warning">
             <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Regular.Size16.Warning())"
                 Slot="start" />
             No tienes permisos para acceder a la configuración de la aplicación. Se requiere rol de Administrador.
@@ -121,7 +121,7 @@
     private string RconPassword = string.Empty;
     private bool IsSaving = false;
     private string StatusMessage = string.Empty;
-    private MessageIntent MessageIntent = MessageIntent.Info;
+    private MessageBarIntent _messageIntent = MessageBarIntent.Info;
     private bool ShowMessage = false;
 
     private string ServerIniPath = string.Empty;
@@ -171,11 +171,11 @@
 
             await ConfigService.SaveConfigurationAsync(config);
 
-            ShowStatusMessage("Configuración de servidores guardada exitosamente.", MessageIntent.Success);
+            ShowStatusMessage("Configuración de servidores guardada exitosamente.", MessageBarIntent.Success);
         }
         catch (Exception ex)
         {
-            ShowStatusMessage($"Error al guardar la configuración: {ex.Message}", MessageIntent.Error);
+            ShowStatusMessage($"Error al guardar la configuración: {ex.Message}", MessageBarIntent.Error);
         }
         finally
         {
@@ -190,7 +190,7 @@
     {
         if (string.IsNullOrEmpty(ServerDirectoryPath))
         {
-            ShowStatusMessage("Por favor especifica un directorio válido primero.", MessageIntent.Warning);
+            ShowStatusMessage("Por favor especifica un directorio válido primero.", MessageBarIntent.Warning);
             return;
         }
 
@@ -205,11 +205,11 @@
     if (success)
     {
         LoadCurrentConfiguration();
-        ShowStatusMessage("Escaneo completado exitosamente. Archivos encontrados.", MessageIntent.Success);
+        ShowStatusMessage("Escaneo completado exitosamente. Archivos encontrados.", MessageBarIntent.Success);
     }
     else
     {
-        ShowStatusMessage("No se encontraron archivos en la ruta especificada. Intenta con otra.", MessageIntent.Warning);
+        ShowStatusMessage("No se encontraron archivos en la ruta especificada. Intenta con otra.", MessageBarIntent.Warning);
     }
     StateHasChanged();
                 });
@@ -217,7 +217,7 @@
         }
         catch (Exception ex)
         {
-            ShowStatusMessage($"Error durante el escaneo: {ex.Message}", MessageIntent.Error);
+            ShowStatusMessage($"Error durante el escaneo: {ex.Message}", MessageBarIntent.Error);
         }
         finally
         {
@@ -240,11 +240,11 @@
 
             await ConfigService.SaveConfigurationAsync(config);
 
-            ShowStatusMessage("Configuración Rcon guardada exitosamente.", MessageIntent.Success);
+            ShowStatusMessage("Configuración Rcon guardada exitosamente.", MessageBarIntent.Success);
         }
         catch (Exception ex)
         {
-            ShowStatusMessage($"Error al guardar la configuración Rcon: {ex.Message}", MessageIntent.Error);
+            ShowStatusMessage($"Error al guardar la configuración Rcon: {ex.Message}", MessageBarIntent.Error);
         }
         finally
         {
@@ -257,10 +257,10 @@
     /// </summary>
     /// <param name="message">Message to display</param>
     /// <param name="intent">Message intent (success, error, etc.)</param>
-    private void ShowStatusMessage(string message, MessageIntent intent)
+    private void ShowStatusMessage(string message, MessageBarIntent intent)
     {
         StatusMessage = message;
-        MessageIntent = intent;
+        _messageIntent = intent;
         ShowMessage = true;
         StateHasChanged();
     }
