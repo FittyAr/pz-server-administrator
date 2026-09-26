@@ -190,82 +190,93 @@
     }
 </FluentStack>
 
-<FluentDialog @ref="_editDialog" Modal="true">
-    <FluentDialogBody>
-        <TitleTemplate>
-            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="10">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" />
-                <FluentLabel Typo="Typography.H4">Editar Registro</FluentLabel>
-            </FluentStack>
-        </TitleTemplate>
-        <ChildContent>
-            @if (_editingRecord != null)
-            {
-                <FluentStack Orientation="Orientation.Vertical" VerticalGap="15" Style="padding: 1rem 0;">
-                    @if (_editingRecord is NetworkPlayer np)
-                    {
-                        <FluentTextInput Value="@np.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="np.Username" Label="Username" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="np.Name" Label="Nombre" Style="width: 100%" />
-                        <FluentTextInput @bind-Value="np.Steamid" Label="Steam ID" Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="np.X" Label="Posición X" Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="np.Y" Label="Posición Y" Style="width: 100%" />
-                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
-                    }
-                    else if (_editingRecord is LocalPlayer lp)
-                    {
-                        <FluentTextInput Value="@lp.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="lp.Name" Label="Nombre" Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="lp.X" Label="Posición X" Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="lp.Y" Label="Posición Y" Style="width: 100%" />
-                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
-                    }
-                    else if (_editingRecord is Vehicle ve)
-                    {
-                        <FluentTextInput Value="@ve.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="ve.X" Label="Posición X" Style="width: 100%" />
-                        <FluentNumberInput TValue="double?" @bind-Value="ve.Y" Label="Posición Y" Style="width: 100%" />
-                        <FluentNumberInput TValue="int?" @bind-Value="ve.Wx" Label="World X" Style="width: 100%" />
-                        <FluentNumberInput TValue="int?" @bind-Value="ve.Wy" Label="World Y" Style="width: 100%" />
-                    }
-                    else if (_editingRecord is Whitelist w)
-                    {
-                        <FluentTextInput Value="@w.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="w.Username" Label="Username" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="w.DisplayName" Label="Nombre Visible" Style="width: 100%" />
-                        <FluentTextInput @bind-Value="w.Steamid" Label="Steam ID" Style="width: 100%" />
-                        <FluentNumberInput TValue="int" @bind-Value="w.Role" Label="Rol (Int)" Style="width: 100%" />
-                        <FluentTextInput @bind-Value="w.Password" Label="Contraseña (Hashed)" Style="width: 100%" />
-                    }
-                    else if (_editingRecord is Userlog u)
-                    {
-                        <FluentTextInput Value="@u.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="u.Username" Label="Username" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="u.Type" Label="Tipo" Style="width: 100%" />
-                        <FluentNumberInput TValue="int?" @bind-Value="u.Amount" Label="Cantidad" Style="width: 100%" />
-                        <FluentTextArea @bind-Value="u.Text" Label="Texto / Razón" Rows="3" Style="width: 100%" />
-                    }
-                    else if (_editingRecord is Ticket t)
-                    {
-                        <FluentTextInput Value="@t.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
-                        <FluentTextInput @bind-Value="t.Author" Label="Autor" ReadOnly Style="width: 100%" />
-                        <FluentTextArea @bind-Value="t.Message" Label="Mensaje" Rows="4" Style="width: 100%" />
-                        <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="Visto" />
-                        <FluentNumberInput TValue="int?" @bind-Value="t.AnsweredId" Label="ID Respuesta" Style="width: 100%" />
-                    }
+@if (_isEditDialogOpen)
+{
+    <FluentDialog @ref="_editDialog" Modal="true" Style="width: 580px; max-width: 95vw;">
+        <FluentDialogBody>
+            <TitleTemplate>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="10">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Edit())" Color="Color.Primary" />
+                    <FluentLabel Typo="Typography.H5">Editar Registro</FluentLabel>
                 </FluentStack>
-            }
-        </ChildContent>
-        <ActionTemplate>
-            <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SaveRecord" Loading="_isSaving">
-                Guardar Cambios
-            </FluentButton>
-            <FluentButton OnClick="CloseEditDialog">
-                Cancelar
-            </FluentButton>
-        </ActionTemplate>
-    </FluentDialogBody>
-</FluentDialog>
+            </TitleTemplate>
+            <TitleActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Subtle"
+                              IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                              OnClick="CloseEditDialog"
+                              Title="Cancelar" />
+            </TitleActionTemplate>
+            <ChildContent>
+                <div class="modal-form-content">
+                    @if (_editingRecord != null)
+                    {
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="15">
+                            @if (_editingRecord is NetworkPlayer np)
+                            {
+                                <FluentTextInput Value="@np.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="np.Username" Label="Username" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="np.Name" Label="Nombre" Style="width: 100%" />
+                                <FluentTextInput @bind-Value="np.Steamid" Label="Steam ID" Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="np.X" Label="Posición X" Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="np.Y" Label="Posición Y" Style="width: 100%" />
+                                <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                            }
+                            else if (_editingRecord is LocalPlayer lp)
+                            {
+                                <FluentTextInput Value="@lp.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="lp.Name" Label="Nombre" Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="lp.X" Label="Posición X" Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="lp.Y" Label="Posición Y" Style="width: 100%" />
+                                <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="¿Está muerto?" />
+                            }
+                            else if (_editingRecord is Vehicle ve)
+                            {
+                                <FluentTextInput Value="@ve.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="ve.X" Label="Posición X" Style="width: 100%" />
+                                <FluentNumberInput TValue="double?" @bind-Value="ve.Y" Label="Posición Y" Style="width: 100%" />
+                                <FluentNumberInput TValue="int?" @bind-Value="ve.Wx" Label="World X" Style="width: 100%" />
+                                <FluentNumberInput TValue="int?" @bind-Value="ve.Wy" Label="World Y" Style="width: 100%" />
+                            }
+                            else if (_editingRecord is Whitelist w)
+                            {
+                                <FluentTextInput Value="@w.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="w.Username" Label="Username" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="w.DisplayName" Label="Nombre Visible" Style="width: 100%" />
+                                <FluentTextInput @bind-Value="w.Steamid" Label="Steam ID" Style="width: 100%" />
+                                <FluentNumberInput TValue="int" @bind-Value="w.Role" Label="Rol (Int)" Style="width: 100%" />
+                                <FluentTextInput @bind-Value="w.Password" Label="Contraseña (Hashed)" Style="width: 100%" />
+                            }
+                            else if (_editingRecord is Userlog u)
+                            {
+                                <FluentTextInput Value="@u.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="u.Username" Label="Username" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="u.Type" Label="Tipo" Style="width: 100%" />
+                                <FluentNumberInput TValue="int?" @bind-Value="u.Amount" Label="Cantidad" Style="width: 100%" />
+                                <FluentTextArea @bind-Value="u.Text" Label="Texto / Razón" Rows="3" Style="width: 100%" />
+                            }
+                            else if (_editingRecord is Ticket t)
+                            {
+                                <FluentTextInput Value="@t.Id.ToString()" Label="ID (No editable)" ReadOnly Style="width: 100%" />
+                                <FluentTextInput @bind-Value="t.Author" Label="Autor" ReadOnly Style="width: 100%" />
+                                <FluentTextArea @bind-Value="t.Message" Label="Mensaje" Rows="4" Style="width: 100%" />
+                                <FluentCheckbox Value="@_boolWrapper" ValueChanged="UpdateBoolStatus" Label="Visto" />
+                                <FluentNumberInput TValue="int?" @bind-Value="t.AnsweredId" Label="ID Respuesta" Style="width: 100%" />
+                            }
+                        </FluentStack>
+                    }
+                </div>
+            </ChildContent>
+            <ActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Primary" OnClick="SaveRecord" Loading="_isSaving">
+                    Guardar Cambios
+                </FluentButton>
+                <FluentButton Appearance="ButtonAppearance.Default" OnClick="CloseEditDialog">
+                    Cancelar
+                </FluentButton>
+            </ActionTemplate>
+        </FluentDialogBody>
+    </FluentDialog>
+}
 
 @code {
     private bool _isBusy = true;
@@ -273,6 +284,7 @@
     private string activeTabId = "tab-players";
     private string _filterText = "";
     private FluentDialog? _editDialog;
+    private bool _isEditDialogOpen = false;
     private object? _editingRecord;
     private bool _isSaving = false;
     private bool _boolWrapper = false;
@@ -391,6 +403,9 @@
         else if (record is LocalPlayer lp) _boolWrapper = lp.IsDead ?? false;
         else if (record is Ticket t) _boolWrapper = t.Viewed ?? false;
 
+        _isEditDialogOpen = true;
+        StateHasChanged();
+        await Task.Yield();
         if (_editDialog != null)
             await _editDialog.ShowAsync();
     }
@@ -399,6 +414,9 @@
     {
         if (_editDialog != null)
             await _editDialog.HideAsync();
+        _isEditDialogOpen = false;
+        _editingRecord = null;
+        StateHasChanged();
     }
 
     private async Task SaveRecord()
