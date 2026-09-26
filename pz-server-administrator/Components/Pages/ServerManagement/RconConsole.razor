@@ -4,7 +4,7 @@
 @inject IRconService RconService
 @inject IPzServerService PzServerService
 @inject IConfigurationService ConfigurationService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @implements IDisposable
 
 <PageTitle>Consola RCON - Project Zomboid Server Administrator</PageTitle>
@@ -24,35 +24,35 @@
             
             @if (_isConnected)
             {
-                <FluentBadge Appearance="Appearance.Accent" Fill="success" Color="white">Conectado a @_currentHost:@_currentPort</FluentBadge>
-                <FluentButton IconStart="@(new Icons.Regular.Size16.PlugDisconnected())" OnClick="DisconnectRcon" Appearance="Appearance.Stealth">Desconectar</FluentButton>
+                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Success">Conectado a @_currentHost:@_currentPort</FluentBadge>
+                <FluentButton IconStart="@(new Icons.Regular.Size16.PlugDisconnected())" OnClick="DisconnectRcon" Appearance="ButtonAppearance.Subtle">Desconectar</FluentButton>
             }
             else
             {
-                <FluentBadge Appearance="Appearance.Neutral">Desconectado</FluentBadge>
+                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Warning">Desconectado</FluentBadge>
                 <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalGap="5">
-                    <FluentSelect TOption="string" @bind-Value="@_selectedHostOption" Style="width: 260px;" Disabled="@_isConnecting">
+                    <FluentSelect TOption="string" TValue="string" @bind-Value="@_selectedHostOption" Style="width: 260px;" Disabled="@_isConnecting">
                         @if (!string.IsNullOrEmpty(_configuredHost))
                         {
-                            <FluentOption TOption="string" Value="@("configured")">Servidor: @_configuredHost</FluentOption>
+                            <FluentOption TValue="string" Value="@("configured")">Servidor: @_configuredHost</FluentOption>
                         }
                         @if (!string.IsNullOrEmpty(_detectedIp))
                         {
-                            <FluentOption TOption="string" Value="@("auto")">Red Local: @_detectedIp</FluentOption>
+                            <FluentOption TValue="string" Value="@("auto")">Red Local: @_detectedIp</FluentOption>
                         }
-                        <FluentOption TOption="string" Value="@("docker")">Docker/Podman: host.containers.internal</FluentOption>
-                        <FluentOption TOption="string" Value="@("local")">Localhost: 127.0.0.1</FluentOption>
-                        <FluentOption TOption="string" Value="@("custom")">Otra IP o Hostname...</FluentOption>
+                        <FluentOption TValue="string" Value="@("docker")">Docker/Podman: host.containers.internal</FluentOption>
+                        <FluentOption TValue="string" Value="@("local")">Localhost: 127.0.0.1</FluentOption>
+                        <FluentOption TValue="string" Value="@("custom")">Otra IP o Hostname...</FluentOption>
                     </FluentSelect>
 
                     @if (_selectedHostOption == "custom")
                     {
-                        <FluentTextField @bind-Value="@_customHostInput" Placeholder="Ej: 192.168.1.5" Style="width: 140px;" Disabled="@_isConnecting" />
+                        <FluentTextInput @bind-Value="@_customHostInput" Placeholder="Ej: 192.168.1.5" Style="width: 140px;" Disabled="@_isConnecting" />
                     }
 
                     <FluentButton IconStart="@(new Icons.Regular.Size16.PlugConnected())" 
                                   OnClick="ConnectRcon" 
-                                  Appearance="Appearance.Accent" 
+                                  Appearance="ButtonAppearance.Primary" 
                                   Loading="@_isConnecting"
                                   Disabled="@_isConnecting">
                         @(_isConnecting ? "Conectando..." : "Conectar")
@@ -66,7 +66,7 @@
     <FluentCard Style="padding: 0; overflow: hidden; border-radius: 8px; flex-grow: 1; display: flex; flex-direction: column;">
         <div style="padding: 10px; background: var(--neutral-fill-secondary-rest); border-bottom: 1px solid var(--neutral-stroke-rest); display: flex; justify-content: space-between;">
             <FluentLabel Typo="Typography.Body" Style="font-size: 0.8em; opacity: 0.8;">Salida de la Consola</FluentLabel>
-            <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth" OnClick="ClearConsole">Limpiar</FluentButton>
+            <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle" OnClick="ClearConsole">Limpiar</FluentButton>
         </div>
         <div style="flex-grow: 1; background: #1e1e1e; padding: 15px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 14px; display: flex; flex-direction: column;" id="rcon-console-output">
             @foreach (var log in _consoleLogs)
@@ -78,16 +78,16 @@
 
     <!-- Command Input -->
     <div style="display: flex; gap: 10px; align-items: stretch;">
-        <FluentTextField @bind-Value="@_commandInput" Placeholder="Escribe un comando RCON (ej: help, players, servermsg Hola)" Style="flex-grow: 1;" Disabled="@(!_isConnected)" @onkeyup="HandleKeyUp" />
-        <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size16.Send())" Disabled="@(!_isConnected || string.IsNullOrWhiteSpace(_commandInput))" OnClick="SendCommand">Enviar</FluentButton>
+        <FluentTextInput @bind-Value="@_commandInput" Placeholder="Escribe un comando RCON (ej: help, players, servermsg Hola)" Style="flex-grow: 1;" Disabled="@(!_isConnected)" @onkeyup="HandleKeyUp" />
+        <FluentButton Appearance="ButtonAppearance.Primary" IconStart="@(new Icons.Regular.Size16.Send())" Disabled="@(!_isConnected || string.IsNullOrWhiteSpace(_commandInput))" OnClick="SendCommand">Enviar</FluentButton>
     </div>
     
     <!-- Quick Commands -->
     <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10">
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("help"))" Appearance="Appearance.Outline">Help</FluentButton>
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("players"))" Appearance="Appearance.Outline">Players</FluentButton>
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="Appearance.Outline">Save World</FluentButton>
-        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="Appearance.Outline">Quit Server</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("help"))" Appearance="ButtonAppearance.Outline">Help</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("players"))" Appearance="ButtonAppearance.Outline">Players</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("save"))" Appearance="ButtonAppearance.Outline">Save World</FluentButton>
+        <FluentButton Disabled="@(!_isConnected)" OnClick="@(() => SendQuickCommand("quit"))" Color="Color.Error" Appearance="ButtonAppearance.Outline">Quit Server</FluentButton>
     </FluentStack>
 
     <!-- Troubleshooting Documentation -->
@@ -169,7 +169,6 @@
     {
         try
         {
-            // Dummy UDP connection to determine the preferred local IPv4 interface
             using (var socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Dgram, 0))
             {
                 socket.Connect("8.8.8.8", 65530);
@@ -181,7 +180,6 @@
         }
         catch
         {
-            // Fallback: look through all network interfaces
             try
             {
                 var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
@@ -254,7 +252,7 @@
             {
                 _currentHost = host;
                 _consoleLogs.Add(new RconLog { Message = "Conectado exitosamente y autenticado.", IsCommand = true });
-                ToastService.ShowSuccess("Conexión RCON establecida.");
+                await NotificationService.ShowSuccessAsync("Conexión RCON establecida.");
             }
         }
         catch (Exception ex)
@@ -281,7 +279,7 @@
         if (string.IsNullOrWhiteSpace(_commandInput) || !_isConnected) return;
 
         string command = _commandInput;
-        _commandInput = string.Empty; // Clear input UI immediately
+        _commandInput = string.Empty;
         _consoleLogs.Add(new RconLog { Message = $"> {command}", IsCommand = true });
         await InvokeAsync(StateHasChanged);
 
@@ -326,14 +324,12 @@
         {
             await JSRuntime.InvokeVoidAsync("eval", "var el = document.getElementById('rcon-console-output'); if (el) { el.scrollTop = el.scrollHeight; }");
         }
-        catch { /* Ignore JS errors during prerendering */ }
+        catch { }
     }
 
     public void Dispose()
     {
         RconService.OnConnectionStateChanged -= UpdateState;
         RconService.OnMessageReceived -= HandleIncomingMessage;
-        // Don't disconnect automatically on dispose if we want background connection, 
-        // but since DI is scoped, it bounds to the circuit. It's safe to keep it, but it might disconnect on GC.
     }
 }

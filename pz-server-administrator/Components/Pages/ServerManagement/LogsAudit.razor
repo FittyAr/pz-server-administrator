@@ -2,7 +2,7 @@
 @using Microsoft.FluentUI.AspNetCore.Components
 @using pz_server_administrator.Services
 @inject IServerLoggerService LoggerService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @inject ILocalizationService LocService
 @implements IDisposable
 
@@ -31,20 +31,20 @@
                 @if (LogFiles.Any())
                 {
                     <FluentDataGrid Items="@LogFiles.AsQueryable()" TGridItem="LogFileInfo"
-                        GenerateHeader="GenerateHeaderOption.Default">
+                        GenerateHeader="DataGridGeneratedHeaderType.Default">
                         <PropertyColumn Property="@(p => p.Name)" Sortable="true"
                             Title="@LocService.Get("LogsAudit.File")" />
                         <PropertyColumn Property="@(p => p.FormattedSize)" Sortable="true"
                             Title="@LocService.Get("LogsAudit.Size")" />
-                        <TemplateColumn Title="@LocService.Get("LogsAudit.Action")" Align="Align.Center">
-                            <FluentButton Appearance="Appearance.Lightweight" IconStart="@(new Icons.Regular.Size16.Eye())"
+                        <TemplateColumn Title="@LocService.Get("LogsAudit.Action")" Align="DataGridCellAlignment.Center">
+                            <FluentButton Appearance="ButtonAppearance.Subtle" IconStart="@(new Icons.Regular.Size16.Eye())"
                                 OnClick="@(() => LoadLogContent(context.RelativePath))" />
                         </TemplateColumn>
                     </FluentDataGrid>
                 }
                 else
                 {
-                    <FluentMessageBar Intent="MessageIntent.Warning">@LocService.Get("LogsAudit.NoLogsFound")
+                    <FluentMessageBar Intent="MessageBarIntent.Warning">@LocService.Get("LogsAudit.NoLogsFound")
                     </FluentMessageBar>
                 }
             </div>
@@ -58,7 +58,7 @@
                     Style="text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 80%;">
                     @LocService.Get("LogsAudit.Viewer"): @_selectedFile</FluentLabel>
                 <div style="display: flex; gap: 10px;">
-                    <FluentButton Appearance="Appearance.Stealth"
+                    <FluentButton Appearance="ButtonAppearance.Subtle"
                         IconStart="@(new Icons.Regular.Size16.ArrowClockwise())" OnClick="ReloadLog"
                         Disabled="@string.IsNullOrEmpty(_selectedFile)">
                         @LocService.Get("LogsAudit.Reload")
@@ -70,7 +70,7 @@
                 style="flex-grow: 1; background-color: #1e1e1e; padding: 10px; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden;">
                 @if (_isLoading)
                 {
-                    <FluentProgressRing Style="margin: auto;" />
+                    <FluentSpinner Style="margin: auto;" />
                 }
                 else if (string.IsNullOrEmpty(_logContent) && string.IsNullOrEmpty(_selectedFile))
                 {
