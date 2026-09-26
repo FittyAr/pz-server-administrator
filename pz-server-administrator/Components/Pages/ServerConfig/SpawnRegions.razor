@@ -4,7 +4,7 @@
 @using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
 @inject IPzServerService PzServerService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 
 <PageTitle>Regiones de Spawn - Project Zomboid Server Administrator</PageTitle>
 
@@ -23,7 +23,7 @@
                     <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Regiones de Spawn
                     </FluentLabel>
                     <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Gestiona las zonas de aparición inicial
-                        para nuevos jugadores.</FluentLabel>
+                    para nuevos jugadores.</FluentLabel>
                 </div>
             </div>
 
@@ -33,12 +33,12 @@
                 VerticalAlignment="VerticalAlignment.Center">
                 <div
                     style="display: flex; background: var(--neutral-fill-secondary-rest); padding: 4px; border-radius: 8px; border: 1px solid var(--neutral-stroke-rest);">
-                    <FluentButton Appearance="@(_editMode == "simple" ? Appearance.Accent : Appearance.Stealth)"
+                    <FluentButton Appearance="@(_editMode == "simple" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "simple")"
                         IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
                         Visual
                     </FluentButton>
-                    <FluentButton Appearance="@(_editMode == "advanced" ? Appearance.Accent : Appearance.Stealth)"
+                    <FluentButton Appearance="@(_editMode == "advanced" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
                         Código LUA
                     </FluentButton>
@@ -49,10 +49,10 @@
 
                 @if (_editMode == "simple")
                 {
-                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="Appearance.Accent"
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="ButtonAppearance.Primary"
                         OnClick="AddRegion">Nueva Región</FluentButton>
                 }
-                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Outline"
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="ButtonAppearance.Outline"
                     OnClick="SaveAsync">Guardar</FluentButton>
             </FluentStack>
         </FluentStack>
@@ -61,7 +61,7 @@
     @if (_regions == null)
     {
         <div style="display: flex; justify-content: center; padding: 50px;">
-            <FluentProgressRing />
+            <FluentSpinner />
         </div>
     }
     else
@@ -70,7 +70,7 @@
         {
             @if (_regions.Count == 0)
             {
-                <FluentMessageBar Intent="MessageIntent.Info">No hay regiones definidas. Usa el botón "Nueva Región" para añadir
+                <FluentMessageBar Intent="MessageBarIntent.Info">No hay regiones definidas. Usa el botón "Nueva Región" para añadir
                     una.</FluentMessageBar>
             }
             else
@@ -82,28 +82,27 @@
                             <FluentCard
                                 Style="padding: 15px; position: relative; border-radius: 8px; border-top: 4px solid var(--accent-fill-rest);">
                                 <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
-                                    <FluentTextField @bind-Value="region.Name" Label="Nombre de la Región" FullWidth="true" />
+                                    <FluentTextInput @bind-Value="region.Name" Label="Nombre de la Región" Style="width: 100%;" />
 
-                                    <FluentSelect TOption="string" Label="Tipo de Archivo" Value="@GetFileType(region)"
-                                        ValueChanged="@(v => SetFileType(region, v))" Appearance="Appearance.Outline" FullWidth="true">
-                                        <FluentOption TOption="string" Value="file">Mapa Estándar (media/maps/...)</FluentOption>
-                                        <FluentOption TOption="string" Value="serverfile">Archivo del Servidor (serverfile)
-                                        </FluentOption>
+                                    <FluentSelect TOption="string" TValue="string" Label="Tipo de Archivo" Value="@GetFileType(region)"
+                                        ValueChanged="@(v => SetFileType(region, v))" Style="width: 100%;">
+                                        <FluentOption TValue="string" Value="@("file")">Mapa Estándar (media/maps/...)</FluentOption>
+                                        <FluentOption TValue="string" Value="@("serverfile")">Archivo del Servidor (serverfile)</FluentOption>
                                     </FluentSelect>
 
                                     @if (GetFileType(region) == "file")
                                     {
-                                        <FluentTextField @bind-Value="region.File" Label="Ruta LUA" FullWidth="true"
+                                        <FluentTextInput @bind-Value="region.File" Label="Ruta LUA" Style="width: 100%;"
                                             Placeholder="Ej: media/maps/Muldraugh, KY/spawnpoints.lua" />
                                     }
                                     else
                                     {
-                                        <FluentTextField @bind-Value="region.ServerFile" Label="Nombre de Archivo" FullWidth="true"
+                                        <FluentTextInput @bind-Value="region.ServerFile" Label="Nombre de Archivo" Style="width: 100%;"
                                             Placeholder="Ej: mi_spawn.lua" />
                                     }
 
                                     <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth"
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle"
                                             OnClick="@(() => RemoveRegion(region))" Color="Color.Error">Eliminar</FluentButton>
                                     </div>
                                 </FluentStack>
@@ -206,7 +205,6 @@
             }
             else if (_regions != null)
             {
-                // Sync values based on selected type
                 foreach (var r in _regions)
                 {
                     if (GetFileType(r) == "file") r.ServerFile = null;
@@ -216,11 +214,11 @@
             }
 
             await LoadDataAsync();
-            ToastService.ShowSuccess("Regiones de spawn guardadas correctamente.");
+            await NotificationService.ShowSuccessAsync("Regiones de spawn guardadas correctamente.");
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
         }
     }
 }

@@ -4,7 +4,7 @@
 @using pz_server_administrator.Services
 @inject IConfigurationService ConfigurationService
 @inject IPzServerService PzServerService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 
 <PageTitle>Puntos de Spawn - Project Zomboid Server Administrator</PageTitle>
 
@@ -23,7 +23,7 @@
                     <FluentLabel Typo="Typography.H3" Style="margin: 0; line-height: 1.2;">Puntos de Spawn por Profesión
                     </FluentLabel>
                     <FluentLabel Typo="Typography.Body" Style="opacity: 0.7;">Configura las coordenadas de aparición
-                        según el rol del jugador.</FluentLabel>
+                    según el rol del jugador.</FluentLabel>
                 </div>
             </div>
 
@@ -33,12 +33,12 @@
                 VerticalAlignment="VerticalAlignment.Center">
                 <div
                     style="display: flex; background: var(--neutral-fill-secondary-rest); padding: 4px; border-radius: 8px; border: 1px solid var(--neutral-stroke-rest);">
-                    <FluentButton Appearance="@(_editMode == "simple" ? Appearance.Accent : Appearance.Stealth)"
+                    <FluentButton Appearance="@(_editMode == "simple" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "simple")"
                         IconStart="@(new Icons.Regular.Size16.TextBulletListSquare())">
                         Visual
                     </FluentButton>
-                    <FluentButton Appearance="@(_editMode == "advanced" ? Appearance.Accent : Appearance.Stealth)"
+                    <FluentButton Appearance="@(_editMode == "advanced" ? ButtonAppearance.Primary : ButtonAppearance.Subtle)"
                         OnClick="@(() => _editMode = "advanced")" IconStart="@(new Icons.Regular.Size16.Code())">
                         Código LUA
                     </FluentButton>
@@ -49,10 +49,10 @@
 
                 @if (_editMode == "simple")
                 {
-                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="Appearance.Accent"
+                    <FluentButton IconStart="@(new Icons.Regular.Size20.Add())" Appearance="ButtonAppearance.Primary"
                         OnClick="AddProfession">Nueva Profesión</FluentButton>
                 }
-                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="Appearance.Outline"
+                <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" Appearance="ButtonAppearance.Outline"
                     OnClick="SaveAsync">Guardar</FluentButton>
             </FluentStack>
         </FluentStack>
@@ -61,7 +61,7 @@
     @if (_config == null)
     {
         <div style="display: flex; justify-content: center; padding: 50px;">
-            <FluentProgressRing />
+            <FluentSpinner />
         </div>
     }
     else
@@ -70,7 +70,7 @@
         {
             @if (_config.ProfessionPoints.Count == 0)
             {
-                <FluentMessageBar Intent="MessageIntent.Info">No hay puntos definidos. Usa "Nueva Profesión" para empezar.
+                <FluentMessageBar Intent="MessageBarIntent.Info">No hay puntos definidos. Usa "Nueva Profesión" para empezar.
                 </FluentMessageBar>
             }
             else
@@ -79,14 +79,14 @@
                     Style="width: 100%; border: 1px solid var(--neutral-stroke-rest); border-radius: 12px; padding: 10px; background: white;">
                     @foreach (var prof in _config.ProfessionPoints)
                     {
-                        <FluentTab Label="@prof.Key" IconStart="@(new Icons.Regular.Size16.Person())">
+                        <FluentTab Header="@prof.Key" IconStart="@(new Icons.Regular.Size16.Person())">
                             <div style="padding: 20px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                     <FluentLabel Typo="Typography.H5">Pestaña: @prof.Key</FluentLabel>
                                     <FluentSpacer />
                                     <FluentButton IconStart="@(new Icons.Regular.Size16.Add())" OnClick="@(() => AddPoint(prof.Key))"
                                         Style="margin-right: 10px;">Añadir Punto</FluentButton>
-                                    <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="Appearance.Stealth"
+                                    <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" Appearance="ButtonAppearance.Subtle"
                                         Color="Color.Error" OnClick="@(() => RemoveProfession(prof.Key))">Eliminar Rol</FluentButton>
                                 </div>
 
@@ -100,14 +100,14 @@
                                                     <div style="display: flex; justify-content: space-between; align-items: center;">
                                                         <FluentLabel Typo="Typography.Body">Coordenadas</FluentLabel>
                                                         <FluentButton IconStart="@(new Icons.Regular.Size16.Dismiss())"
-                                                            Appearance="Appearance.Stealth" OnClick="@(() => prof.Value.Remove(point))" />
+                                                            Appearance="ButtonAppearance.Subtle" OnClick="@(() => prof.Value.Remove(point))" />
                                                     </div>
                                                     <FluentDivider />
-                                                    <FluentNumberField @bind-Value="point.WorldX" Label="World X" FullWidth="true" />
-                                                    <FluentNumberField @bind-Value="point.WorldY" Label="World Y" FullWidth="true" />
-                                                    <FluentNumberField @bind-Value="point.PosX" Label="Pos X" FullWidth="true" />
-                                                    <FluentNumberField @bind-Value="point.PosY" Label="Pos Y" FullWidth="true" />
-                                                    <FluentNumberField @bind-Value="point.PosZ" Label="Pos Z (Piso)" FullWidth="true" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.WorldX" Label="World X" Style="width: 100%;" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.WorldY" Label="World Y" Style="width: 100%;" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.PosX" Label="Pos X" Style="width: 100%;" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.PosY" Label="Pos Y" Style="width: 100%;" />
+                                                    <FluentNumberInput TValue="int" @bind-Value="point.PosZ" Label="Pos Z (Piso)" Style="width: 100%;" />
                                                 </FluentStack>
                                             </FluentCard>
                                         </FluentGridItem>
@@ -171,8 +171,7 @@
         {
             newName = $"profession_{i++}";
         }
-        _config.ProfessionPoints[newName] = new List<SpawnPoint> { new SpawnPoint { WorldX = 40, WorldY = 22, PosX = 0, PosY = 0
-} };
+        _config.ProfessionPoints[newName] = new List<SpawnPoint> { new SpawnPoint { WorldX = 40, WorldY = 22, PosX = 0, PosY = 0 } };
     }
 
     private void RemoveProfession(string key)
@@ -204,11 +203,11 @@
             }
 
             await LoadDataAsync();
-            ToastService.ShowSuccess("Puntos de spawn guardados correctamente.");
+            await NotificationService.ShowSuccessAsync("Puntos de spawn guardados correctamente.");
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error al guardar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error al guardar: {ex.Message}");
         }
     }
 }
