@@ -11,69 +11,66 @@
 <div class="navmenu">
     <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
     <label for="navmenu-toggle" class="navmenu-icon">
-        <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" />
+        <FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Default" />
     </label>
     <nav class="sitenav" aria-labelledby="main-menu">
-        <FluentNavMenu Id="main-menu" Collapsible="true" Width="250" Title="Navigation menu" @bind-Expanded="expanded"
-            CustomToggle="true">
-            <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())"
-                IconColor="Color.Accent">@LocService.Get("NavMenu.Home")</FluentNavLink>
+        <FluentNav Id="main-menu" Width="250">
+            <FluentNavItem Href="/" Match="NavLinkMatch.All" IconRest="@(new Icons.Regular.Size20.Home())">
+                @LocService.Get("NavMenu.Home")
+            </FluentNavItem>
 
             @* Server Config Section *@
-            <FluentNavGroup Text="@LocService.Get("NavMenu.ServerConfig")" Icon="@(new Icons.Regular.Size20.Settings())"
-                IconColor="Color.Accent" Expanded="false">
-                <FluentNavLink Href="/server-config/ini" Icon="@(new Icons.Regular.Size20.Document())"
-                    IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.IniConfig")
-                </FluentNavLink>
-                <FluentNavLink Href="/server-config/sandbox" Icon="@(new Icons.Regular.Size20.Box())"
-                    IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SandboxVars")
-                </FluentNavLink>
-                <FluentNavLink Href="/server-config/spawn-regions" Icon="@(new Icons.Regular.Size20.Location())"
-                    IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnRegions")
-                </FluentNavLink>
-                <FluentNavLink Href="/server-config/spawn-points" Icon="@(new Icons.Regular.Size20.Circle())"
-                    IconColor="Color.Accent" Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnPoints")
-                </FluentNavLink>
-            </FluentNavGroup>
+            <FluentNavCategory Title="@LocService.Get("NavMenu.ServerConfig")" IconRest="@(new Icons.Regular.Size20.Settings())" Expanded="false">
+                <FluentNavItem Href="/server-config/ini" IconRest="@(new Icons.Regular.Size20.Document())"
+                    Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.IniConfig")
+                </FluentNavItem>
+                <FluentNavItem Href="/server-config/sandbox" IconRest="@(new Icons.Regular.Size20.Box())"
+                    Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SandboxVars")
+                </FluentNavItem>
+                <FluentNavItem Href="/server-config/spawn-regions" IconRest="@(new Icons.Regular.Size20.Location())"
+                    Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnRegions")
+                </FluentNavItem>
+                <FluentNavItem Href="/server-config/spawn-points" IconRest="@(new Icons.Regular.Size20.Circle())"
+                    Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.SpawnPoints")
+                </FluentNavItem>
+            </FluentNavCategory>
 
             @* RCON Section *@
-            <FluentNavLink Href="/rcon" Icon="@(new Icons.Regular.Size20.Code())" IconColor="Color.Accent"
-                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.RconConsole")</FluentNavLink>
-            <FluentNavLink Href="/logs" Icon="@(new Icons.Regular.Size20.DocumentText())" IconColor="Color.Accent"
-                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.LogsAudit")</FluentNavLink>
+            <FluentNavItem Href="/rcon" IconRest="@(new Icons.Regular.Size20.Code())"
+                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.RconConsole")</FluentNavItem>
+            <FluentNavItem Href="/logs" IconRest="@(new Icons.Regular.Size20.DocumentText())"
+                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.LogsAudit")</FluentNavItem>
 
             @* Database Section *@
-            <FluentNavLink Href="/database" Icon="@(new Icons.Regular.Size20.Database())" IconColor="Color.Accent"
-                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.DatabaseExplorer")</FluentNavLink>
+            <FluentNavItem Href="/database" IconRest="@(new Icons.Regular.Size20.Database())"
+                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.DatabaseExplorer")</FluentNavItem>
 
             @* Mods Section *@
-            <FluentNavLink Href="/mods" Icon="@(new Icons.Regular.Size20.Apps())" IconColor="Color.Accent"
-                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.Mods")</FluentNavLink>
+            <FluentNavItem Href="/mods" IconRest="@(new Icons.Regular.Size20.Apps())"
+                Disabled="@(!HasActiveServer)">@LocService.Get("NavMenu.Mods")</FluentNavItem>
 
             @* System Administration *@
             @if (AuthService.HasPermission(p => p.AllowUserManagement) || AuthService.HasPermission(p =>
             p.AllowConfigEdit))
             {
-                <FluentNavGroup Text="@LocService.Get("NavMenu.System")" Icon="@(new Icons.Regular.Size20.Shield())"
-                    IconColor="Color.Accent" Expanded="false">
+                <FluentNavCategory Title="@LocService.Get("NavMenu.System")" IconRest="@(new Icons.Regular.Size20.Shield())" Expanded="false">
                     @if (AuthService.HasPermission(p => p.AllowUserManagement))
                     {
-                        <FluentNavLink Href="/users" Icon="@(new Icons.Regular.Size20.People())" IconColor="Color.Accent">
-                            @LocService.Get("NavMenu.UserManagement")</FluentNavLink>
+                        <FluentNavItem Href="/users" IconRest="@(new Icons.Regular.Size20.People())">
+                            @LocService.Get("NavMenu.UserManagement")</FluentNavItem>
                     }
                     @if (AuthService.HasPermission(p => p.AllowConfigEdit))
                     {
-                        <FluentNavLink Href="/settings" Icon="@(new Icons.Regular.Size20.SettingsChat())"
-                            IconColor="Color.Accent">@LocService.Get("NavMenu.AppConfiguration")</FluentNavLink>
+                        <FluentNavItem Href="/settings" IconRest="@(new Icons.Regular.Size20.SettingsChat())">
+                            @LocService.Get("NavMenu.AppConfiguration")</FluentNavItem>
                     }
-                </FluentNavGroup>
+                </FluentNavCategory>
             }
-        </FluentNavMenu>
+        </FluentNav>
     </nav>
 </div>
 
 @code {
-    private bool expanded = true;
     private bool HasActiveServer => !string.IsNullOrEmpty(ConfigService.GetConfiguration().AppSettings.ActiveServer);
 
     protected override void OnInitialized()

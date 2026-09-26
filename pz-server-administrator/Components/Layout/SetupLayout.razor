@@ -1,14 +1,12 @@
 @inherits LayoutComponentBase
 
 <FluentLayout>
-    <FluentBodyContent>
+    <FluentLayoutItem Area="LayoutArea.Content">
         @Body
-    </FluentBodyContent>
+    </FluentLayoutItem>
 </FluentLayout>
 
-<FluentToastProvider />
-<FluentDialogProvider />
-<FluentMessageBarProvider />
+<FluentProviders />
 
 <style>
     body {
