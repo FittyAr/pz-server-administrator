@@ -1,101 +1,115 @@
 @using pz_server_administrator.Models
 @using pz_server_administrator.Services
 @inject IAuthenticationService AuthService
+@inject ILocalizationService LocService
+@inject NavigationManager Navigation
 
-<FluentDialog @ref="_dialog" Modal="true">
-    <FluentDialogBody>
-        <TitleTemplate>
-            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
-                <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" />
-                <FluentLabel Typo="Typography.H5">Iniciar Sesión</FluentLabel>
-            </FluentStack>
-        </TitleTemplate>
-        
-        <ChildContent>
-            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <FluentMessageBar Intent="MessageBarIntent.Error">
-                        @ErrorMessage
-                    </FluentMessageBar>
-                }
-                
-                <FluentTextInput @bind-Value="Username" 
-                               Placeholder="Nombre de usuario"
-                               Label="Usuario"
-                               Required="true"
-                               Style="width: 100%" />
-                
-                <FluentTextInput @bind-Value="Password" 
-                               Placeholder="Contraseña"
-                               Label="Contraseña"
-                               TextInputType="TextInputType.Password"
-                               Required="true"
-                               Style="width: 100%" />
-            </FluentStack>
-        </ChildContent>
-        
-        <ActionTemplate>
-            <FluentButton Appearance="ButtonAppearance.Primary" 
-                         OnClick="HandleLogin"
-                         Loading="@IsLoading"
-                         Disabled="@(IsLoading || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))">
-                @if (IsLoading)
-                {
-                    <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())" />
-                    <span>Iniciando sesión...</span>
-                }
-                else
-                {
-                    <span>Iniciar Sesión</span>
-                }
-            </FluentButton>
+@if (_isOpen)
+{
+    <FluentDialog @ref="_dialog" Modal="true" Style="width: 420px; max-width: 95vw;">
+        <FluentDialogBody>
+            <TitleTemplate>
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Gap="8">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" Color="Color.Primary" />
+                    <FluentLabel Typo="Typography.H5">@LocService.Get("Login.Title")</FluentLabel>
+                </FluentStack>
+            </TitleTemplate>
+
+            <TitleActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Subtle"
+                              IconStart="@(new Icons.Regular.Size16.Dismiss())"
+                              OnClick="HandleCancel"
+                              Title="@LocService.Get("Generic.Cancel")" />
+            </TitleActionTemplate>
             
-            <FluentButton Appearance="ButtonAppearance.Default" 
-                         OnClick="HandleCancel"
-                         Disabled="@IsLoading">
-                Cancelar
-            </FluentButton>
-        </ActionTemplate>
-    </FluentDialogBody>
-</FluentDialog>
+            <ChildContent>
+                <div class="modal-form-content">
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                        @if (!string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            <FluentMessageBar Intent="MessageBarIntent.Error">
+                                @ErrorMessage
+                            </FluentMessageBar>
+                        }
+                        
+                        <FluentTextInput @bind-Value="Username" 
+                                         Placeholder="@LocService.Get("Login.Username")"
+                                         Label="@LocService.Get("Login.Username")"
+                                         Required="true"
+                                         Autofocus="true"
+                                         Style="width: 100%"
+                                         @onkeydown="HandleKeyDown" />
+                        
+                        <FluentTextInput @bind-Value="Password" 
+                                         Placeholder="@LocService.Get("Login.Password")"
+                                         Label="@LocService.Get("Login.Password")"
+                                         TextInputType="TextInputType.Password"
+                                         Required="true"
+                                         Style="width: 100%"
+                                         @onkeydown="HandleKeyDown" />
+                    </FluentStack>
+                </div>
+            </ChildContent>
+            
+            <ActionTemplate>
+                <FluentButton Appearance="ButtonAppearance.Primary" 
+                             OnClick="HandleLogin"
+                             Loading="@IsLoading"
+                             Disabled="@(IsLoading || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))">
+                    @if (IsLoading)
+                    {
+                        <FluentIcon Value="@(new Icons.Regular.Size16.ArrowClockwise())" />
+                        <span>@LocService.Get("Login.LoggingIn")</span>
+                    }
+                    else
+                    {
+                        <span>@LocService.Get("Login.LoginButton")</span>
+                    }
+                </FluentButton>
+                
+                <FluentButton Appearance="ButtonAppearance.Default" 
+                             OnClick="HandleCancel"
+                             Disabled="@IsLoading">
+                    @LocService.Get("Generic.Cancel")
+                </FluentButton>
+            </ActionTemplate>
+        </FluentDialogBody>
+    </FluentDialog>
+}
 
 @code {
-    [Parameter] public bool IsHidden { get; set; } = true;
-    [Parameter] public EventCallback<bool> IsHiddenChanged { get; set; }
     [Parameter] public EventCallback<AuthUser> OnLoginSuccess { get; set; }
     
     private FluentDialog? _dialog;
+    private bool _isOpen = false;
     private string Username = string.Empty;
     private string Password = string.Empty;
     private string ErrorMessage = string.Empty;
     private bool IsLoading = false;
     
-    protected override async Task OnParametersSetAsync()
-    {
-        if (_dialog != null)
-        {
-            if (!IsHidden)
-                await _dialog.ShowAsync();
-            else
-                await _dialog.HideAsync();
-        }
-    }
-    
     public async Task ShowAsync()
     {
-        IsHidden = false;
+        _isOpen = true;
+        ErrorMessage = string.Empty;
+        StateHasChanged();
+        await Task.Yield();
         if (_dialog != null)
+        {
             await _dialog.ShowAsync();
-        await IsHiddenChanged.InvokeAsync(IsHidden);
+        }
     }
 
     public async Task HideAsync()
     {
-        IsHidden = true;
-        if (_dialog != null)
-            await _dialog.HideAsync();
-        await IsHiddenChanged.InvokeAsync(IsHidden);
+        await CloseModal();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !IsLoading && !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password))
+        {
+            await HandleLogin();
+        }
     }
 
     private async Task HandleLogin()
@@ -115,9 +129,10 @@
             var success = await AuthService.LoginAsync(Username, Password);
             if (success)
             {
-                await OnLoginSuccess.InvokeAsync(AuthService.CurrentState.CurrentUser);
+                var currentUser = AuthService.CurrentState.CurrentUser;
                 await CloseModal();
                 ClearForm();
+                await OnLoginSuccess.InvokeAsync(currentUser);
             }
             else
             {
@@ -143,12 +158,12 @@
     
     private async Task CloseModal()
     {
-        IsHidden = true;
         if (_dialog != null)
         {
             await _dialog.HideAsync();
         }
-        await IsHiddenChanged.InvokeAsync(IsHidden);
+        _isOpen = false;
+        StateHasChanged();
     }
     
     private void ClearForm()
