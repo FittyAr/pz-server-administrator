@@ -7,7 +7,7 @@
 @inject IAiService AiService
 @inject IConfigurationService ConfigService
 @inject ILocalizationService LocService
-@inject IToastService ToastService
+@inject INotificationService NotificationService
 @inject ICommunityService CommunityService
 @inject IModPresetService PresetService
 @inject IServerLoggerService LoggerService
@@ -26,20 +26,20 @@
     <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.Title")</FluentLabel>
     <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
         <FluentButton IconStart="@(new Icons.Regular.Size20.Save())" 
-                      Appearance="Appearance.Accent"
+                      Appearance="ButtonAppearance.Primary"
                       OnClick="SaveConfigAsync" 
                       Loading="@_isSaving">
             @LocService.Get("Mods.SaveConfig")
         </FluentButton>
         <FluentButton IconStart="@(new Icons.Regular.Size20.ArrowClockwise())" 
-                      Appearance="Appearance.Neutral"
+                      Appearance="ButtonAppearance.Default"
                       OnClick="ScanModsAsync" 
                       Loading="@_isScanning">
             @LocService.Get("Mods.ScanButton")
         </FluentButton>
         <FluentDivider Role="DividerRole.Presentation" Orientation="Orientation.Vertical" />
         <FluentButton IconStart="@(new Icons.Regular.Size20.Power())" 
-                      Appearance="Appearance.Neutral"
+                      Appearance="ButtonAppearance.Default"
                       OnClick="RestartViaRcon"
                       Title="@LocService.Get("Mods.RestartServer")">
             @LocService.Get("Mods.RestartServer")
@@ -49,148 +49,150 @@
 
 <FluentDivider Style="margin: 1rem 0;" />
 
-<FluentTabs ActiveTabId="tab-explorer" OnTabSelect="OnTabHandle">
+<FluentTabs @bind-ActiveTabId="_activeTabId">
     @* --- TAB: EXPLORADOR --- *@
-    <FluentTab Id="tab-explorer" Label="@LocService.Get("Mods.TabExplorer")">
+    <FluentTab Id="tab-explorer" Header="@LocService.Get("Mods.TabExplorer")">
         <div style="margin-top: 1rem;">
             <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <FluentSearch @bind-Value="_filterText" 
-                @bind-Value:after="StateHasChanged"
+                <FluentTextInput TextInputType="TextInputType.Search" @bind-Value="_filterText" 
+                              @bind-Value:after="StateHasChanged"
                               Placeholder="@LocService.Get("Mods.SearchPlaceholder")" 
                               Style="width: 300px;" />
             </div>
 
             @if (_items == null)
             {
-                    <FluentProgressRing Style="margin: 2rem auto;" />
+                <FluentSpinner Style="margin: 2rem auto;" />
             }
             else if (!FilteredItems?.Any() ?? true)
             {
-                    <div style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
-                        <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Neutral" />
-                        <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoModsFound")</FluentLabel>
-                    </div>
+                <div style="height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.6;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Box())" Color="Color.Default" />
+                    <FluentLabel Typo="Typography.Body" Style="margin-top: 1rem;">@LocService.Get("Mods.NoModsFound")</FluentLabel>
+                </div>
             }
             else
             {
-                    <FluentGrid Spacing="3" AdaptiveRendering="true">
+                <FluentGrid Spacing="3" AdaptiveRendering="true">
                     @foreach (var item in FilteredItems!)
                     {
-                                <FluentGridItem xs="12" sm="6" md="4" lg="3">
-                                    <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden; position: relative;">
+                        <FluentGridItem xs="12" sm="6" md="4" lg="3">
+                            <FluentCard Style="height: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden; position: relative;">
                                 @if (!string.IsNullOrEmpty(item.ThumbnailPath))
                                 {
-                                                <img src="@item.ThumbnailPath" style="width: 100%; height: 150px; object-fit: cover;" alt="@item.Title" />
+                                    <img src="@item.ThumbnailPath" style="width: 100%; height: 150px; object-fit: cover;" alt="@item.Title" />
                                 }
                                 else
                                 {
-                                                <div style="width: 100%; height: 150px; background: var(--neutral-layer-2); display: flex; align-items: center; justify-content: center;">
-                                                    <FluentIcon Value="@(new Icons.Regular.Size20.Apps())" Color="Color.Neutral" />
-                                                </div>
+                                    <div style="width: 100%; height: 150px; background: var(--neutral-layer-2); display: flex; align-items: center; justify-content: center;">
+                                        <FluentIcon Value="@(new Icons.Regular.Size20.Apps())" Color="Color.Default" />
+                                    </div>
                                 }
 
-                                        <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
-                                            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-                                                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@item.Title</FluentLabel>
+                                <div style="padding: 1rem; flex-grow: 1; display: flex; flex-direction: column;">
+                                    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                        <FluentLabel Typo="Typography.Body" Weight="LabelWeight.Semibold">@item.Title</FluentLabel>
                                         @if (item.IsUpdateAvailable)
                                         {
-                                                        <FluentBadge Appearance="Appearance.Accent" Circular="true" Style="font-size: 0.7rem;">@LocService.Get("Mods.UpdateAvailable")</FluentBadge>
+                                            <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand" Style="font-size: 0.7rem;">@LocService.Get("Mods.UpdateAvailable")</FluentBadge>
                                         }
-                                            </FluentStack>
-                                            <FluentLabel Typo="Typography.Body" Color="Color.Neutral" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
+                                    </FluentStack>
+                                    <FluentLabel Typo="Typography.Body" Color="Color.Default" Style="font-size: 0.8rem;">ID: @item.Id</FluentLabel>
 
-                                            <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                         @foreach (var instance in item.Instances)
                                         {
                                             var hasAiWarning = _aiActions.Any(a => a.TargetId == instance.ModId && (a.Type == AiActionType.Deactivate || a.Type == AiActionType.Reorder));
 
-                                                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                                                            <FluentBadge Appearance="@(instance.IsActive ? Appearance.Accent : Appearance.Neutral)"
-                                                                         Style="cursor: pointer;" 
-                                                @onclick="@(() => ToggleActive(item.Id, instance))">
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <FluentBadge Appearance="@(instance.IsActive ? BadgeAppearance.Filled : BadgeAppearance.Ghost)"
+                                                             Color="@(instance.IsActive ? BadgeColor.Brand : BadgeColor.Subtle)"
+                                                             Style="cursor: pointer;" 
+                                                             @onclick="@(() => ToggleActive(item.Id, instance))">
                                                     @(instance.IsActive ? "✅ " : "❌ ") 
                                                     @if (hasAiWarning)
                                                     {
-                                                                        <span title="Este mod tiene advertencias de la IA" style="margin-right: 4px;">⚠️</span>
+                                                        <span title="Este mod tiene advertencias de la IA" style="margin-right: 4px;">⚠️</span>
                                                     }
                                                     @instance.ModId
-                                                            </FluentBadge>
-                                                            <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
+                                                </FluentBadge>
+                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.8;">
                                                     @GetCategoryIcon(instance.Category) @instance.Category
-                                                            </FluentLabel>
-                                                        </div>
-                                        }
+                                                </FluentLabel>
                                             </div>
+                                        }
+                                    </div>
 
-                                            <div style="margin-top: auto; padding-top: 1rem;">
-                                                <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
-                                                    <FluentButton IconStart="@(new Icons.Regular.Size16.Info())" 
-                                                                  Appearance="Appearance.Stealth"
-                                                                  Style="flex-grow: 1;" 
-                                                                  OnClick="@(() => FetchMetadata(item.Id))">
+                                    <div style="margin-top: auto; padding-top: 1rem;">
+                                        <FluentStack Orientation="Orientation.Horizontal" Spacing="2">
+                                            <FluentButton IconStart="@(new Icons.Regular.Size16.Info())" 
+                                                          Appearance="ButtonAppearance.Subtle"
+                                                          Style="flex-grow: 1;" 
+                                                          OnClick="@(() => FetchMetadata(item.Id))">
                                                 @LocService.Get("Mods.UpdateInfo")
-                                                    </FluentButton>
+                                            </FluentButton>
                                             @if (item.IsUpdateAvailable)
                                             {
-                                                            <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())"
-                                                                          Appearance="Appearance.Accent"
-                                                                          OnClick="@(() => TriggerUpdate(item.Id))">
+                                                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())"
+                                                              Appearance="ButtonAppearance.Primary"
+                                                              OnClick="@(() => TriggerUpdate(item.Id))">
                                                     @LocService.Get("Mods.ForceUpdate")
-                                                            </FluentButton>
+                                                </FluentButton>
                                             }
-                                                </FluentStack>
-                                            </div>
-                                        </div>
-                                    </FluentCard>
-                                </FluentGridItem>
+                                        </FluentStack>
+                                    </div>
+                                </div>
+                            </FluentCard>
+                        </FluentGridItem>
                     }
-                    </FluentGrid>
+                </FluentGrid>
             }
         </div>
     </FluentTab>
 
     @* --- TAB: ORDEN DE CARGA --- *@
-    <FluentTab Id="tab-order" Label="@LocService.Get("Mods.TabOrder")">
+    <FluentTab Id="tab-order" Header="@LocService.Get("Mods.TabOrder")">
         <div style="margin-top: 1rem;">
-            <FluentMessageBar Title="Information" Intent="@MessageIntent.Info" AllowDismiss="false">
+            <FluentMessageBar Title="Information" Intent="@MessageBarIntent.Info" AllowDismiss="false">
                 @LocService.Get("Mods.OrderTip")
             </FluentMessageBar>
 
             <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
                 @if (_items != null)
                 {
-                        <FluentListbox Items="@ActiveModsOrdered" 
-                                       TValue="ModInstance" 
-                    @bind-SelectedOption="@_selectedForMove"
-                                       Style="min-height: 400px; width: 100%;">
-                            <OptionTemplate Context="option">
+                    <FluentListbox TOption="ModInstance" 
+                                   TValue="ModInstance"
+                                   Items="@ActiveModsOrdered" 
+                                   @bind-Value="@_selectedForMove"
+                                   Style="min-height: 400px; width: 100%;">
+                        <OptionTemplate Context="option">
                             @if (option != null)
                             {
-                                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                            <div style="display: flex; align-items: center;">
-                                                <FluentIcon Value="@(GetIconForCategory(option.Category))" Color="Color.Accent" />
-                                                <span style="font-weight: bold; margin-left: 8px;">@option.ModId</span>
-                                                <span style="margin-left: 10px; opacity: 0.7; font-size: 0.8rem;">(@option.Name)</span>
-                                            </div>
-                                            <div>
-                                                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowUp())" 
-                                                              Appearance="Appearance.Stealth" 
-                                                              OnClick="@(() => MoveOrder(option, -1))" />
-                                                <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDown())" 
-                                                              Appearance="Appearance.Stealth" 
-                                                              OnClick="@(() => MoveOrder(option, 1))" />
-                                            </div>
-                                        </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div style="display: flex; align-items: center;">
+                                        <FluentIcon Value="@(GetIconForCategory(option.Category))" Color="Color.Primary" />
+                                        <span style="font-weight: bold; margin-left: 8px;">@option.ModId</span>
+                                        <span style="margin-left: 10px; opacity: 0.7; font-size: 0.8rem;">(@option.Name)</span>
+                                    </div>
+                                    <div>
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowUp())" 
+                                                      Appearance="ButtonAppearance.Subtle" 
+                                                      OnClick="@(() => MoveOrder(option, -1))" />
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDown())" 
+                                                      Appearance="ButtonAppearance.Subtle" 
+                                                      OnClick="@(() => MoveOrder(option, 1))" />
+                                    </div>
+                                </div>
                             }
-                            </OptionTemplate>
-                        </FluentListbox>
+                        </OptionTemplate>
+                    </FluentListbox>
                 }
             </div>
         </div>
     </FluentTab>
 
     @* --- TAB: DIAGNÓSTICO IA --- *@
-    <FluentTab Id="tab-ai" Label="@LocService.Get("Mods.TabAi")">
+    <FluentTab Id="tab-ai" Header="@LocService.Get("Mods.TabAi")">
         <div style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
             <FluentStack Orientation="Orientation.Vertical" Spacing="4">
                 <FluentCard Style="padding: 1.5rem;">
@@ -198,17 +200,17 @@
                         <FluentLabel Typo="Typography.Header">AI Health Desk</FluentLabel>
                         @if (!string.IsNullOrEmpty(_recommendation))
                         {
-                                <FluentBadge Appearance="Appearance.Accent">@_recommendation</FluentBadge>
+                            <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand">@_recommendation</FluentBadge>
                         }
                         <FluentButton IconStart="@(new Icons.Regular.Size20.Wand())"
-                                      Appearance="Appearance.Accent"
+                                      Appearance="ButtonAppearance.Primary"
                                       OnClick="RunAiDiagnosis"
                                       Loading="@_isAiLoading"
                                       Disabled="@(!_config.Ai.IsApiKeyValid)">
                             @LocService.Get("Mods.ScanAi")
                         </FluentButton>
                         <FluentButton IconStart="@(new Icons.Regular.Size20.Eye())"
-                                      Appearance="Appearance.Neutral"
+                                      Appearance="ButtonAppearance.Default"
                                       OnClick="AnalyzeServerLog"
                                       Loading="@_isAiLoading"
                                       Disabled="@(!_config.Ai.IsApiKeyValid)">
@@ -220,69 +222,69 @@
                         <FluentCheckbox @bind-Value="@(_config.Ai.AiAutoFixEnabled)" 
                                         Label="@LocService.Get("Mods.AiAutoFixLabel")" 
                                         Disabled="@(!_config.Ai.IsApiKeyValid)"
-                        @bind-Value:after="SaveConfigAsync" />
+                                        @bind-Value:after="SaveConfigAsync" />
                     </FluentStack>
 
                     <FluentDivider Style="margin: 1rem 0;" />
 
                     @if (_isAiLoading)
                     {
-                            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
-                                <FluentProgressRing />
-                                <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiLoading")</FluentLabel>
+                        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                            <FluentSpinner />
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiLoading")</FluentLabel>
                             @if (_aiProgressLogs.Any())
                             {
-                                        <div style="margin-top: 1rem; padding: 1rem; width: 100%; border-radius: 4px; background: var(--neutral-layer-3); text-align: left; opacity: 0.8; font-family: monospace; font-size: 0.85rem;">
+                                <div style="margin-top: 1rem; padding: 1rem; width: 100%; border-radius: 4px; background: var(--neutral-layer-3); text-align: left; opacity: 0.8; font-family: monospace; font-size: 0.85rem;">
                                     @foreach (var p in _aiProgressLogs)
                                     {
-                                                    <div>> @p</div>
+                                        <div>> @p</div>
                                     }
-                                        </div>
+                                </div>
                             }
-                            </FluentStack>
+                        </FluentStack>
                     }
                     else if (_aiActions.Any())
                     {
-                            <FluentStack Orientation="Orientation.Vertical" Spacing="3">
-                                <FluentLabel Typo="Typography.Subject">@LocService.Get("Mods.AiActionPlan")</FluentLabel>
+                        <FluentStack Orientation="Orientation.Vertical" Spacing="3">
+                            <FluentLabel Typo="Typography.Subject">@LocService.Get("Mods.AiActionPlan")</FluentLabel>
                             @foreach (var action in _aiActions)
                             {
-                                        <FluentCard Style="padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
-                                            <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-                                                <FluentStack Orientation="Orientation.Vertical" Spacing="1">
-                                                    <FluentLabel Weight="FontWeight.Bold">@action.Type: @action.TargetId</FluentLabel>
-                                                    <FluentLabel Typo="Typography.Body" Style="font-size: 0.85rem;">@action.Reason</FluentLabel>
+                                <FluentCard Style="padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
+                                    <FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                        <FluentStack Orientation="Orientation.Vertical" Spacing="1">
+                                            <FluentLabel Weight="LabelWeight.Semibold">@action.Type: @action.TargetId</FluentLabel>
+                                            <FluentLabel Typo="Typography.Body" Style="font-size: 0.85rem;">@action.Reason</FluentLabel>
                                             @if (action.Parameters.Any())
                                             {
-                                                            <FluentBadge Appearance="Appearance.Neutral">Params: @string.Join(", ", action.Parameters.Select(p => $"{p.Key}={p.Value}"))</FluentBadge>
+                                                <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Subtle">Params: @string.Join(", ", action.Parameters.Select(p => $"{p.Key}={p.Value}"))</FluentBadge>
                                             }
-                                                </FluentStack>
-                                                <FluentBadge Appearance="Appearance.Accent">@(Math.Round(action.Confidence * 100))%</FluentBadge>
-                                            </FluentStack>
-                                        </FluentCard>
+                                        </FluentStack>
+                                        <FluentBadge Appearance="BadgeAppearance.Filled" Color="BadgeColor.Brand">@(Math.Round(action.Confidence * 100))%</FluentBadge>
+                                    </FluentStack>
+                                </FluentCard>
                             }
 
-                                <FluentDivider Style="margin: 1rem 0;" />
+                            <FluentDivider Style="margin: 1rem 0;" />
 
-                                <FluentButton Appearance="Appearance.Accent" 
-                                              IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())"
-                                              OnClick="ApplyAiActions">
+                            <FluentButton Appearance="ButtonAppearance.Primary" 
+                                          IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())"
+                                          OnClick="ApplyAiActions">
                                 @LocService.Get("Mods.AiApplyHarmonization")
-                                </FluentButton>
-                            </FluentStack>
+                            </FluentButton>
+                        </FluentStack>
                     }
                     else if (!string.IsNullOrEmpty(_aiReport))
                     {
-                            <div style="background: var(--neutral-layer-2); padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">
+                        <div style="background: var(--neutral-layer-2); padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace;">
                             @_aiReport
-                            </div>
+                        </div>
                     }
                     else
                     {
-                            <div style="opacity: 0.6; text-align: center; padding: 2rem;">
-                                <FluentIcon Value="@(new Icons.Regular.Size24.Handshake())" Style="width: 100px; height: 100px;" />
-                                <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiStartPrompt")</FluentLabel>
-                            </div>
+                        <div style="opacity: 0.6; text-align: center; padding: 2rem;">
+                            <FluentIcon Value="@(new Icons.Regular.Size24.Handshake())" Style="width: 100px; height: 100px;" />
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.AiStartPrompt")</FluentLabel>
+                        </div>
                     }
                 </FluentCard>
             </FluentStack>
@@ -290,7 +292,7 @@
     </FluentTab>
 
     @* --- TAB: PERFILES & PRESETS --- *@
-    <FluentTab Id="tab-presets" Label="@LocService.Get("Mods.TabPresets")">
+    <FluentTab Id="tab-presets" Header="@LocService.Get("Mods.TabPresets")">
         <div style="margin-top: 1rem; max-width: 900px; margin-left: auto; margin-right: auto;">
             <FluentGrid Spacing="3">
                 <FluentGridItem xs="12" md="4">
@@ -298,14 +300,14 @@
                         <FluentLabel Typo="Typography.Header">@LocService.Get("Mods.NewPreset")</FluentLabel>
                         <FluentDivider Style="margin: 0.5rem 0;" />
                         <FluentStack Orientation="Orientation.Vertical" Spacing="4">
-                            <FluentTextField @bind-value="_newPresetName" 
+                            <FluentTextInput @bind-Value="_newPresetName" 
                                              Label="@LocService.Get("Mods.PresetName")" 
                                              Style="width: 100%;" />
-                            <FluentTextArea @bind-value="_newPresetDesc" 
+                            <FluentTextArea @bind-Value="_newPresetDesc" 
                                             Label="@LocService.Get("Mods.PresetDesc")" 
                                             Rows="3" 
                                             Style="width: 100%;" />
-                            <FluentButton Appearance="Appearance.Accent" 
+                            <FluentButton Appearance="ButtonAppearance.Primary" 
                                           OnClick="CreatePreset" 
                                           IconStart="@(new Icons.Regular.Size20.Add())">
                                 @LocService.Get("Mods.SavePreset")
@@ -317,42 +319,42 @@
                 <FluentGridItem xs="12" md="8">
                     @if (_presets == null || !_presets.Any())
                     {
-                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                <FluentIcon Value="@(new Icons.Regular.Size32.Archive())" />
-                                <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.NoPresets")</FluentLabel>
-                            </div>
+                        <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                            <FluentIcon Value="@(new Icons.Regular.Size32.Archive())" />
+                            <FluentLabel Typo="Typography.Body">@LocService.Get("Mods.NoPresets")</FluentLabel>
+                        </div>
                     }
                     else
                     {
                         @foreach (var p in _presets)
                         {
-                                    <FluentCard Style="margin-bottom: 1rem; padding: 1rem;">
-                                        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-                                            <FluentStack Orientation="Orientation.Vertical" Spacing="0">
-                                                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
-                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
-                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
+                            <FluentCard Style="margin-bottom: 1rem; padding: 1rem;">
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentStack Orientation="Orientation.Vertical" Spacing="0">
+                                        <FluentLabel Typo="Typography.Body" Weight="LabelWeight.Semibold">@p.Name</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
                                             @p.Mods.Count mods | @p.CreatedAt.ToLocalTime().ToString("g")
-                                                </FluentLabel>
-                                            </FluentStack>
-                                            <FluentStack Orientation="Orientation.Horizontal">
-                                                <FluentButton IconStart="@(new Icons.Regular.Size16.CloudArrowUp())" 
-                                                              Appearance="Appearance.Stealth"
-                                                              OnClick="@(() => SharePreset(p))"
-                                                              Disabled="@(!_config.Cloud.IsApiKeyValid)">
+                                        </FluentLabel>
+                                    </FluentStack>
+                                    <FluentStack Orientation="Orientation.Horizontal">
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.CloudArrowUp())" 
+                                                      Appearance="ButtonAppearance.Subtle"
+                                                      OnClick="@(() => SharePreset(p))"
+                                                      Disabled="@(!_config.Cloud.IsApiKeyValid)">
                                             @LocService.Get("Mods.SharePreset")
-                                                </FluentButton>
-                                                <FluentButton IconStart="@(new Icons.Regular.Size16.Play())" 
-                                                              Appearance="Appearance.Accent"
-                                                              OnClick="@(() => ApplyPreset(p))">
+                                        </FluentButton>
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Play())" 
+                                                      Appearance="ButtonAppearance.Primary"
+                                                      OnClick="@(() => ApplyPreset(p))">
                                             @LocService.Get("Mods.ApplyPreset")
-                                                </FluentButton>
-                                                <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" 
-                                                              Appearance="Appearance.Neutral"
-                                                              OnClick="@(() => DeletePreset(p))" />
-                                            </FluentStack>
-                                        </FluentStack>
-                                    </FluentCard>
+                                        </FluentButton>
+                                        <FluentButton IconStart="@(new Icons.Regular.Size16.Delete())" 
+                                                      Appearance="ButtonAppearance.Default"
+                                                      OnClick="@(() => DeletePreset(p))" />
+                                    </FluentStack>
+                                </FluentStack>
+                            </FluentCard>
                         }
                     }
 
@@ -362,32 +364,32 @@
 
                     @if (_communityPresets == null)
                     {
-                            <FluentButton OnClick="LoadCommunityPresets" 
-                                          IconStart="@(new Icons.Regular.Size20.Search())"
-                                          Disabled="@(!_config.Cloud.IsApiKeyValid)">
-                                Buscar perfiles públicos
-                            </FluentButton>
+                        <FluentButton OnClick="LoadCommunityPresets" 
+                                      IconStart="@(new Icons.Regular.Size20.Search())"
+                                      Disabled="@(!_config.Cloud.IsApiKeyValid)">
+                            Buscar perfiles públicos
+                        </FluentButton>
                     }
                     else
                     {
                         @foreach (var p in _communityPresets)
                         {
-                                    <FluentCard Style="margin-bottom: 1rem; padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
-                                        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
-                                            <FluentStack Orientation="Orientation.Vertical" Spacing="0">
-                                                <FluentLabel Typo="Typography.Body" Weight="FontWeight.Bold">@p.Name</FluentLabel>
-                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
-                                                <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
-                                                    Autor: @p.Author | @p.Mods.Count mods | @LocService.Get("Mods.CommunityVerified")
-                                                </FluentLabel>
-                                            </FluentStack>
-                                            <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())" 
-                                                          Appearance="Appearance.Accent"
-                                                          OnClick="@(() => DownloadCommunityPreset(p))">
-                                                Importar
-                                            </FluentButton>
-                                        </FluentStack>
-                                    </FluentCard>
+                            <FluentCard Style="margin-bottom: 1rem; padding: 1rem; border-left: 4px solid var(--accent-fill-rest);">
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween">
+                                    <FluentStack Orientation="Orientation.Vertical" Spacing="0">
+                                        <FluentLabel Typo="Typography.Body" Weight="LabelWeight.Semibold">@p.Name</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.8rem; opacity: 0.8;">@p.Description</FluentLabel>
+                                        <FluentLabel Typo="Typography.Body" Style="font-size: 0.7rem; opacity: 0.6;">
+                                            Autor: @p.Author | @p.Mods.Count mods | @LocService.Get("Mods.CommunityVerified")
+                                        </FluentLabel>
+                                    </FluentStack>
+                                    <FluentButton IconStart="@(new Icons.Regular.Size16.ArrowDownload())" 
+                                                  Appearance="ButtonAppearance.Primary"
+                                                  OnClick="@(() => DownloadCommunityPreset(p))">
+                                        Importar
+                                    </FluentButton>
+                                </FluentStack>
+                            </FluentCard>
                         }
                     }
                 </FluentGridItem>
@@ -397,6 +399,7 @@
 </FluentTabs>
 
 @code {
+    private string _activeTabId = "tab-explorer";
     private List<WorkshopItem>? _items;
     private ZsmConfiguration _config = new();
     private string _filterText = "";
@@ -432,8 +435,6 @@
         _presets = await PresetService.GetAllPresetsAsync();
     }
 
-    private void OnTabHandle(FluentTab tab) => StateHasChanged();
-
     private async Task LoadDataAsync()
     {
         _items = await ModDiscovery.GetWorkshopItemsAsync();
@@ -451,11 +452,11 @@
         try
         {
             await ModDiscovery.SaveModConfigurationAsync();
-            ToastService.ShowSuccess(LocService.Get("Mods.SaveSuccess"));
+            await NotificationService.ShowSuccessAsync(LocService.Get("Mods.SaveSuccess"));
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"{LocService.Get("Mods.SaveError")}: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"{LocService.Get("Mods.SaveError")}: {ex.Message}");
         }
         finally
         {
@@ -495,24 +496,22 @@
                 InvokeAsync(StateHasChanged);
             });
 
-            // Ejecutar análisis agéntico profundo
             _aiActions = await AiService.AnalyzeAndFixAsync(ActiveModsOrdered, null, progress);
 
             if (!_aiActions.Any())
             {
-                // Fallback al análisis heurístico si no hay acciones
                 _aiReport = await AiService.AnalyzeModConflictsAsync(ActiveModsOrdered);
             }
             else
             {
                 if (_config.Ai.AiAutoFixEnabled == true)
                 {
-                    ToastService.ShowInfo("Modo Automático: Aplicando armonización...");
+                    await NotificationService.ShowInfoAsync("Modo Automático: Aplicando armonización...");
                     await ApplyAiActions();
                 }
                 else
                 {
-                    ToastService.ShowInfo($"El Agente de IA ha identificado {_aiActions.Count} mejoras potenciales.");
+                    await NotificationService.ShowInfoAsync($"El Agente de IA ha identificado {_aiActions.Count} mejoras potenciales.");
                 }
             }
         }
@@ -534,14 +533,14 @@
         try
         {
             await ModDiscovery.BatchApplyAiActionsAsync(_aiActions);
-            ToastService.ShowSuccess("Armonización completada. Los cambios han sido aplicados y guardados.");
+            await NotificationService.ShowSuccessAsync("Armonización completada. Los cambios han sido aplicados y guardados.");
             _aiActions.Clear();
             await LoadDataAsync();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Fallo al aplicar acciones: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Fallo al aplicar acciones: {ex.Message}");
         }
         finally
         {
@@ -560,16 +559,16 @@
             var log = await LoggerService.ReadLogFileAsync("server-console.txt", 1500);
             if (string.IsNullOrEmpty(log))
             {
-                ToastService.ShowError("No se encontró el archivo server-console.txt o está vacío.");
+                await NotificationService.ShowErrorAsync("No se encontró el archivo server-console.txt o está vacío.");
                 return;
             }
 
             _aiReport = await AiService.AnalyzeLogAsync(log);
-            ToastService.ShowSuccess("Análisis de log completado.");
+            await NotificationService.ShowSuccessAsync("Análisis de log completado.");
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Fallo del análisis: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Fallo del análisis: {ex.Message}");
         }
         finally
         {
@@ -581,12 +580,12 @@
     {
         if (string.IsNullOrWhiteSpace(_newPresetName))
         {
-            ToastService.ShowWarning("El nombre del perfil es obligatorio.");
+            await NotificationService.ShowWarningAsync("El nombre del perfil es obligatorio.");
             return;
         }
 
         await PresetService.SavePresetAsync(_newPresetName, _newPresetDesc, ActiveModsOrdered);
-        ToastService.ShowSuccess("Perfil de mods guardado.");
+        await NotificationService.ShowSuccessAsync("Perfil de mods guardado.");
         _presets = await PresetService.GetAllPresetsAsync();
         _newPresetName = "";
         _newPresetDesc = "";
@@ -598,12 +597,12 @@
         {
             await PresetService.ApplyPresetAsync(p.Name);
             await LoadDataAsync();
-            ToastService.ShowSuccess($"Perfil '{p.Name}' aplicado correctamente.");
+            await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' aplicado correctamente.");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error al aplicar: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error al aplicar: {ex.Message}");
         }
     }
 
@@ -612,7 +611,6 @@
         await PresetService.DeletePresetAsync(p.Name);
         _presets = await PresetService.GetAllPresetsAsync();
     }
-
 
     private async Task ScanModsAsync()
     {
@@ -624,7 +622,7 @@
 
             if (string.IsNullOrEmpty(serverDir) || !Directory.Exists(serverDir))
             {
-                ToastService.ShowError(LocService.Get("Mods.ScanError.NoServerDir"));
+                await NotificationService.ShowErrorAsync(LocService.Get("Mods.ScanError.NoServerDir"));
                 return;
             }
 
@@ -639,16 +637,16 @@
                 {
                     await ModDiscovery.DiscoverLocalModsAsync(workshopPath);
                     await LoadDataAsync();
-                    ToastService.ShowSuccess(LocService.Get("Mods.ScanSuccess"));
+                    await NotificationService.ShowSuccessAsync(LocService.Get("Mods.ScanSuccess"));
                     return;
                 }
             }
 
-            ToastService.ShowWarning(LocService.Get("Mods.NoModsFound"));
+            await NotificationService.ShowWarningAsync(LocService.Get("Mods.NoModsFound"));
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"{LocService.Get("Mods.ScanError")}: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"{LocService.Get("Mods.ScanError")}: {ex.Message}");
         }
         finally
         {
@@ -660,25 +658,25 @@
     {
         if (string.IsNullOrEmpty(_config.Cloud.ApiKey))
         {
-            ToastService.ShowWarning("Configura tu API Key en la página de Configuración Global para compartir perfiles.");
+            await NotificationService.ShowWarningAsync("Configura tu API Key en la página de Configuración Global para compartir perfiles.");
             return;
         }
 
         var success = await CommunityService.UploadPresetAsync(_config.Cloud.ApiKey, p);
         if (success)
         {
-            ToastService.ShowSuccess($"Perfil '{p.Name}' compartido con éxito.");
+            await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' compartido con éxito.");
         }
         else
         {
-            ToastService.ShowError("Error al subir el perfil.");
+            await NotificationService.ShowErrorAsync("Error al subir el perfil.");
         }
     }
 
     private async Task TriggerUpdate(string workshopId)
     {
         await ModDiscovery.TriggerModUpdateAsync(workshopId);
-        ToastService.ShowInfo($"Se ha solicitado la actualización de {workshopId}. Reinicia el servidor para aplicar.");
+        await NotificationService.ShowInfoAsync($"Se ha solicitado la actualización de {workshopId}. Reinicia el servidor para aplicar.");
     }
 
     private async Task RestartViaRcon()
@@ -693,7 +691,7 @@
 
         if (string.IsNullOrEmpty(password))
         {
-            ToastService.ShowWarning("RCON no configurado o sin contraseña en el archivo .ini.");
+            await NotificationService.ShowWarningAsync("RCON no configurado o sin contraseña en el archivo .ini.");
             return;
         }
 
@@ -705,17 +703,17 @@
                 await RconService.SendCommandAsync("servermsg \"Reiniciando servidor para actualizar mods...\"");
                 await Task.Delay(1000);
                 await RconService.SendCommandAsync("quit");
-                ToastService.ShowSuccess("Comando de reinicio enviado.");
+                await NotificationService.ShowSuccessAsync("Comando de reinicio enviado.");
                 await RconService.DisconnectAsync();
             }
             else
             {
-                ToastService.ShowError("No se pudo conectar vía RCON.");
+                await NotificationService.ShowErrorAsync("No se pudo conectar vía RCON.");
             }
         }
         catch (Exception ex)
         {
-            ToastService.ShowError($"Error RCON: {ex.Message}");
+            await NotificationService.ShowErrorAsync($"Error RCON: {ex.Message}");
         }
     }
 
@@ -727,10 +725,9 @@
 
     private async Task DownloadCommunityPreset(ModPreset p)
     {
-        // Guardar localmente
         await PresetService.SavePresetAsync(p);
         _presets = await PresetService.GetAllPresetsAsync();
-        ToastService.ShowSuccess($"Perfil '{p.Name}' importado correctamente.");
+        await NotificationService.ShowSuccessAsync($"Perfil '{p.Name}' importado correctamente.");
     }
 
     private async Task FetchMetadata(string workshopId)
@@ -739,11 +736,11 @@
         if (result)
         {
             await LoadDataAsync();
-            ToastService.ShowSuccess(LocService.Get("Mods.MetadataSuccess"));
+            await NotificationService.ShowSuccessAsync(LocService.Get("Mods.MetadataSuccess"));
         }
         else
         {
-            ToastService.ShowWarning(LocService.Get("Mods.MetadataError"));
+            await NotificationService.ShowWarningAsync(LocService.Get("Mods.MetadataError"));
         }
     }
 
