@@ -336,14 +336,18 @@
         }
     }
 
+    private bool _disposed;
+
     private void HandleFilterInput(ChangeEventArgs e)
     {
+        if (_disposed) return;
         _filterText = e.Value?.ToString() ?? "";
         LoadTabData();
     }
 
     private void UpdateBoolStatus(bool value)
     {
+        if (_disposed) return;
         _boolWrapper = value;
         if (_editingRecord is NetworkPlayer np) np.IsDead = value;
         else if (_editingRecord is LocalPlayer lp) lp.IsDead = value;
@@ -352,45 +356,58 @@
 
     private void LoadTabData()
     {
-        var filter = _filterText?.ToLower() ?? "";
+        if (_disposed) return;
 
-        if (activeTabId == "tab-players" && _playersContext != null)
+        try
         {
-            _netPlayers = _playersContext.NetworkPlayers
-            .Where(p => string.IsNullOrEmpty(filter) ||
-            (p.Username != null && p.Username.ToLower().Contains(filter)) ||
-            (p.Name != null && p.Name.ToLower().Contains(filter)) ||
-            (p.Steamid != null && p.Steamid.ToLower().Contains(filter)))
-            .AsQueryable();
-            _locPlayers = _playersContext.LocalPlayers
-            .Where(p => string.IsNullOrEmpty(filter) ||
-            (p.Name != null && p.Name.ToLower().Contains(filter)))
-            .AsQueryable();
+            var filter = _filterText?.ToLower() ?? "";
+
+            if (activeTabId == "tab-players" && _playersContext != null)
+            {
+                _netPlayers = _playersContext.NetworkPlayers
+                    .Where(p => string.IsNullOrEmpty(filter) ||
+                    (p.Username != null && p.Username.ToLower().Contains(filter)) ||
+                    (p.Name != null && p.Name.ToLower().Contains(filter)) ||
+                    (p.Steamid != null && p.Steamid.ToLower().Contains(filter)))
+                    .AsQueryable();
+                _locPlayers = _playersContext.LocalPlayers
+                    .Where(p => string.IsNullOrEmpty(filter) ||
+                    (p.Name != null && p.Name.ToLower().Contains(filter)))
+                    .AsQueryable();
+            }
+            else if (activeTabId == "tab-vehicles" && _vehiclesContext != null)
+            {
+                _vehicles = _vehiclesContext.Vehicles
+                    .Where(v => string.IsNullOrEmpty(filter) || v.Id.ToString().Contains(filter))
+                    .AsQueryable();
+            }
+            else if (activeTabId == "tab-server" && _serverContext != null)
+            {
+                _whitelists = _serverContext.Whitelists
+                    .Where(w => string.IsNullOrEmpty(filter) ||
+                    (w.Username != null && w.Username.ToLower().Contains(filter)) ||
+                    (w.Steamid != null && w.Steamid.ToLower().Contains(filter)) ||
+                    (w.DisplayName != null && w.DisplayName.ToLower().Contains(filter)))
+                    .AsQueryable();
+                _userlogs = _serverContext.Userlogs
+                    .Where(u => string.IsNullOrEmpty(filter) ||
+                    (u.Username != null && u.Username.ToLower().Contains(filter)) ||
+                    (u.Text != null && u.Text.ToLower().Contains(filter)))
+                    .AsQueryable();
+                _tickets = _serverContext.Tickets
+                    .Where(t => string.IsNullOrEmpty(filter) ||
+                    (t.Author != null && t.Author.ToLower().Contains(filter)) ||
+                    (t.Message != null && t.Message.ToLower().Contains(filter)))
+                    .AsQueryable();
+            }
         }
-        else if (activeTabId == "tab-vehicles" && _vehiclesContext != null)
+        catch (ObjectDisposedException)
         {
-            _vehicles = _vehiclesContext.Vehicles
-            .Where(v => string.IsNullOrEmpty(filter) || v.Id.ToString().Contains(filter))
-            .AsQueryable();
+            // Contexto o componente siendo descartado; retorno seguro
         }
-        else if (activeTabId == "tab-server" && _serverContext != null)
+        catch (Exception)
         {
-            _whitelists = _serverContext.Whitelists
-            .Where(w => string.IsNullOrEmpty(filter) ||
-            (w.Username != null && w.Username.ToLower().Contains(filter)) ||
-            (w.Steamid != null && w.Steamid.ToLower().Contains(filter)) ||
-            (w.DisplayName != null && w.DisplayName.ToLower().Contains(filter)))
-            .AsQueryable();
-            _userlogs = _serverContext.Userlogs
-            .Where(u => string.IsNullOrEmpty(filter) ||
-            (u.Username != null && u.Username.ToLower().Contains(filter)) ||
-            (u.Text != null && u.Text.ToLower().Contains(filter)))
-            .AsQueryable();
-            _tickets = _serverContext.Tickets
-            .Where(t => string.IsNullOrEmpty(filter) ||
-            (t.Author != null && t.Author.ToLower().Contains(filter)) ||
-            (t.Message != null && t.Message.ToLower().Contains(filter)))
-            .AsQueryable();
+            // Protección contra excepciones no controladas durante renderizado
         }
     }
 
@@ -422,7 +439,7 @@
 
     private async Task SaveRecord()
     {
-        if (_editingRecord == null) return;
+        if (_editingRecord == null || _disposed) return;
         _isSaving = true;
         try
         {
@@ -450,8 +467,35 @@
 
     public void Dispose()
     {
-        _playersContext?.Dispose();
-        _vehiclesContext?.Dispose();
-        _serverContext?.Dispose();
+        _disposed = true;
+        try
+        {
+            _playersContext?.Dispose();
+        }
+        catch { }
+        finally
+        {
+            _playersContext = null;
+        }
+
+        try
+        {
+            _vehiclesContext?.Dispose();
+        }
+        catch { }
+        finally
+        {
+            _vehiclesContext = null;
+        }
+
+        try
+        {
+            _serverContext?.Dispose();
+        }
+        catch { }
+        finally
+        {
+            _serverContext = null;
+        }
     }
 }
