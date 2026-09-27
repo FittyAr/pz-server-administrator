@@ -61,6 +61,17 @@ public class ServerLoggerService : IServerLoggerService
             roots.Add(zomboidDir);
         }
 
+        // Add application Serilog log roots (Docker persistent volume or local directory)
+        if (Directory.Exists("/app/config/logs"))
+        {
+            roots.Add("/app/config");
+        }
+        var localLogsDir = Path.Combine(AppContext.BaseDirectory, "logs");
+        if (Directory.Exists(localLogsDir))
+        {
+            roots.Add(AppContext.BaseDirectory);
+        }
+
         return roots;
     }
 
@@ -88,23 +99,28 @@ public class ServerLoggerService : IServerLoggerService
                 });
             }
 
-            // Add everything in Logs
-            var logsDir = Path.Combine(rootDir, "Logs");
-            if (Directory.Exists(logsDir))
+            // Add everything in Logs / logs (.txt and .log)
+            var possibleLogDirs = new[] { Path.Combine(rootDir, "Logs"), Path.Combine(rootDir, "logs") };
+            foreach (var logsDir in possibleLogDirs.Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var files = Directory.GetFiles(logsDir, "*.txt", SearchOption.AllDirectories);
-                foreach (var file in files)
+                if (Directory.Exists(logsDir))
                 {
-                    if (seenPaths.Add(file))
+                    var files = Directory.GetFiles(logsDir, "*.*", SearchOption.AllDirectories)
+                        .Where(f => f.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".log", StringComparison.OrdinalIgnoreCase));
+
+                    foreach (var file in files)
                     {
-                        var info = new FileInfo(file);
-                        result.Add(new LogFileInfo
+                        if (seenPaths.Add(file))
                         {
-                            Name = info.Name,
-                            RelativePath = Path.GetRelativePath(rootDir, file),
-                            Size = info.Length,
-                            LastModified = info.LastWriteTime
-                        });
+                            var info = new FileInfo(file);
+                            result.Add(new LogFileInfo
+                            {
+                                Name = info.Name,
+                                RelativePath = Path.GetRelativePath(rootDir, file),
+                                Size = info.Length,
+                                LastModified = info.LastWriteTime
+                            });
+                        }
                     }
                 }
             }
